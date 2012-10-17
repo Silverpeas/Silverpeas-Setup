@@ -13,9 +13,9 @@
   <name>Silverpeas Configuration Tools</name>
 
   <scm>
-    <connection>scm:git:git@github.com:Silverpeas/Silverpeas-Configuration.git</connection>
-    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-Configuration.git</developerConnection>
-    <url>https://github.com/Silverpeas/Silverpeas-Configuration</url>
+    <connection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</connection>
+    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</developerConnection>
+    <url>https://github.com/Silverpeas/Silverpeas-setup</url>
   </scm>
   
   <repositories>
