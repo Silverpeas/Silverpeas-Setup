@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2000 - 2009 Silverpeas
+ * Copyright (C) 2000 - 2012 Silverpeas
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU Affero General Public License as published by the Free Software Foundation, either version 3
@@ -9,7 +9,7 @@
  * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
  * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
  * text describing the FLOSS exception, and it is also available here:
- * "http://www.silverpeas.com/legal/licensing"
+ * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
  * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -70,8 +70,8 @@ public class SilverpeasSettings {
   private static final String[] TAGS_TO_MERGE = { "global-vars", "fileset", "script" };
   private static List<File> xmlFiles;
   private static final String TOOL_VERSION = "SilverpeasSettings V5.0";
-  public static final String DIR_SETTINGS = DirectoryLocator.getSilverpeasHome() +
-      "/setup/settings";
+  public static final String DIR_SETTINGS =
+      DirectoryLocator.getSilverpeasHome() + "/setup/settings";
   public static final String SILVERPEAS_SETTINGS = "SilverpeasSettings.xml";
   public static final String SILVERPEAS_CONFIG = "config.xml";
   public static final String DEPENDENCIES_TAG = "dependencies";
@@ -94,6 +94,7 @@ public class SilverpeasSettings {
   static final String[] scriptsRootPath =
       new String[] { DirectoryLocator.getSilverpeasHome() + "/bin/scripts/" };
   static GroovyScriptEngine scriptEngine = null;
+  private static boolean hasError = false;
 
   static {
     try {
@@ -143,13 +144,11 @@ public class SilverpeasSettings {
     // detects file separator
     baseUnixSep = (relBase != null && relBase.indexOf('/') != -1);
     // removes starting file separator
-    if (relBase != null && relBase.length() >= 1 &&
-        relBase.charAt(0) == (baseUnixSep ? '/' : '\\')) {
+    if (relBase != null && relBase.length() >= 1 && relBase.charAt(0) == (baseUnixSep ? '/' : '\\')) {
       relBase = relBase.substring(1);
     }
     // removes ending file separator
-    if (relBase != null && relBase.length() >= 1 &&
-        relBase.endsWith(baseUnixSep ? "/" : "\\")) {
+    if (relBase != null && relBase.length() >= 1 && relBase.endsWith(baseUnixSep ? "/" : "\\")) {
       relBase = relBase.substring(0, relBase.length() - 2);
     }
     // detects number of levels
@@ -174,8 +173,7 @@ public class SilverpeasSettings {
     // detects file separator
     baseUnixSep = (result != null && result.indexOf('/') != -1);
     // adds starting file separator
-    if (result != null && result.length() >= 1 &&
-        result.charAt(0) != (baseUnixSep ? '/' : '\\')) {
+    if (result != null && result.length() >= 1 && result.charAt(0) != (baseUnixSep ? '/' : '\\')) {
       result = (baseUnixSep ? "/" : "\\") + result;
     }
     result = resultBase + result;
@@ -191,10 +189,9 @@ public class SilverpeasSettings {
       System.out.println("start settings of " + TOOL_VERSION + " (" + new Date() + ").");
       File fileLog = new File(DirectoryLocator.getLogHome() + "/SilverpeasSettings.log");
       bufLog = new PrintWriter(new BufferedWriter(new FileWriter(fileLog.getAbsolutePath(), true)));
-      displayMessageln(NEW_LINE +
-          "************************************************************************");
-      displayMessageln("start settings of Silverpeas (" + new java.util.Date() +
-          ").");
+      displayMessageln(NEW_LINE
+          + "************************************************************************");
+      displayMessageln("start settings of Silverpeas (" + new java.util.Date() + ").");
       if (args.length != 0) {
         throw new Exception("parameters forbidden");
       }
@@ -238,17 +235,29 @@ public class SilverpeasSettings {
             }
           } catch (Exception e) {
             printError(e);
+            hasError = true;
           }
         } // while actions
       } // while fileset
-      displayMessageln(NEW_LINE + "Silverpeas has been successfuly configured (" + new Date() +
-          ").");
-      bufLog.close();
-      System.out.println(
-          NEW_LINE + "Silverpeas has been successfuly configured (" + new Date() + ").");
+      if (!hasError) {
+        String success = NEW_LINE + "Silverpeas has been successfuly configured (" + new Date()
+            + ").";
+        displayMessageln(success);
+        bufLog.close();
+        System.out.println(success);
+        System.exit(0);
+      } else {
+        String failure = NEW_LINE + "Silverpeas has not been configured (" + new Date() + ").";
+        displayMessageln(failure);
+        bufLog.close();
+        System.out.println(failure);
+        System.exit(1);
+      }
     } catch (Exception e) {
       printError(e);
+      hasError = true;
       e.printStackTrace(System.err);
+      System.exit(1);
     }
   }
 
@@ -397,7 +406,7 @@ public class SilverpeasSettings {
         displayMessageln(NEW_LINE + buffer.toString());
         bufLog.close();
       }
-      System.out.println(NEW_LINE + buffer.toString() + NEW_LINE);
+      System.err.println(NEW_LINE + buffer.toString() + NEW_LINE);
     } finally {
       IOUtils.closeQuietly(buffer);
     }
@@ -408,7 +417,7 @@ public class SilverpeasSettings {
       displayMessageln(NEW_LINE + errMsg);
       bufLog.close();
     }
-    System.out.println(NEW_LINE + errMsg + NEW_LINE);
+    System.err.println(NEW_LINE + errMsg + NEW_LINE);
   }
 
   public static void displayMessageln(String msg) {
@@ -488,16 +497,14 @@ public class SilverpeasSettings {
   public static void mergeConfigurationFiles(XmlDocument fileXml, File dirXml) throws IOException,
       AppBuilderException {
     // Tri par ordre alphabetique
-    xmlFiles =
-        new ArrayList<File>((Collection<File>) FileUtils.listFiles(dirXml, new String[] { "xml" },
-        false));
+    xmlFiles = new ArrayList<File>(FileUtils.listFiles(dirXml, new String[] { "xml" }, false));
     Collections.sort(xmlFiles);
     for (File xmlFile : xmlFiles) {
       displayMessageln(xmlFile.toString());
     }
     for (File f : xmlFiles) {
-      displayMessageln("Is File = " + f.isFile() + " - Extension: " + FileUtil.getExtension(f) +
-          " - Nom =" + f.getName());
+      displayMessageln("Is File = " + f.isFile() + " - Extension: " + FileUtil.getExtension(f)
+          + " - Nom =" + f.getName());
       if (!(SILVERPEAS_SETTINGS.equalsIgnoreCase(f.getName()) || SILVERPEAS_CONFIG
           .equalsIgnoreCase(f.
           getName()))) {
