@@ -1,17 +1,16 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.silverpeas</groupId>
     <artifactId>parent</artifactId>
-    <version>22</version>
+    <version>24-SNAPSHOT</version>
   </parent>
 
   <groupId>com.silverpeas.builder</groupId>
-  <artifactId>fileutil</artifactId>
+  <artifactId>utils</artifactId>
   <packaging>jar</packaging>
-  <version>1.8-SNAPSHOT</version>
-  <name>FileUtil</name>
+  <version>5.11-SNAPSHOT</version>
+  <name>Installation Tools</name>
 
   <scm>
     <connection>scm:git:git@github.com:Silverpeas/Silverpeas-Fileutil.git</connection>
@@ -56,14 +55,39 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-          <groupId>org.silverpeas.services</groupId>
-          <artifactId>code-formatter-plugin</artifactId>
-        </plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <index>true</index>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <mainClass>org.silverpeas.applicationbuilder.ApplicationBuilder</mainClass>
+              <classpathLayoutType>custom</classpathLayoutType>
+              <customClasspathLayout>lib/$${artifact.artifactId}.$${artifact.extension}</customClasspathLayout>
+            </manifest>
+            <manifestEntries>
+              <mode>development</mode>
+              <url>${project.url}</url>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.silverpeas.services</groupId>
+        <artifactId>code-formatter-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
 </project>
