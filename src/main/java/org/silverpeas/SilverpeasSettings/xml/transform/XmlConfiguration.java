@@ -55,18 +55,19 @@ public class XmlConfiguration {
         if (eltValues == null || eltValues.isEmpty()) {
           parameter.addValue(new Value(null, null, gv.resolveAndEvalString(
               eltParameter.getTextTrim()), parameter.getMode()));
-        }
-        for (Element eltValue : eltValues) {
-          String relativePath = eltValue.getAttributeValue(RELATIVE_VALUE_ATTRIB);
-          if (relativePath != null && !"".equals(relativePath)) {
-            relativePath = gv.resolveAndEvalString(relativePath);
+        } else {
+          for (Element eltValue : eltValues) {
+            String relativePath = eltValue.getAttributeValue(RELATIVE_VALUE_ATTRIB);
+            if (relativePath != null && !"".equals(relativePath)) {
+              relativePath = gv.resolveAndEvalString(relativePath);
+            }
+            String location = eltValue.getAttributeValue(VALUE_LOCATION_ATTRIB);
+            if (location != null && !"".equals(location)) {
+              location = gv.resolveAndEvalString(location);
+            }
+            parameter.addValue(new Value(location, relativePath, gv.resolveAndEvalString(
+                eltValue.getTextTrim()), parameter.getMode()));
           }
-          String location = eltValue.getAttributeValue(VALUE_LOCATION_ATTRIB);
-          if (location != null && !"".equals(location)) {
-            location = gv.resolveAndEvalString(location);
-          }
-          parameter.addValue(new Value(location, relativePath, gv.resolveAndEvalString(
-              eltValue.getTextTrim()), parameter.getMode()));
         }
       } else {
         parameter.addValue(new Value(null, null, gv.resolveAndEvalString(

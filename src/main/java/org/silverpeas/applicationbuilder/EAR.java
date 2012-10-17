@@ -89,8 +89,7 @@ public class EAR extends EARDirectory {
         Log.add("WARNING : could not delete \"" + getWAR().getName() + "\" from temporary space");
       }
     } catch (Exception e) {
-      Log.add("WARNING : could not delete \"" + getWAR().getName()
-          + "\" from temporary space");
+      Log.add("WARNING : could not delete \"" + getWAR().getName() + "\" from temporary space");
       Log.add(e);
     }
     // Application descriptor

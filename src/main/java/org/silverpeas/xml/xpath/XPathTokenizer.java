@@ -280,8 +280,7 @@ public class XPathTokenizer {
             setIndex(getIndex() + 1);
           }
         } catch (RuntimeException re) {
-          throw new XPathParseException("unauthorised char in XML name",
-              getXPath(), getIndex());
+          throw new XPathParseException("unauthorised char in XML name", getXPath(), getIndex(), re);
         }
         if (nameFound) {
           setCurrentTokenType(NAME);

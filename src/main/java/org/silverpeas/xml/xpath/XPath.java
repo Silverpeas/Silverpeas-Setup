@@ -162,7 +162,7 @@ public class XPath {
    */
   private void analyse() throws XPathParseException {
     getTokenizer().readNextToken();
-    LocationPath();
+    locationPath();
     if (getTokenizer().getCurrentTokenType() != XPathTokenizer.END_OF_XPATH) {
       throw new XPathParseException("end of XPath expected", getXPath(),
           getTokenizer().getCurrentTokenPosition());
@@ -176,21 +176,21 @@ public class XPath {
    * W3C XPath 1.0 Recommendation (S=Simplified) (S)[1] LocationPath ::= '/' RelativeLocationPath? |
    * RelativeLocationPath
    */
-  private void LocationPath() throws XPathParseException {
+  private void locationPath() throws XPathParseException {
     if (getTokenizer().getCurrentTokenType() == XPathTokenizer.STEP_SEPARATOR) {
       if (areXMLActionsPerformed() && getTreeHandler().currentNodeExists()) {
         getTreeHandler().gotoRoot();
       }
       setIsAbsolute(true);
       if (getTokenizer().readNextToken() != XPathTokenizer.END_OF_XPATH) {
-        RelativeLocationPath();
+        relativeLocationPath();
       }
     } else {
       if (areXMLActionsPerformed() && getTreeHandler().currentNodeExists()) {
         getTreeHandler().setCurrentElementAsCousinsAncestor();
       }
       setIsAbsolute(false);
-      RelativeLocationPath();
+      relativeLocationPath();
     }
   }
 
@@ -198,11 +198,11 @@ public class XPath {
    * W3C XPath 1.0 Recommendation (S=Simplified) (S)[3] RelativeLocationPath ::= Step ('/'
    * RelativeLocationPath)?
    */
-  private void RelativeLocationPath() throws XPathParseException {
-    Step();
+  private void relativeLocationPath() throws XPathParseException {
+    step();
     if (getTokenizer().getCurrentTokenType() == XPathTokenizer.STEP_SEPARATOR) {
       getTokenizer().readNextToken();
-      RelativeLocationPath();
+      relativeLocationPath();
     }
   }
 
@@ -210,7 +210,7 @@ public class XPath {
    * W3C XPath 1.0 Recommendation (S=Simplified) (S)[4] Step ::= '.' | '..' | '@' NCName | NCName
    * Predicate?
    */
-  private void Step() throws XPathParseException {
+  private void step() throws XPathParseException {
     switch (getTokenizer().getCurrentTokenType()) {
       case XPathTokenizer.DOT:
         // the current element
@@ -249,7 +249,7 @@ public class XPath {
         String elementName = getTokenizer().getCurrentToken();
 
         if (getTokenizer().readNextToken() == XPathTokenizer.PREDICATE_OPEN) {
-          Predicate(elementName);
+          predicate(elementName);
         } else {
           if (areXMLActionsPerformed() && getTreeHandler().currentNodeExists()) {
             getTreeHandler().gotoFirstNephewNode(XmlTreeHandler.TYPE_ELEMENT,
@@ -266,13 +266,13 @@ public class XPath {
   /**
    * W3C XPath 1.0 Recommendation (S=Simplified) (S)[8] Predicate ::= '[' PredicateExpr ']'
    */
-  private void Predicate(String elementName) throws XPathParseException {
+  private void predicate(String elementName) throws XPathParseException {
     if (getTokenizer().getCurrentTokenType() != XPathTokenizer.PREDICATE_OPEN) {
       throw new XPathParseException("'[' expected", getXPath(), getTokenizer()
           .getCurrentTokenPosition());
     }
     getTokenizer().readNextToken();
-    PredicateExpr(elementName);
+    predicateExpr(elementName);
     if (areXMLActionsPerformed() && getTreeHandler().currentNodeExists()) {
       getTreeHandler().setCurrentElementAsCousinsAncestor();
     }
@@ -287,7 +287,7 @@ public class XPath {
    * W3C XPath 1.0 Recommendation (S=Simplified) (S)[9] PredicateExpr ::= '@'? NCName '='
    * PrimaryExpr
    */
-  private void PredicateExpr(String elementName) throws XPathParseException {
+  private void predicateExpr(String elementName) throws XPathParseException {
     char nodeType = 'X';
     String nodeName = null;
     switch (getTokenizer().getCurrentTokenType()) {
@@ -313,7 +313,7 @@ public class XPath {
           .getCurrentTokenPosition());
     }
     getTokenizer().readNextToken();
-    String value2find = PrimaryExpr();
+    String value2find = primaryExpr();
 
     // search
     if (areXMLActionsPerformed() && getTreeHandler().currentNodeExists()) {
@@ -325,7 +325,7 @@ public class XPath {
   /**
    * W3C XPath 1.0 Recommendation (S=Simplified) (S)[15] PrimaryExpr ::= Literal | Number
    */
-  private String PrimaryExpr() throws XPathParseException {
+  private String primaryExpr() throws XPathParseException {
     String value = null;
     switch (getTokenizer().getCurrentTokenType()) {
       case XPathTokenizer.INTEGER:
@@ -353,7 +353,7 @@ public class XPath {
   }
 
   private void setIsAttribute(boolean isAttribute) {
-    _isAttribute = new Boolean(isAttribute);
+    _isAttribute = Boolean.valueOf(isAttribute);
   }
 
   private void eraseIsAttribute() {
@@ -372,7 +372,7 @@ public class XPath {
   }
 
   private void setIsElement(boolean isElement) {
-    _isElement = new Boolean(isElement);
+    _isElement = Boolean.valueOf(isElement);
   }
 
   private void eraseIsElement() {
@@ -392,7 +392,7 @@ public class XPath {
   }
 
   private void setExists(boolean doesExist) {
-    _exists = new Boolean(doesExist);
+    _exists = Boolean.valueOf(doesExist);
   }
 
   private void eraseExists() {
@@ -407,7 +407,7 @@ public class XPath {
    * sets the absolute XPath indicator
    */
   private void setIsAbsolute(boolean isAbsolute) {
-    _isAbsolute = new Boolean(isAbsolute);
+    _isAbsolute = Boolean.valueOf(isAbsolute);
   }
 
   private void eraseIsAbsolute() {

@@ -27,10 +27,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -66,7 +66,7 @@ public class SilverpeasSettings {
 
   static final String NEW_LINE = System.getProperty("line.separator");
   private static PrintWriter bufLog = null;
-  private static XPath _xpathEngine = null;
+  private static XPath _xpathEngine = new XPath();
   private static final String[] TAGS_TO_MERGE = { "global-vars", "fileset", "script" };
   private static List<File> xmlFiles;
   private static final String TOOL_VERSION = "SilverpeasSettings V5.0";
@@ -125,9 +125,6 @@ public class SilverpeasSettings {
   }
 
   public static XPath getXPathEngine() {
-    if (_xpathEngine == null) {
-      _xpathEngine = new XPath();
-    }
     return _xpathEngine;
   }
 
@@ -167,7 +164,7 @@ public class SilverpeasSettings {
       }
     }
     // removes drive
-    if (result.length() >= 2 && result.charAt(1) == ':') {
+    if (result != null && result.length() >= 2 && result.charAt(1) == ':') {
       result = result.substring(2);
     }
     // detects file separator
@@ -269,7 +266,12 @@ public class SilverpeasSettings {
     Properties config = new Properties();
     File configFile = new File(dir, "config.properties");
     if (configFile.exists() && configFile.isFile()) {
-      config.load(new FileInputStream(configFile));
+      InputStream in = new FileInputStream(configFile);
+      try {
+        config.load(in);
+      } finally {
+        IOUtils.closeQuietly(in);
+      }
       configuration = new GestionVariables(config, defaultConfig);
     } else {
       configuration = new GestionVariables(defaultConfig);

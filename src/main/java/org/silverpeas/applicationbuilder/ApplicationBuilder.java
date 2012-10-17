@@ -43,7 +43,6 @@ public class ApplicationBuilder {
   private static final String APPLICATION_NAME = "Silverpeas";
   private static final String APPLICATION_DESCRIPTION = "Collaborative portal organizer";
   private static final String APPLICATION_ROOT = "silverpeas";
-  private static String extRepositoryPath = null;
   private EAR theEAR = null;
   private MavenRepository theRepository = null;
   private MavenRepository theExternalRepository = null;
@@ -53,10 +52,6 @@ public class ApplicationBuilder {
     // instantiates source and target objects
     try {
       theRepository = new MavenRepository();
-      if (extRepositoryPath != null) {
-        DirectoryLocator.setRepositoryHome(extRepositoryPath);
-        theExternalRepository = new MavenRepository();
-      }
     } catch (AppBuilderException abe) {
       Log.add(abe);
       errorFound = true;
