@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2000 - 2012 Silverpeas
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    As a special exception to the terms and conditions of version 3.0 of
+    the GPL, you may redistribute this Program in connection with Free/Libre
+    Open Source Software ("FLOSS") applications as described in Silverpeas's
+    FLOSS exception.  You should have received a copy of the text describing
+    the FLOSS exception, and it is also available here:
+    "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<silverpeas-settings product="Silverpeas">
+  <global-vars>
+
+	<!-- SILVERPEAS DATABASE CONNECTION INFO -->
+    <var name="DB_SERVERTYPE" value="POSTGRES"/>
+    <var name="DB_SERVER" value="silver-db"/>
+    <var name="DB_USER" value="silver"/>
+    <var name="DB_PASSWD" value="silver"/>
+    <var name="DB_NAME" value="Silverpeas"/>
+    <var name="SQL_LISTEN_PORT_POSTGRES" value="5432"/>
+
+
+    <!-- Silverpeas Adminitrator infos -->
+    <var name="ADMIN_LOGIN" value="Silverpeas"/>
+    <var name="ADMIN_PASSWD" value="Silverpeas"/>
+    <var name="ADMIN_EMAIL" value="test@silverpeas.com"/>
+    <var name="URL_SERVER" value="http://www.silverpeas.com"/>
+  </global-vars>
+
+
+		<!-- 1) COM/STRATELIA/WEBACTIV : -->
+  <fileset root="${SILVERPEAS_HOME}/properties/com/stratelia/webactiv/">
+    <configfile name="util/jcr.properties">
+      <parameter key="jcr.configuration.persistence.manager">Test</parameter>
+      <parameter key="jcr.home.dir.url">file:///${SILVERPEAS_DATA_HOME}/data/jackrabbit</parameter>
+    </configfile>
+  </fileset>
+
+</silverpeas-settings>

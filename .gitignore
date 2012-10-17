@@ -1,6 +1,7 @@
-<<<<<<< HEAD
-/target/
-=======
 /target/
 nbactions.xml
->>>>>>> applicationbuilder
+*.iws
+*.ipr
+*.iml
+target
+.sonar-ide.properties

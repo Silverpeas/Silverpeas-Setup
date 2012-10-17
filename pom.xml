@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -7,15 +8,15 @@
   </parent>
 
   <groupId>com.silverpeas.builder</groupId>
-  <artifactId>utils</artifactId>
+  <artifactId>configuration</artifactId>
   <packaging>jar</packaging>
   <version>5.11-SNAPSHOT</version>
-  <name>Installation Tools</name>
+  <name>Silverpeas Configuration Tools</name>
 
   <scm>
-    <connection>scm:git:git@github.com:Silverpeas/Silverpeas-Fileutil.git</connection>
-    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-Fileutil.git</developerConnection>
-    <url>https://github.com/Silverpeas/Silverpeas-Fileutil</url>
+    <connection>scm:git:git@github.com:Silverpeas/Silverpeas-Configuration.git</connection>
+    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-Configuration.git</developerConnection>
+    <url>https://github.com/Silverpeas/Silverpeas-Configuration</url>
   </scm>
   
   <repositories>
@@ -54,14 +55,23 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>
+    </dependency>    
     <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
     </dependency>
   </dependencies>
 
   <build>
+<<<<<<< HEAD
+=======
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+>>>>>>> settings
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -73,7 +83,11 @@
               <addClasspath>true</addClasspath>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+<<<<<<< HEAD
               <mainClass>org.silverpeas.applicationbuilder.ApplicationBuilder</mainClass>
+=======
+              <mainClass>org.silverpeas.SilverpeasSettings.SilverpeasSettings</mainClass>
+>>>>>>> settings
               <classpathLayoutType>custom</classpathLayoutType>
               <customClasspathLayout>lib/$${artifact.artifactId}.$${artifact.extension}</customClasspathLayout>
             </manifest>
@@ -88,6 +102,19 @@
         <groupId>org.silverpeas.services</groupId>
         <artifactId>code-formatter-plugin</artifactId>
       </plugin>
+<<<<<<< HEAD
+=======
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <SILVERPEAS_HOME>${project.basedir}/target/temp/silverpeas</SILVERPEAS_HOME>
+            <JBOSS_HOME>${project.basedir}/target/temp/jboss</JBOSS_HOME>
+          </environmentVariables>
+        </configuration>
+      </plugin>
+>>>>>>> settings
     </plugins>
   </build>
 </project>
