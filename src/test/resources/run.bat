@@ -1,5 +1,5 @@
 @REM
-@REM Copyright (C) 2000 - 2009 Silverpeas
+@REM Copyright (C) 2000 - 2012 Silverpeas
 @REM
 @REM This program is free software: you can redistribute it and/or modify
 @REM it under the terms of the GNU Affero General Public License as
@@ -11,7 +11,7 @@
 @REM Open Source Software ("FLOSS") applications as described in Silverpeas's
 @REM FLOSS exception.  You should have received a copy of the text describing
 @REM the FLOSS exception, and it is also available here:
-@REM "http://repository.silverpeas.com/legal/licensing"
+@REM "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
 @REM
 @REM This program is distributed in the hope that it will be useful,
 @REM but WITHOUT ANY WARRANTY; without even the implied warranty of

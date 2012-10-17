@@ -3,5 +3,5 @@ nbactions.xml
 *.iws
 *.ipr
 *.iml
-target
 .sonar-ide.properties
+.idea
