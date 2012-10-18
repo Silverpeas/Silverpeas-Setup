@@ -148,7 +148,6 @@
               <addClasspath>true</addClasspath>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <mainClass>org.silverpeas.applicationbuilder.ApplicationBuilder</mainClass>
               <mainClass>org.silverpeas.SilverpeasSettings.SilverpeasSettings</mainClass>
               <classpathLayoutType>custom</classpathLayoutType>
               <customClasspathLayout>lib/$${artifact.artifactId}.$${artifact.extension}</customClasspathLayout>
