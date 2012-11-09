@@ -23,7 +23,8 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
---><Server>
+-->
+<Server>
     <!-- Use a custom version of StandardService that allows the
    connectors to be started independent of the normal lifecycle
    start to allow web apps to be deployed before starting the
