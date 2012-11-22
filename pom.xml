@@ -4,19 +4,19 @@
   <parent>
     <groupId>com.silverpeas</groupId>
     <artifactId>parent</artifactId>
-    <version>24</version>
+    <version>25-SNAPSHOT</version>
   </parent>
   <groupId>com.silverpeas.builder</groupId>
   <artifactId>configuration</artifactId>
   <packaging>jar</packaging>
-  <version>5.11</version>
+  <version>5.12-SNAPSHOT</version>
   <name>Silverpeas Configuration Tools</name>
 
   <scm>
     <connection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</connection>
     <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</developerConnection>
     <url>https://github.com/Silverpeas/Silverpeas-setup</url>
-    <tag>configuration-5.11</tag>
+    <tag>HEAD</tag>
   </scm>
   
   <repositories>
