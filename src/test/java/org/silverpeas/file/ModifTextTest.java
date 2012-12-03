@@ -38,10 +38,10 @@ public class ModifTextTest {
   public void testModificationWithRegexp() throws Exception {
     File testFile = new File(base + File.separatorChar + "target" + File.separatorChar + "test-classes" +
          File.separatorChar + "run.sh");
-    List lines = FileUtils.readLines(testFile);
+    List<String>  lines = FileUtils.readLines(testFile);
     assertNotNull(lines);
     assertEquals(27, lines.size());
-    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms128m -Xmx256m", (String) lines.get(26));
+    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms128m -Xmx256m", lines.get(26));
     ModifText mp = new ModifText(testFile.getPath());
     mp.createFileBak(null);
     RegexpElementMotif elt = new RegexpElementMotif("-Xms[0-9]+m");
@@ -51,7 +51,7 @@ public class ModifTextTest {
     lines = FileUtils.readLines(testFile);
     assertNotNull(lines);
     assertEquals(27, lines.size());
-    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms512m -Xmx256m", (String) lines.get(26));
+    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms512m -Xmx256m", lines.get(26));
 
   }
 
@@ -68,10 +68,10 @@ public class ModifTextTest {
     mp.addModification(elt1);
     mp.addModification(elt2);
     mp.executeModification();
-    List lines = FileUtils.readLines(testFile);
+    List<String> lines = FileUtils.readLines(testFile);
     assertNotNull(lines);
     assertEquals(27, lines.size());
-    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms512m -Xmx512m", (String) lines.get(26));
+    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms512m -Xmx512m", lines.get(26));
 
   }
 
@@ -88,10 +88,10 @@ public class ModifTextTest {
     mp.addModification(elt1);
     mp.addModification(elt2);
     mp.executeModification();
-    List lines = FileUtils.readLines(testFile);
+    List<String>  lines = FileUtils.readLines(testFile);
     assertNotNull(lines);
     assertEquals(27, lines.size());
-    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms512m -Xmx512m -Xms512m", (String) lines.get(26));
+    assertEquals("set JAVA_OPTS=%JAVA_OPTS% -Xms512m -Xmx512m -Xms512m", lines.get(26));
 
   }
 }
