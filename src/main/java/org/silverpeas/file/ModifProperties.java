@@ -24,9 +24,8 @@
 package org.silverpeas.file;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.Properties;
+
+import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class ModifProperties extends ModifFile {
 
@@ -58,32 +57,28 @@ public class ModifProperties extends ModifFile {
 
   /**
    * lance la modification du fichier properties
+   * @throws Exception
    */
   @Override
   public void executeModification() throws Exception {
     File file = new File(path);
     if (file.exists()) {
-      FileInputStream inputFile = new FileInputStream(file);
-      Properties pro = new OrderedProperties();
-      pro.load(inputFile);
-      inputFile.close();
+      PropertiesConfiguration configuration = new PropertiesConfiguration(file);
       for (ElementModif em : listeModifications) {
-        if (pro.containsKey(em.getSearch())) {
-          if (!em.getModif().equals(pro.getProperty(em.getSearch()))) {
+        if (configuration.containsKey(em.getSearch())) {
+          if (!em.getModif().equals(configuration.getProperty(em.getSearch()))) {
             if (!isModified) {
               isModified = true;
               BackupFile bf = new BackupFile(new File(path));
               bf.makeBackup();
             }
-            pro.setProperty(em.getSearch(), em.getModif());
+            configuration.setProperty(em.getSearch(), em.getModif());
           }
         } else {
-          throw new Exception("ATTENTION key:\"" + em.getSearch()
-              + "\" non existante dans le fichier propertie: " + path);
+          configuration.setProperty(em.getSearch(), em.getModif());
         }
       }
-      FileOutputStream outputFile = new FileOutputStream(path);
-      pro.store(outputFile, messageProperties);
+      configuration.save(file);
     } else {
       throw new Exception("ATTENTION le fichier:" + path + " n'existe pas");
     }
