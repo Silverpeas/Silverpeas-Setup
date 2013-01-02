@@ -32,14 +32,16 @@ package org.silverpeas.dbbuilder;
  * @author ATH
  * @version 1.0
  */
+import org.apache.commons.dbutils.DbUtils;
+import org.jdom.Element;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
-import org.jdom.Element;
 
 public abstract class DBBuilderItem {
 
@@ -112,24 +114,22 @@ public abstract class DBBuilderItem {
   }
 
   private String extractVersionFromDatabase() throws SQLException {
-    Connection connection = null;
+    Connection connection = ConnectionFactory.getConnection();
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
     String version = NOTINSTALLED;
     try {
-      connection = ConnectionFactory.getConnection();
-      PreparedStatement pstmt = connection.prepareStatement(
-          "SELECT SR_VERSION FROM SR_PACKAGES where SR_PACKAGE = ?");
+      pstmt =
+          connection.prepareStatement("SELECT SR_VERSION FROM SR_PACKAGES where SR_PACKAGE = ?");
       pstmt.setString(1, module);
-      ResultSet rs = pstmt.executeQuery();
+      rs = pstmt.executeQuery();
       if (rs.next()) {
         version = rs.getString("SR_VERSION");
       }
-      rs.close();
-      pstmt.close();
-    } catch (SQLException sqlex) {
     } finally {
-      if (connection != null) {
-        connection.close();
-      }
+      DbUtils.close(rs);
+      DbUtils.close(pstmt);
+      DbUtils.close(connection);
     }
     return version;
   }
@@ -151,7 +151,7 @@ public abstract class DBBuilderItem {
       if (eltCurrent.getAttributeValue(DBBuilderFileItem.VERSION_ATTRIB).equals(v)) {
         myElement = eltCurrent;
       }
-    } // while
+    }
     if (myElement == null) {
       throw new Exception(getModule() + ": no version <" + v + "> for <" + b
           + "> tag found for this module into contribution file.");

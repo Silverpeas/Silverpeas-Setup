@@ -24,15 +24,16 @@
 
 package org.silverpeas.file;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Iterator;
-import java.util.List;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Iterator;
+import java.util.List;
 
 public class ModifXMLSilverpeas extends ModifFile {
 
@@ -52,21 +53,18 @@ public class ModifXMLSilverpeas extends ModifFile {
       Element currentNode = (Element) children.get(i);
       if (currentNode.getName().compareTo("param-name") == 0) {
         String value = currentNode.getTextTrim();
-        ElementModif em;
-        Iterator listeModif = listeModifications.iterator();
+        Iterator<ElementModif> listeModif = listeModifications.iterator();
         while (listeModif.hasNext()) {
-          em = ((ElementModif) listeModif.next());
+          ElementModif em = listeModif.next();
           if (em.getSearch().compareTo(value) == 0) {
-            String val = ((Element) currentNode).getParentElement().getChild(
-                "param-value").getTextTrim();
+            String val = currentNode.getParentElement().getChild("param-value").getTextTrim();
             if (!val.equals(em.getModif())) {
               if (!isModified) {
                 isModified = true;
                 BackupFile bf = new BackupFile(new File(path));
                 bf.makeBackup();
               }
-              ((Element) currentNode).getParentElement().getChild(
-                  "param-value").setText(em.getModif());
+              currentNode.getParentElement().getChild("param-value").setText(em.getModif());
             }
           }
         }

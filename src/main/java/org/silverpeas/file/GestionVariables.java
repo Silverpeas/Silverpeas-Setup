@@ -100,17 +100,17 @@ public class GestionVariables {
   public String resolveString(String pStr) throws IOException {
     String newString = "";
     int index = pStr.indexOf("${");
-    if (index != -1) {
+    if (-1 != index) {
       int index_fin;
       String tmp = pStr;
-      while (index != -1) {
-        newString = newString.concat(tmp.substring(0, index));
+      while (-1 != index) {
+        newString = newString + tmp.substring(0, index);
         index_fin = tmp.indexOf('}');
-        newString = newString.concat(this.getValue(tmp.substring(index + 2, index_fin)));
+        newString = newString + this.getValue(tmp.substring(index + 2, index_fin));
         tmp = tmp.substring(index_fin + 1);
         index = tmp.indexOf("${");
       }
-      newString = newString.concat(tmp);
+      newString = newString + tmp;
       return newString;
     } else {
       return pStr;
@@ -124,10 +124,10 @@ public class GestionVariables {
   public final String resolveAndEvalString(String pStr) throws IOException,
       IllegalArgumentException {
     int index = pStr.indexOf("$eval{{");
-    if (index == -1) {
+    if (-1 == index) {
       return resolveString(pStr);
     } else {
-      if (index != 0) {
+      if (0 != index) {
         throw new IllegalArgumentException("(Unable to evaluate " + pStr +
             " because string is not beginning with \"$eval{{\" sequence.");
       }
@@ -147,7 +147,7 @@ public class GestionVariables {
       String evaluatedString = null;
       try {
         Interpreter bsh = new Interpreter();
-        bsh.set("value", new String());
+        bsh.set("value", "");
         bsh.eval(resolvedString);
         evaluatedString = (String) bsh.get("value");
       } catch (EvalError e) {
@@ -162,7 +162,7 @@ public class GestionVariables {
    */
   public String getValue(String pVar) throws IOException {
     String tmp = listeVariables.getProperty(pVar);
-    if (tmp == null) {
+    if (null == tmp) {
       throw new IOException("La variable :\"" + pVar + "\" n'existe pas dans la base");
     }
     return tmp;

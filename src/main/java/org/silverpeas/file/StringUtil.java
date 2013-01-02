@@ -38,30 +38,28 @@ public class StringUtil {
    */
   public static String sReplace(String search, String replace, String source) {
     String returnString;
-    String origSource = "" + source;
+    String origSource = source;
     int spot = source.indexOf(search);
-    if (spot > -1) {
+    if (-1 < spot) {
       returnString = "";
     } else {
       returnString = source;
     }
-    while (spot > -1) {
+    while (-1 < spot) {
       if (spot == source.length() + 1) {
-        returnString = returnString.concat(source.substring(0,
-            source.length() - 1).concat(replace));
+        returnString = returnString + source.substring(0, source.length() - 1).concat(replace);
         source = "";
-      } else if (spot > 0) {
-        returnString = returnString.concat(source.substring(0, spot).concat(
-            replace));
+      } else if (0 < spot) {
+        returnString = returnString + source.substring(0, spot) + replace;
         source = source.substring(spot + search.length(), source.length());
       } else {
-        returnString = returnString.concat(replace);
+        returnString = returnString + replace;
         source = source.substring(spot + search.length(), source.length());
       }
       spot = source.indexOf(search);
     }
     if (!source.equals(origSource)) {
-      return returnString.concat(source);
+      return returnString + source;
     } else {
       return returnString;
     }
@@ -92,26 +90,26 @@ public class StringUtil {
         char patternChar = pattern.charAt(patternIndex);
 
         if (inputIndex < inputLen) {
-          if (patternChar == '*') {
+          if ('*' == patternChar) {
             stack[stacktop++] = patternIndex;
             stack[stacktop++] = inputIndex + 1;
             patternIndex++;
             continue;
 
-          } else if (patternChar == '?'
+          } else if ('?' == patternChar
               || patternChar == input.charAt(inputIndex)) {
             patternIndex++;
             inputIndex++;
             continue;
           }
 
-        } else if (patternChar == '*') {
+        } else if ('*' == patternChar) {
           patternIndex++;
           continue;
         }
       }
 
-      if (stacktop == 0) {
+      if (0 == stacktop) {
         return false;
       }
 
@@ -134,7 +132,7 @@ public class StringUtil {
 
   public static String lookupKeysInString(String str, int recurselvl,
       KeyFinder finder) {
-    if (recurselvl > RECURSION_THRESHOLD) {
+    if (RECURSION_THRESHOLD < recurselvl) {
       throw new RuntimeException("Recursion Threshold reached");
     }
 
@@ -151,23 +149,23 @@ public class StringUtil {
 
     for (int i = 0; i < len; i++) {
       char c = sb[i];
-      if ((c == '{') && (i + 2 < len) && (sb[i + 1] == '%')) {
+      if (('{' == c) && (i + 2 < len) && ('%' == sb[i + 1])) {
         // we got a potential key
 
         int endkey = -1;
         StringBuilder key = new StringBuilder();
-        for (int j = i + 2; j + 1 < len && endkey < 0; j++) {
-          if (sb[j] == '%' && sb[j + 1] == '}') {
+        for (int j = i + 2; j + 1 < len && 0 > endkey; j++) {
+          if ('%' == sb[j] && '}' == sb[j + 1]) {
             endkey = j - 1;
           } else {
             key.append(sb[j]);
           }
         }
-        if (endkey > 0) {
+        if (0 < endkey) {
           String val = finder.lookupString(key.toString());
           String s = lookupKeysInString(val, recurselvl + 1, finder);
-          if (s != null) {
-            if (newsb == null) {
+          if (null != s) {
+            if (null == newsb) {
               newsb = new StringBuffer(len);
               for (int k = 0; k < i; k++) {
                 newsb.append(sb[k]);
@@ -185,10 +183,10 @@ public class StringUtil {
         }
       }
     }
-    if (lastKeyEnd == 0 && newsb == null) {
+    if (0 == lastKeyEnd && null == newsb) {
       return str;
     }
-    if (lastKeyEnd > 0 && lastKeyEnd + 1 < len) {
+    if (0 < lastKeyEnd && lastKeyEnd + 1 < len) {
       for (int k = lastKeyEnd + 1; k < len; k++) {
         newsb.append(sb[k]);
       }

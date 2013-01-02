@@ -20,6 +20,18 @@
  */
 package org.silverpeas.SilverpeasSettings;
 
+import org.apache.commons.io.FileUtils;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.silverpeas.applicationbuilder.XmlDocument;
+import org.silverpeas.file.GestionVariables;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -27,22 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.commons.io.FileUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import org.silverpeas.applicationbuilder.XmlDocument;
-import org.silverpeas.file.GestionVariables;
 
 import static java.io.File.separatorChar;
 import static org.silverpeas.SilverpeasSettings.SilverpeasSettings.*;
@@ -66,17 +62,6 @@ public class SilverpeasSettingsTest {
     System.setProperty("JBOSS_HOME", resourcesDir);
   }
 
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-  }
-
-  @Before
-  public void setUp() {
-  }
-
-  @After
-  public void tearDown() {
-  }
 
   /**
    * Test of loadGlobalVariables method, of class SilverpeasSettings.

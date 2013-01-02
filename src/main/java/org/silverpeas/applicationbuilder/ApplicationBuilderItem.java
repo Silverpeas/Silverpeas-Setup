@@ -118,7 +118,7 @@ public class ApplicationBuilderItem {
    * @roseuid 3AB219E00319
    */
   public void setName(String itemName) {
-    if (itemName.trim().equals("")) {
+    if (itemName.trim().isEmpty()) {
       name = null;
     } else {
       name = itemName;
@@ -144,9 +144,9 @@ public class ApplicationBuilderItem {
    * @roseuid 3AB21C4500C1
    */
   public void setLocation(String directory) {
-    if (directory == null) {
+    if (null == directory) {
       location = null;
-    } else if (directory.trim().equals("")) {
+    } else if (directory.trim().isEmpty()) {
       location = null;
     } else {
       location = directory;
@@ -187,7 +187,7 @@ public class ApplicationBuilderItem {
    * @return the size of the item, <code>-1</code> if unknown.
    */
   public long getSize() {
-    if (getPath() == null) {
+    if (null == getPath()) {
       return size;
     }
     if (getPath().exists() && !getPath().isDirectory()) {
@@ -206,7 +206,7 @@ public class ApplicationBuilderItem {
    * @see com.silverpeas.applicationbuilder.ApplicationBuilderItem#setHome
    */
   private void updatePath() {
-    if (getHome() != null && getName() != null) {
+    if (null != getHome() && null != getName()) {
       path = new File(getHome(), getName());
     }
   }
@@ -217,9 +217,9 @@ public class ApplicationBuilderItem {
    * @see com.silverpeas.applicationbuilder.ApplicationBuilderItem#setLocation
    */
   private void updateArchivePath() {
-    if (getName() != null) {
+    if (null != getName()) {
       archivePath = "";
-      if (getLocation() != null) {
+      if (null != getLocation()) {
         archivePath += getLocation() + File.separator;
       }
       archivePath += getName();

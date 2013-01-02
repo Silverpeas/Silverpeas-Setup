@@ -22,7 +22,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.installedtree;
+package org.silverpeas.file;
+
+import org.silverpeas.file.SilverpeasHomeResolver;
 
 import java.io.File;
 

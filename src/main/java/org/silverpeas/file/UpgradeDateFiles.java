@@ -66,11 +66,13 @@ public class UpgradeDateFiles {
    * fonction : qui met a jour tous les fichiers et repertoire du repertoire passer en parametre
    */
   private void majDirectory(File pRep) throws Exception {
-    File[] listFiles;
     if (pRep.isDirectory()) {
       nbRepertoires++;
       pRep.setLastModified(dateMaj.getTime());
-      listFiles = pRep.listFiles();
+      File[]  listFiles = pRep.listFiles();
+      if(listFiles == null) {
+        listFiles = new File[0];
+      }
       for (int i = 0; i < listFiles.length; i++) {
         if (listFiles[i].isDirectory()) {
           majDirectory(listFiles[i]);

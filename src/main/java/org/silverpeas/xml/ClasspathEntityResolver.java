@@ -45,7 +45,7 @@ public class ClasspathEntityResolver implements EntityResolver {
   @Override
   public InputSource resolveEntity(String publicId, String systemId) throws SAXException,
       IOException {
-    if (defaultResolver != null) {
+    if (null != defaultResolver) {
       try {
         return defaultResolver.resolveEntity(publicId, systemId);
       } catch (IOException ioex) {
@@ -58,10 +58,10 @@ public class ClasspathEntityResolver implements EntityResolver {
   private InputSource resolveInClasspath(String publicId, String systemId) throws SAXException,
       IOException {
     InputSource result = resolveInClasspath(publicId);
-    if (result == null) {
+    if (null == result) {
       result = resolveInClasspath(systemId);
     }
-    if (result == null) {
+    if (null == result) {
       result = new InputSource(new ByteArrayInputStream("<?xml version='1.0' encoding='UTF-8'?>".
           getBytes("UTF-8")));
     }
@@ -69,11 +69,11 @@ public class ClasspathEntityResolver implements EntityResolver {
   }
 
   private InputSource resolveInClasspath(String id) throws SAXException, IOException {
-    if (id != null && !id.isEmpty()) {
+    if (null != id && !id.isEmpty()) {
       String schemaName = id.substring(id.lastIndexOf('/'));
       InputStream resource = this.getClass().getClassLoader().getResourceAsStream(
           "/META-INF" + schemaName);
-      if (resource != null) {
+      if (null != resource) {
         return new InputSource(resource);
       }
     }

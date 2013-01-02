@@ -87,7 +87,7 @@ public class XmlDocument extends ApplicationBuilderItem {
       saveTo(new FileOutputStream(getPath()));
     } catch (FileNotFoundException fnfe) {
       throw new AppBuilderException("Could not save \""
-          + getPath().getAbsolutePath() + "\"", fnfe);
+          + getPath().getAbsolutePath() + '"', fnfe);
     }
   }
 
@@ -110,17 +110,17 @@ public class XmlDocument extends ApplicationBuilderItem {
    */
   public void load() throws AppBuilderException {
     if (!getPath().exists()) {
-      throw new AppBuilderException("\"" + getPath().getAbsolutePath()
+      throw new AppBuilderException('"' + getPath().getAbsolutePath()
           + "\" does not exist");
     }
     try {
       loadFrom(getPath().toURI().toURL().openStream());
     } catch (java.net.MalformedURLException mue) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", mue);
+          + getPath().getAbsolutePath() + '"', mue);
     } catch (java.io.IOException ioe) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", ioe);
+          + getPath().getAbsolutePath() + '"', ioe);
     }
   }
 
@@ -335,7 +335,7 @@ public class XmlDocument extends ApplicationBuilderItem {
       if (!eltLst.isEmpty()) {
         if (!root.removeChildren(tagsToFind[iTag])) {
           throw new AppBuilderException("Could not remove \""
-              + tagsToFind[iTag] + "\" elements from \"" + getName() + "\"");
+              + tagsToFind[iTag] + "\" elements from \"" + getName() + '"');
         }
 
       }

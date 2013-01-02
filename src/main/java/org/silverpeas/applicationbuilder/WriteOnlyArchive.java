@@ -83,7 +83,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
     } catch (Exception e) {
       throw new AppBuilderException(getName()
           + " : impossible to add the document \"" + xmlDoc.getArchivePath()
-          + "\"", e);
+          + '"', e);
     }
   }
 
@@ -98,10 +98,10 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
       add(entry, entry.getPath().toURI().toURL().openStream());
     } catch (MalformedURLException mue) {
       throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + "\"", mue);
+          + entry.getName() + '"', mue);
     } catch (IOException ioe) {
       throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + "\"", ioe);
+          + entry.getName() + '"', ioe);
     }
   }
 
@@ -148,7 +148,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
           Log.add(getName()
               + " : already added from \""
               + alreadyAddedFiles.get(entries[iEntry].getArchivePath()) + "\" : \""
-              + archive.getName() + "!" + entries[iEntry].getArchivePath()
+              + archive.getName() + '!' + entries[iEntry].getArchivePath()
               + "\" ");
         } else {
           alreadyAddedFiles.put(entries[iEntry].getArchivePath(), archive
@@ -189,7 +189,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
     } catch (Exception e) {
       throw new AppBuilderException(getName()
           + " : impossible to create new entry \"" + entry.getArchivePath()
-          + "\"", e);
+          + '"', e);
     }
     try {
       int bytesRead;
@@ -202,7 +202,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
     } catch (Exception e) {
       throw new AppBuilderException(getName()
           + " : impossible to write contents of \"" + entry.getArchivePath()
-          + "\"", e);
+          + '"', e);
     }
   }
 
@@ -237,10 +237,8 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
     alreadyAddedDirs.add(directory);
   }
 
-  private ZipEntry getNormalizedEntry(String path) {
-    String sysDependantPath = path;
+  private ZipEntry getNormalizedEntry(String sysDependantPath) {
     String pathOK = sysDependantPath.replace(File.separatorChar, '/');
-    ZipEntry normalizedEntry = new ZipEntry(pathOK);
-    return normalizedEntry;
+    return new ZipEntry(pathOK);
   }
 }

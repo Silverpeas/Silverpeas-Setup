@@ -18,9 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.SilverpeasSettings.xml.transform;
+package org.silverpeas.xml.transform;
 
-import org.silverpeas.file.StringUtil;
 import java.util.StringTokenizer;
 
 /**
@@ -41,14 +40,14 @@ public class Value {
   }
 
   public Value(String location, String relativePath, String value, char mode) {
-    if (location != null) {
+    if (null != location) {
       this.location = location;
     } else {
       this.location = ".";
     }
     this.mode = mode;
     this.value = value;
-    if (relativePath != null && !relativePath.equals("")) {
+    if (null != relativePath && !relativePath.isEmpty()) {
       this.value = getRelativePath(relativePath, value);
     }
   }
@@ -79,23 +78,23 @@ public class Value {
     // BASE (../.. etc)
 
     // removes drive
-    if (relBase != null && relBase.length() >= 2 && relBase.charAt(1) == ':') {
+    if (null != relBase && 2 <= relBase.length() && ':' == relBase.charAt(1)) {
       relBase = relBase.substring(2);
     }
     // detects file separator
-    baseUnixSep = (relBase != null && relBase.indexOf('/') != -1);
+    baseUnixSep = (null != relBase && -1 != relBase.indexOf('/'));
     // removes starting file separator
-    if (relBase != null && relBase.length() >= 1
+    if (null != relBase && 1 <= relBase.length()
         && relBase.charAt(0) == (baseUnixSep ? '/' : '\\')) {
       relBase = relBase.substring(1);
     }
     // removes ending file separator
-    if (relBase != null && relBase.length() >= 1
+    if (null != relBase && 1 <= relBase.length()
         && relBase.endsWith(baseUnixSep ? "/" : "\\")) {
       relBase = relBase.substring(0, relBase.length() - 2);
     }
     // detects number of levels
-    if (relBase == null || relBase.length() == 0) {
+    if (null == relBase || 0 == relBase.length()) {
       nbLevel = 0;
     } else {
       StringTokenizer st = new StringTokenizer(relBase, baseUnixSep ? "/" : "\\");
@@ -103,20 +102,20 @@ public class Value {
     }
     // creates the base (../.. etc)
     for (int i = 0; i < nbLevel; i++) {
-      if (i == 0) {
+      if (0 == i) {
         resultBase = "..";
       } else {
         resultBase += (baseUnixSep ? "/" : "\\") + "..";
       }
     }
     // removes drive
-    if (result != null && result.length() >= 2 && result.charAt(1) == ':') {
+    if (null != result && 2 <= result.length() && ':' == result.charAt(1)) {
       result = result.substring(2);
     }
     // detects file separator
-    baseUnixSep = (result != null && result.indexOf('/') != -1);
+    baseUnixSep = (null != result && -1 != result.indexOf('/'));
     // adds starting file separator
-    if (result != null && result.length() >= 1 && result.charAt(0) != (baseUnixSep ? '/' : '\\')) {
+    if (null != result && 1 <= result.length() && result.charAt(0) != (baseUnixSep ? '/' : '\\')) {
       result = (baseUnixSep ? "/" : "\\") + result;
     }
     result = resultBase + result;

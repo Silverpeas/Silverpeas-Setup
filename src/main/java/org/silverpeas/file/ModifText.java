@@ -24,13 +24,14 @@
 
 package org.silverpeas.file;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 public class ModifText extends ModifFile {
 
@@ -58,7 +59,7 @@ public class ModifText extends ModifFile {
     for (ElementModif modif : listeModifications) {
       tmpLine = analyseLine(tmpLine, modif);
     }
-    if ("".equals(tmpLine)) {
+    if (tmpLine != null && tmpLine.isEmpty()) {
       tmpLine = line;
     }
     return tmpLine;
@@ -75,12 +76,11 @@ public class ModifText extends ModifFile {
       }
       match.appendTail(resStr);
     } else {
-      ElementModif em = modification;
       // remplace uniquement la derniere occurence de chaque ligne
-      int res = line.lastIndexOf(em.getSearch());
+      int res = line.lastIndexOf(modification.getSearch());
       if (res != -1) {
-        resStr.append(line.substring(0, res)).append(em.getModif()).append(
-            line.substring((res + em.getSearch().length()), line.length()));
+        resStr.append(line.substring(0, res)).append(modification.getModif()).append(
+            line.substring((res + modification.getSearch().length()), line.length()));
       }
     }
     return resStr.toString().trim();

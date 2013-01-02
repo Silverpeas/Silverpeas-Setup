@@ -63,7 +63,7 @@ public class ModifTextSilverpeas extends ModifFile {
 
     while (i.hasNext()) {
       em = ((ElementModif) i.next());
-      int egal = tmpStr.indexOf("=");
+      int egal = tmpStr.indexOf('=');
       // if (tmpStr.startsWith(em.getSearch())){
       if ((egal != -1)
           && (tmpStr.substring(0, egal).trim().equalsIgnoreCase(em.getSearch()))) {
@@ -76,7 +76,7 @@ public class ModifTextSilverpeas extends ModifFile {
             BackupFile bf = new BackupFile(new File(path));
             bf.makeBackup();
           }
-          tmpStr = new String(em.getSearch() + "=" + em.getModif());
+          tmpStr = em.getSearch() + '=' + em.getModif();
         }
       }
     }
@@ -94,20 +94,16 @@ public class ModifTextSilverpeas extends ModifFile {
   @Override
   public void executeModification() throws Exception {
 
-    DataInput dataInput;
-    DataOutput dataOutput;
-    String line;
-
-    File tmpFile = new File(System.getProperty("java.io.tmpdir")
-        + File.separator + "ModifText.sh");
+    File tmpFile = new File(System.getProperty("java.io.tmpdir"), "ModifText.sh");
     File inFile = new File(path);
 
     FileInputStream dis = new FileInputStream(path);
     FileOutputStream dos = new FileOutputStream(tmpFile);
 
-    dataInput = new DataInputStream(dis);
-    dataOutput = new DataOutputStream(dos);
+    DataInput dataInput = new DataInputStream(dis);
+    DataOutput dataOutput = new DataOutputStream(dos);
 
+    String line;
     while ((line = dataInput.readLine()) != null) {
       analyseLigne(dataOutput, line);
     }
@@ -123,7 +119,7 @@ public class ModifTextSilverpeas extends ModifFile {
       String[] commande = new String[3];
       commande[0] = "/bin/chmod";
       commande[1] = "755";
-      commande[2] = new String(path);
+      commande[2] = path;
       Runtime.getRuntime().exec(commande);
     }
   }

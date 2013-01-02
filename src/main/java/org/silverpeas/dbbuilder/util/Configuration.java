@@ -24,13 +24,13 @@
 
 package org.silverpeas.dbbuilder.util;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
-import org.apache.commons.io.IOUtils;
 
 /**
  * @author ehugonnet
@@ -64,7 +64,7 @@ public class Configuration {
     Properties properties = new Properties();
     InputStream in = Configuration.class.getClassLoader().getResourceAsStream(propertyName);
     try {
-      if (in == null) {
+      if (null == in) {
         String path = propertyName.replace('/', File.separatorChar);
         path = path.replace('\\', File.separatorChar);
         if (!path.startsWith(File.separator)) {
@@ -75,7 +75,7 @@ public class Configuration {
           in = new FileInputStream(configurationFile);
         }
       }
-      if (in != null) {
+      if (null != in) {
         properties.load(in);
       }
     } finally {
@@ -86,7 +86,7 @@ public class Configuration {
 
   // Récupère le répertoire racine d'installation
   public static String getHome() {
-    if (dbbuilderHome == null) {
+    if (null == dbbuilderHome) {
       if (!System.getProperties().containsKey(HOME_KEY)) {
         System.err.println("### CANNOT FIND DBBUILDER INSTALL LOCATION ###");
         System.err.println("please use \"-D" + HOME_KEY
@@ -108,7 +108,7 @@ public class Configuration {
 
   // Récupère le répertoire data d'installation
   public static String getData() {
-    if (dbbuilderData == null) {
+    if (null == dbbuilderData) {
       if (System.getProperties().containsKey(DATA_KEY)) {
         dbbuilderData = System.getProperty(DATA_KEY);
       }

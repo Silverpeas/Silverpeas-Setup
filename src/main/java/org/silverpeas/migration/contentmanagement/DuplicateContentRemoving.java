@@ -23,6 +23,9 @@
  */
 package org.silverpeas.migration.contentmanagement;
 
+import org.silverpeas.dbbuilder.Console;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -30,8 +33,6 @@ import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import org.silverpeas.dbbuilder.Console;
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 
 /**
  * DB migration to remove any duplicate content instances in the database underlying at Silverpeas.
@@ -174,13 +175,6 @@ public class DuplicateContentRemoving extends DbBuilderDynamicPart {
     connection.setAutoCommit(autocommit);
   }
 
-  // private int executeQuery(String query) throws SQLException {
-  // Connection connection = getConnection();
-  // Statement statement = connection.createStatement();
-  // ResultSet resultSet = statement.executeQuery(query);
-  // resultSet.next();
-  // return resultSet.getInt(1);
-  // }
   private List<Integer> executeQuery(String query) throws SQLException {
     List<Integer> result = new ArrayList<Integer>();
     Connection connection = getConnection();

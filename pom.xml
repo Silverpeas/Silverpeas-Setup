@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.silverpeas</groupId>
@@ -14,11 +16,12 @@
 
   <scm>
     <connection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</connection>
-    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git
+    </developerConnection>
     <url>https://github.com/Silverpeas/Silverpeas-setup</url>
     <tag>HEAD</tag>
   </scm>
-  
+
   <repositories>
     <repository>
       <id>Silverpeas</id>
@@ -36,6 +39,11 @@
 
 
   <dependencies>
+    <dependency>
+      <groupId>com.silverpeas.core</groupId>
+      <artifactId>lib-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.dbunit</groupId>
       <artifactId>dbunit</artifactId>
@@ -63,7 +71,7 @@
     </dependency>
     <dependency>
       <groupId>junit</groupId>
-      <artifactId>junit-dep</artifactId>
+      <artifactId>junit</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -105,7 +113,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>    
+    </dependency>
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
@@ -131,8 +139,13 @@
       <artifactId>commons-configuration</artifactId>
       <version>1.8</version>
     </dependency>
+    <dependency>
+      <groupId>commons-dbutils</groupId>
+      <artifactId>commons-dbutils</artifactId>
+      <version>1.5</version>
+    </dependency>
   </dependencies>
-  
+
   <build>
     <testResources>
       <testResource>

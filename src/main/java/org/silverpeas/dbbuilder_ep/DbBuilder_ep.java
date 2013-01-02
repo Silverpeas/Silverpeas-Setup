@@ -20,15 +20,16 @@
  */
 package org.silverpeas.dbbuilder_ep;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.dbbuilder.util.Configuration;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
-
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.dbbuilder.util.Configuration;
 
 public class DbBuilder_ep extends DbBuilderDynamicPart {
 
@@ -53,50 +54,32 @@ public class DbBuilder_ep extends DbBuilderDynamicPart {
   }
 
   public void run() throws Exception {
-    Connection m_Connection = this.getConnection();
+    Connection connection = this.getConnection();
     ResultSet rs = null;
     Statement stmt = null;
     PreparedStatement stmtUpdate = null;
-    String sUpdateStart = "UPDATE DomainSP_User SET password = '";
-    String sUpdateMiddle = "' WHERE id=";
-    String sClearPass;
-
     try {
       if (needEncryption) {
-        stmt = m_Connection.createStatement();
-        rs = stmt.executeQuery("SELECT * FROM DomainSP_User");
+        stmt = connection.createStatement();
+        rs = stmt.executeQuery("SELECT id, password FROM DomainSP_User");
         while (rs.next()) {
-          sClearPass = rs.getString("password");
-          if (sClearPass == null) {
-            sClearPass = "";
+          String clearPassword = rs.getString("password");
+          if (clearPassword == null) {
+            clearPassword = "";
           }
-          stmtUpdate = m_Connection.prepareStatement(sUpdateStart
-              + jcrypt.crypt("SP", sClearPass) + sUpdateMiddle
-              + rs.getString("id"));
+          stmtUpdate = connection.prepareStatement("UPDATE DomainSP_User SET password = ? WHERE id= ?");
+          stmtUpdate.setString(1, jcrypt.crypt("SP", clearPassword));
+          stmtUpdate.setInt(2, rs.getInt("id"));
           stmtUpdate.executeUpdate();
           stmtUpdate.close();
-          stmtUpdate = null;
-        } // while
-      } // if
-    } catch (SQLException ex) {
-      throw new Exception("Error during password Crypting : " + ex.getMessage());
-
-    } finally {
-      try {
-        if (rs != null) {
-          rs.close();
-          rs = null;
-        } // if
-        if (stmt != null) {
-          stmt.close();
-          stmt = null;
-        } // if
-        if (stmtUpdate != null) {
-          stmtUpdate.close();
-          stmtUpdate = null;
-        } // if
-      } catch (SQLException ex) {
+        }
       }
-    } // try
+    } catch (SQLException ex) {
+      throw new Exception("Error during password Crypting : " + ex.getMessage(), ex);
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+      DbUtils.closeQuietly(stmtUpdate);
+    }
   }
 }

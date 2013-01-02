@@ -25,7 +25,7 @@
 package org.silverpeas.applicationbuilder.maven;
 
 import org.silverpeas.applicationbuilder.AppBuilderException;
-import org.silverpeas.installedtree.DirectoryLocator;
+import org.silverpeas.file.DirectoryLocator;
 import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;

@@ -24,8 +24,17 @@
 
 package org.silverpeas.dbbuilder;
 
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.Format.TextMode;
+import org.jdom.output.XMLOutputter;
 import org.silverpeas.applicationbuilder.AppBuilderException;
 import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,17 +45,9 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Iterator;
 import java.util.List;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.Format.TextMode;
-import org.jdom.output.XMLOutputter;
+import java.util.Set;
 
 /**
  * Represents an XML Document and provides convenient methods. The methods are used basically to
@@ -96,7 +97,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
       saveTo(new FileOutputStream(getPath()));
     } catch (FileNotFoundException fnfe) {
       throw new AppBuilderException("Could not save \""
-          + getPath().getAbsolutePath() + "\"", fnfe);
+          + getPath().getAbsolutePath() + '"', fnfe);
     }
   }
 
@@ -126,14 +127,14 @@ public class DBXmlDocument extends ApplicationBuilderItem {
         loadFrom(new FileInputStream(getPath()));
       } else {
         throw new AppBuilderException("Could not find \""
-            + getPath().getAbsolutePath() + "\"");
+            + getPath().getAbsolutePath() + '"');
       }
     } catch (MalformedURLException mue) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", mue);
+          + getPath().getAbsolutePath() + '"', mue);
     } catch (IOException ioe) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", ioe);
+          + getPath().getAbsolutePath() + '"', ioe);
     }
 
   }
@@ -221,7 +222,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
       if (!eltLst.isEmpty()) {
         if (!root.removeChildren(tagsToSort[iTag])) {
           throw new AppBuilderException("Could not remove \""
-              + tagsToSort[iTag] + "\" elements from \"" + getName() + "\"");
+              + tagsToSort[iTag] + "\" elements from \"" + getName() + '"');
         }
       }
       eltLstLst.add(iTag, eltLst);
@@ -233,7 +234,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
       if (!((List) eltLstLst.get(iTag)).isEmpty()) {
         if (!allEltLst.addAll(allEltLst.size(), (List) eltLstLst.get(iTag))) {
           throw new AppBuilderException("Could not add \"" + tagsToSort[iTag]
-              + "\" elements to \"" + getName() + "\"");
+              + "\" elements to \"" + getName() + '"');
         }
       }
     }
@@ -319,7 +320,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
       if (!eltLst.isEmpty()) {
         if (!root.removeChildren(tagsToFind[iTag])) {
           throw new AppBuilderException("Could not remove \""
-              + tagsToFind[iTag] + "\" elements from \"" + getName() + "\"");
+              + tagsToFind[iTag] + "\" elements from \"" + getName() + '"');
         }
       }
       eltLstLst.add(iTag, eltLst);
@@ -381,9 +382,8 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     }
     @SuppressWarnings("unchecked")
     Iterator<Element> iChildren = getDocument().getRootElement().getChildren().iterator();
-    Element currentElement = null;
     while (iChildren.hasNext()) {
-      currentElement = iChildren.next();
+      Element currentElement = iChildren.next();
       if (currentElement.getAttribute(attributeToFind) != null) {
         result.add(currentElement.getAttributeValue(attributeToFind));
       }

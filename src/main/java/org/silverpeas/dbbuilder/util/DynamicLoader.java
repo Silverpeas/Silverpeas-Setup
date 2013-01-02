@@ -23,8 +23,10 @@
  */
 package org.silverpeas.dbbuilder.util;
 
+import org.apache.commons.io.FileUtils;
 import org.silverpeas.dbbuilder.DBBuilder;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.io.FileUtils;
 
 /**
  * Load the classes for dynamic Databases Operations
@@ -47,7 +48,7 @@ public class DynamicLoader {
 
   public DynamicLoader() {
     File jarDirectory = new File(Configuration.getPiecesFilesDir(), JAR_DIRECTORY);
-    URL[] classpath = new URL[] {};
+    URL[] classpath = new URL[0];
     if (jarDirectory.exists() && jarDirectory.isDirectory()) {
       @SuppressWarnings("unchecked")
       Collection<File> jars = FileUtils.listFiles(jarDirectory, new String[] { "jar" }, true);

@@ -22,19 +22,65 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.helpbuilder;
+package org.silverpeas.xml.transform;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import org.silverpeas.installedtree.DirectoryLocator;
+/**
+ * @author ehugonnet
+ */
+public class Parameter {
 
-public class AboutBuilder extends TemplateBasedBuilder {
+  private String key;
+  private char mode;
+  private List<Value> values;
 
-  private static final String indexName = "about-silverpeas.htm";
+  public Parameter(String key, char mode) {
+    this.key = key;
+    this.mode = mode;
+    this.values = new ArrayList<Value>();
+  }
 
-  public AboutBuilder() throws IOException, Exception {
-    super(indexName);
-    writeInDirectory(DirectoryLocator.getHelpHome());
+  /**
+   * Get the value of values
+   * @return the value of values
+   */
+  public List<Value> getValues() {
+    return Collections.unmodifiableList(values);
+  }
+
+  /**
+   * Add a list of Value
+   * @param values new values to be added.
+   */
+  public void addValues(List<Value> values) {
+    this.values.addAll(values);
+  }
+
+  /**
+   * Add a new Value
+   * @param value new value to be added.
+   */
+  public void addValue(Value value) {
+    this.values.add(value);
+  }
+
+  /**
+   * Get the value of mode
+   * @return the value of mode
+   */
+  public char getMode() {
+    return mode;
+  }
+
+  /**
+   * Get the value of key
+   * @return the value of key
+   */
+  public String getKey() {
+    return key;
   }
 
 }

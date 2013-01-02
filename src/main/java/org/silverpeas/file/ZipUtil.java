@@ -79,30 +79,6 @@ public final class ZipUtil {
 
   /**
    * ---------------------------------------------------------------------
-   * @param fromZipFile
-   * @param fileName
-   * @param toDir
-   * @throws Exception
-   * @see
-   */
-  public static void extractFile(String fromZipFile, String fileName,
-      String toDir) throws Exception {
-    ZipFile zipFile = new ZipFile(fromZipFile);
-    File dir = new File(toDir);
-    if (!dir.exists()) {
-      dir.mkdirs();
-    } else if (dir.isFile()) {
-      throw new Exception("destination cannot be a file");
-    }
-    if (zipFile.getEntry(fileName) == null) {
-      throw new Exception("file \"" + fileName + "\" not found into \""
-          + fromZipFile + "\".");
-    }
-    extractFile(zipFile, zipFile.getEntry(fileName), dir);
-  }
-
-  /**
-   * ---------------------------------------------------------------------
    * @param zipFile
    * @param zipEntry
    * @param toDir

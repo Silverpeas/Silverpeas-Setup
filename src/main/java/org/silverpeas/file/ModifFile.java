@@ -24,9 +24,10 @@
 
 package org.silverpeas.file;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.util.ArrayList;
-import org.apache.commons.io.FileUtils;
 
 public abstract class ModifFile {
 
@@ -64,7 +65,7 @@ public abstract class ModifFile {
    */
   protected final void setPath(String src) throws Exception {
     File file = new File(src);
-    if (file.exists() != true) {
+    if (!file.exists()) {
       throw new Exception("Le fichier \"" + src + "\" n'existe pas");
     } else {
       path = src;
@@ -96,7 +97,7 @@ public abstract class ModifFile {
    * ajoute une modification au fichier parametre: chaine de type "key=value"
    */
   public void addModification(String pModif) throws Exception {
-    int index = pModif.lastIndexOf("=");
+    int index = pModif.lastIndexOf('=');
     if (index != -1) {
       listeModifications.add(new ElementModif(pModif.substring(0, index - 1),
           pModif.substring(index + 1, pModif.length())));

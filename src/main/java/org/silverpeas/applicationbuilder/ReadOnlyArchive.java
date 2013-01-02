@@ -139,7 +139,7 @@ public class ReadOnlyArchive extends ApplicationBuilderItem {
       in = getJar().getInputStream(jarEntry);
     } catch (IOException ioe) {
       Log.add("Could not get input stream from item \"" + entry.getName()
-          + "\"");
+          + '"');
       Log.add(ioe);
     }
     return in;

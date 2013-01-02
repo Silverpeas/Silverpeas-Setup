@@ -38,7 +38,7 @@ public class XPathParseException extends Exception {
   public XPathParseException(String msg, String xpathStr, int errorIndex) {
     super(msg + " at column " + errorIndex);
     _errorIndex = Integer.valueOf(errorIndex);
-    _indexedErrorMsg = xpathStr + "\n";
+    _indexedErrorMsg = xpathStr + '\n';
     char[] padding = new char[errorIndex - 1];
     Arrays.fill(padding, '-');
     _indexedErrorMsg += new String(padding) + '^';
@@ -47,7 +47,7 @@ public class XPathParseException extends Exception {
   public XPathParseException(String msg, String xpathStr, int errorIndex, Throwable cause) {
     super(msg + " at column " + errorIndex, cause);
     _errorIndex = Integer.valueOf(errorIndex);
-    _indexedErrorMsg = xpathStr + "\n";
+    _indexedErrorMsg = xpathStr + '\n';
     char[] padding = new char[errorIndex - 1];
     Arrays.fill(padding, '-');
     _indexedErrorMsg += new String(padding) + '^';
@@ -68,8 +68,8 @@ public class XPathParseException extends Exception {
       msg += super.getMessage();
     }
     if (getErrorLocationMessage() != null) {
-      msg += "\n" + getErrorLocationMessage();
+      msg += '\n' + getErrorLocationMessage();
     }
-    return msg.equals("") ? null : msg;
+    return msg.isEmpty() ? null : msg;
   }
 }

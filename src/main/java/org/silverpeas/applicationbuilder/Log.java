@@ -32,7 +32,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.GregorianCalendar;
 
-import org.silverpeas.installedtree.DirectoryLocator;
+import org.silverpeas.file.DirectoryLocator;
 
 /**
  * Makes logging available to every class in this package. The static initializer opens the log file

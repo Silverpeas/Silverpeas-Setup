@@ -22,16 +22,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.SilverpeasSettings.xml.transform;
+package org.silverpeas.xml.transform;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
+import org.silverpeas.file.GestionVariables;
+import org.silverpeas.xml.ClasspathEntityResolver;
+import org.silverpeas.xml.XmlTransformer;
+import org.silverpeas.xml.XmlTreeHandler;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,25 +48,21 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
-import org.apache.commons.io.IOUtils;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
-
-import org.silverpeas.SilverpeasSettings.xml.XmlTransformer;
-import org.silverpeas.file.GestionVariables;
-import org.silverpeas.xml.ClasspathEntityResolver;
-import org.silverpeas.xml.XmlTreeHandler;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.silverpeas.SilverpeasSettings.SilverpeasSettings.displayMessageln;
 
 /**
  * This is the original transformer used by SilverpeasSettings since the 5.3 release of Silverpeas.
  * It is using full XPATH capacities for detecting nodes to be updated, inserted or deleted.
- * @author ehugonnet
+ * @since 5.3
  */
 public class XPathTransformer implements XmlTransformer {
 
@@ -85,6 +83,7 @@ public class XPathTransformer implements XmlTransformer {
       DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
       docFactory.setValidating(false);
       docFactory.setIgnoringElementContentWhitespace(false);
+      docFactory.setIgnoringComments(false);
       DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
       docBuilder.setEntityResolver(new ClasspathEntityResolver(null));
       doc = docBuilder.parse(in);
@@ -130,7 +129,7 @@ public class XPathTransformer implements XmlTransformer {
   protected void applyTransformation(XmlConfiguration configuration, Document doc) {
     List<Parameter> parameters = configuration.getParameters();
     for (Parameter parameter : parameters) {
-      displayMessageln("\t" + parameter.getKey() + " (mode:" + parameter.getMode() + ")");
+      displayMessageln('\t' + parameter.getKey() + " (mode:" + parameter.getMode() + ')');
       Node rootXpathNode = getMatchingNode(parameter.getKey(), doc);
       if (rootXpathNode != null) {
         for (Value value : parameter.getValues()) {
@@ -154,7 +153,7 @@ public class XPathTransformer implements XmlTransformer {
                 }
                 Node newNode = oldNode.cloneNode(true);
                 if (oldNode instanceof Element) {
-                  ((Element) newNode).setTextContent(value.getValue());
+                  newNode.setTextContent(value.getValue());
                   rootXpathNode.replaceChild(newNode, oldNode);
                 } else {
                   ((Attr) newNode).setValue(value.getValue());

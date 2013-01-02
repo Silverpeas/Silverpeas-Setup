@@ -96,7 +96,7 @@ public class CommandLineParameters {
           DBBuilder.printError(USAGE);
           throw new Exception();
         }
-        if (dbType != null) {
+        if (null != dbType) {
           DBBuilder.printError(USAGE);
           throw new Exception();
         }
@@ -106,7 +106,7 @@ public class CommandLineParameters {
           DBBuilder.printError(USAGE);
           throw new Exception();
         }
-        if (action != null) {
+        if (null != action) {
           DBBuilder.printError(USAGE);
           throw new Exception();
         }
@@ -140,12 +140,12 @@ public class CommandLineParameters {
         getModuleName = false;
       }
     }
-    if (dbType == null || action == null) {
+    if (null == dbType || null == action) {
       DBBuilder.printError(USAGE);
       throw new Exception();
     }
 
-    if (moduleName == null && getModuleName) {
+    if (null == moduleName && getModuleName) {
       DBBuilder.printError(USAGE);
       throw new Exception();
     }

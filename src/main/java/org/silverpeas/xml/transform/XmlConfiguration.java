@@ -22,14 +22,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.SilverpeasSettings.xml.transform;
+package org.silverpeas.xml.transform;
 
-import java.util.ArrayList;
 import org.jdom.Element;
 import org.silverpeas.file.GestionVariables;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import static org.silverpeas.SilverpeasSettings.SilverpeasSettings.*;
 
 /**
@@ -58,11 +60,11 @@ public class XmlConfiguration {
         } else {
           for (Element eltValue : eltValues) {
             String relativePath = eltValue.getAttributeValue(RELATIVE_VALUE_ATTRIB);
-            if (relativePath != null && !"".equals(relativePath)) {
+            if (relativePath != null && relativePath != null && !relativePath.isEmpty()) {
               relativePath = gv.resolveAndEvalString(relativePath);
             }
             String location = eltValue.getAttributeValue(VALUE_LOCATION_ATTRIB);
-            if (location != null && !"".equals(location)) {
+            if (location != null && location != null && !location.isEmpty()) {
               location = gv.resolveAndEvalString(location);
             }
             parameter.addValue(new Value(location, relativePath, gv.resolveAndEvalString(

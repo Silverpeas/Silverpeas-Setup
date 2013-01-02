@@ -64,14 +64,14 @@ public final class Console {
 
   public void printError(String errMsg, Exception ex) {
     printError(errMsg);
-    if (logBuffer != null) {
+    if (null != logBuffer) {
       ex.printStackTrace(logBuffer);
       logBuffer.close();
     }
   }
 
   public void printError(String errMsg) {
-    if (logBuffer != null) {
+    if (null != logBuffer) {
       printMessageln(NEW_LINE);
       printMessageln(errMsg);
       logBuffer.close();
@@ -85,7 +85,7 @@ public final class Console {
   }
 
   public void printMessage(String msg) {
-    if (logBuffer != null) {
+    if (null != logBuffer) {
       logBuffer.print(msg);
       System.out.print(".");
     } else {

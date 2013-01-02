@@ -24,10 +24,10 @@
 
 package org.silverpeas.dbbuilder.sql;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
-import javax.sql.DataSource;
 
 /**
  * Utility class for obtaining a connection to the database.
@@ -43,7 +43,7 @@ public class ConnectionFactory {
 
   public static ConnectionFactory getInstance() {
     synchronized (ConnectionFactory.class) {
-      if (instance == null) {
+      if (null == instance) {
         instance = new ConnectionFactory();
       }
     }
@@ -74,7 +74,7 @@ public class ConnectionFactory {
       builder.append(newLine).append("\tJdbcDriver    : ").append(metaData.getDriverName());
       builder.append(newLine).append("\tUserName      : ").append(metaData.getUserName());
     } finally {
-      if (connection != null) {
+      if (null != connection) {
         connection.close();
       }
     }

@@ -26,6 +26,7 @@ package org.silverpeas.file;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class BackupFile {
   private static final String EXT = ".bak~";
@@ -61,8 +62,6 @@ public class BackupFile {
     return firstFileBackup;
   }
 
-  // ---------------------------------------------------------------------
-
   /**
    * @return
    * @throws Exception
@@ -71,8 +70,6 @@ public class BackupFile {
   public File getLastBackup() throws Exception {
     return lastFileBackup;
   }
-
-  // ---------------------------------------------------------------------
 
   /**
    * @return
@@ -83,18 +80,14 @@ public class BackupFile {
     return nbFileBackup;
   }
 
-  // ---------------------------------------------------------------------
-
   /**
    * @return
    * @throws Exception
    * @see
    */
   public boolean existBackup() throws Exception {
-    return (nbFileBackup != 0);
+    return (0 != nbFileBackup);
   }
-
-  // ---------------------------------------------------------------------
 
   /**
    * @throws Exception
@@ -102,23 +95,24 @@ public class BackupFile {
    */
   private void setList() throws Exception {
     File[] listeAll = file.getParentFile().listFiles();
-    ArrayList listeGood = new ArrayList();
+    if(listeAll == null) {
+      listeAll = new File[0];
+    }
+    List<File> listeGood = new ArrayList<File>();
     for (int i = 0; i < listeAll.length; i++) {
       File tmpFile = listeAll[i];
-      if (tmpFile.isFile() && (tmpFile.getName().indexOf(file.getName()) != -1)
-          && tmpFile.getName().indexOf(EXT) != -1) {
+      if (tmpFile.isFile() && (-1 != tmpFile.getName().indexOf(file.getName()))
+          && -1 != tmpFile.getName().indexOf(EXT)) {
         listeGood.add(tmpFile);
       }
     }
     File[] listeF = new File[listeGood.size()];
     for (int i = 0; i < listeF.length; i++) {
-      listeF[i] = (File) listeGood.get(i);
+      listeF[i] = listeGood.get(i);
     }
     listFileBackup = listeF;
     nbFileBackup = listFileBackup.length;
   }
-
-  // ---------------------------------------------------------------------
 
   /**
    * @throws Exception
@@ -136,8 +130,6 @@ public class BackupFile {
     }
     firstFileBackup = f;
   }
-
-  // ---------------------------------------------------------------------
 
   /**
    * @throws Exception
@@ -161,8 +153,7 @@ public class BackupFile {
       int i = 1;
       while (i <= endName.length()) {
         try {
-          int num = Integer.parseInt(endName.substring(0, i));
-          lastNumFileBackup = num;
+          lastNumFileBackup = Integer.parseInt(endName.substring(0, i));
           i++;
         } catch (Exception e) {
           i = endName.length() + 2;
@@ -170,23 +161,4 @@ public class BackupFile {
       }
     }
   }
-
-  // ---------------------------------------------------------------------
-
-  /**
-   * @param args
-   * @throws Exception
-   * @see
-   */
-  public static void main(String[] args) throws Exception {
-    BackupFile bf = new BackupFile(new File(args[0]));
-    bf.makeBackup();
-    File f[] = bf.getListBackup();
-    for (int i = 0; i < f.length; i++) {
-      System.out.println(f[i].getAbsolutePath());
-    }
-    System.out.println("last : " + bf.getLastBackup().getAbsolutePath());
-    System.out.println("nb last : " + bf.lastNumFileBackup);
-  }
-
 }

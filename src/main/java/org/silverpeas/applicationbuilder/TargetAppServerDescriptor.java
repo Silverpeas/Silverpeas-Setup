@@ -116,7 +116,7 @@ public class TargetAppServerDescriptor extends XmlDocument {
         theText = server.getChildText(tag);
         if (theText == null) {
           throw new AppBuilderException(getName() + " :could not find \"" + tag
-              + "\" element for \"" + appServer + "\"");
+              + "\" element for \"" + appServer + '"');
         }
         return theText;
       }

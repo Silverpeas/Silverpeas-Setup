@@ -52,7 +52,7 @@ public class AppBuilderException extends Exception {
   }
 
   public void printStackTrace() {
-    if (nestedException != null) {
+    if (null != nestedException) {
       System.err.println(getMessage());
       nestedException.printStackTrace();
     } else {
@@ -61,7 +61,7 @@ public class AppBuilderException extends Exception {
   }
 
   public void printStackTrace(PrintStream s) {
-    if (nestedException != null) {
+    if (null != nestedException) {
       s.println(getMessage());
       nestedException.printStackTrace(s);
     } else {
@@ -70,7 +70,7 @@ public class AppBuilderException extends Exception {
   }
 
   public void printStackTrace(PrintWriter s) {
-    if (nestedException != null) {
+    if (null != nestedException) {
       s.println(getMessage());
       nestedException.printStackTrace(s);
     } else {
@@ -79,28 +79,28 @@ public class AppBuilderException extends Exception {
   }
 
   public void printLogMessage() {
-    if (getMessage() != null && !getMessage().trim().equals("")) {
+    if (null != getMessage() && !getMessage().trim().isEmpty()) {
       System.err.println(getMessage());
     }
-    if (nestedException != null) {
+    if (null != nestedException) {
       nestedException.printStackTrace();
     }
   }
 
   public void printLogMessage(PrintStream s) {
-    if (getMessage() != null && !getMessage().trim().equals("")) {
+    if (null != getMessage() && !getMessage().trim().isEmpty()) {
       s.println(getMessage());
     }
-    if (nestedException != null) {
+    if (null != nestedException) {
       nestedException.printStackTrace(s);
     }
   }
 
   public void printLogMessage(PrintWriter s) {
-    if (getMessage() != null && !getMessage().trim().equals("")) {
+    if (null != getMessage() && !getMessage().trim().isEmpty()) {
       s.println(getMessage());
     }
-    if (nestedException != null) {
+    if (null != nestedException) {
       nestedException.printStackTrace(s);
     }
   }

@@ -79,7 +79,7 @@ public class WARDirectory extends ApplicationBuilderItem {
       out.flush();
     } catch (Exception e) {
       throw new AppBuilderException(getName() + " : impossible to add the document \""
-          + xmlDoc.getArchivePath() + "\"", e);
+          + xmlDoc.getArchivePath() + '"', e);
     } finally {
       close(out);
     }
@@ -97,10 +97,10 @@ public class WARDirectory extends ApplicationBuilderItem {
       add(entry, entry.getPath().toURI().toURL().openStream());
     } catch (MalformedURLException mue) {
       throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + "\"", mue);
+          + entry.getName() + '"', mue);
     } catch (IOException ioe) {
       throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + "\"", ioe);
+          + entry.getName() + '"', ioe);
     }
   }
 
@@ -144,7 +144,7 @@ public class WARDirectory extends ApplicationBuilderItem {
         if (alreadyAddedFiles.containsKey(entries[iEntry].getArchivePath())) {
           Log.add(getName() + " : already added from \"" +
               alreadyAddedFiles.get(entries[iEntry].getArchivePath()) + "\" : \""
-              + archive.getName() + "!" + entries[iEntry].getArchivePath() + "\" ");
+              + archive.getName() + '!' + entries[iEntry].getArchivePath() + "\" ");
         } else {
           alreadyAddedFiles.put(entries[iEntry].getArchivePath(), archive.getName());
           add(entries[iEntry], archive.getEntry(entries[iEntry]));
@@ -192,7 +192,7 @@ public class WARDirectory extends ApplicationBuilderItem {
     } catch (Exception e) {
       throw new AppBuilderException(getName()
           + " : impossible to create new entry \"" + entry.getArchivePath()
-          + "\"", e);
+          + '"', e);
     }
     try {
       int bytesRead;
@@ -204,7 +204,7 @@ public class WARDirectory extends ApplicationBuilderItem {
     } catch (Exception e) {
       throw new AppBuilderException(getName()
           + " : impossible to write contents of \"" + entry.getArchivePath()
-          + "\"", e);
+          + '"', e);
     } finally {
       close(out);
     }

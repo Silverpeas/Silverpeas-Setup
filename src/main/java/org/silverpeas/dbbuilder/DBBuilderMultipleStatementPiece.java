@@ -20,11 +20,11 @@
  */
 package org.silverpeas.dbbuilder;
 
+import org.silverpeas.file.StringUtil;
+
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.silverpeas.file.StringUtil;
 
 public class DBBuilderMultipleStatementPiece extends DBBuilderPiece {
 
@@ -111,10 +111,9 @@ public class DBBuilderMultipleStatementPiece extends DBBuilderPiece {
 
   private List<String> tokenizeAll(String str, String delimiter, boolean keepDelimiter) {
     List<String> tokens = new ArrayList<String>();
-    int previ = 0;
     int curi = 0;
     while (curi < str.length() && curi >= 0) {
-      previ = curi;
+      int previ = curi;
       curi = str.indexOf(delimiter, curi);
       if (curi < str.length() && curi >= 0) {
         int endIndex = curi;
@@ -122,20 +121,20 @@ public class DBBuilderMultipleStatementPiece extends DBBuilderPiece {
           endIndex = curi + delimiter.length();
         }
         String instruction = str.substring(previ, endIndex).trim();
-        if (!" ".equals(instruction) && !"".equals(instruction)) {
+        if (!" ".equals(instruction) && instruction != null && !instruction.isEmpty()) {
           tokens.add(instruction);
         }
         curi += delimiter.length();
       } else if (str.length() - previ > delimiter.length()) {
         String instruction = str.substring(previ, str.length()).trim();
-        if (!" ".equals(instruction) && !"".equals(instruction)) {
+        if (!" ".equals(instruction) && instruction != null && !instruction.isEmpty()) {
           if (keepDelimiter) {
             instruction = instruction + delimiter;
           }
           tokens.add(instruction);
         }
-      }// if
-    } // while
+      }
+    }
     return tokens;
   }
 }

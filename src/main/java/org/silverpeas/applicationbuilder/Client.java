@@ -66,7 +66,7 @@ public class Client extends WriteOnlyArchive {
       } catch (AppBuilderException abe) {
         Log
             .add("Could not merge library \"" + libraries[iLib].getName()
-            + "\"");
+            + '"');
         throw abe;
       }
     }

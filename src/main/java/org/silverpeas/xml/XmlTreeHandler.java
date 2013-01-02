@@ -20,12 +20,12 @@
  */
 package org.silverpeas.xml;
 
+import org.jdom.Attribute;
+import org.jdom.Element;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.jdom.Attribute;
-import org.jdom.Element;
 
 public class XmlTreeHandler {
 
@@ -90,7 +90,7 @@ public class XmlTreeHandler {
   private Element _startingElement = null;
   private char _mode;
 
-  // ###################################
+
   private void setName(String name) {
     _name = name;
   }
@@ -100,7 +100,7 @@ public class XmlTreeHandler {
   }
 
   private boolean hasName() {
-    return getName() != null;
+    return null != getName();
   }
 
   private void eraseName() {
@@ -111,7 +111,6 @@ public class XmlTreeHandler {
 
   private String _name = null;
 
-  // ###################################
   private void setElement(Element e) {
     _element = e;
   }
@@ -121,7 +120,7 @@ public class XmlTreeHandler {
   }
 
   private boolean hasElement() {
-    return getElement() != null;
+    return null != getElement();
   }
 
   private void eraseElement() {
@@ -132,7 +131,7 @@ public class XmlTreeHandler {
 
   private Element _element = null;
 
-  // ###################################
+
   private void setIElements(Iterator iElements) {
     _iElements = iElements;
   }
@@ -142,7 +141,7 @@ public class XmlTreeHandler {
   }
 
   private boolean hasIElements() {
-    return getIElements() != null;
+    return null != getIElements();
   }
 
   private void eraseIElements() {
@@ -153,7 +152,7 @@ public class XmlTreeHandler {
 
   private Iterator _iElements = null;
 
-  // ###################################
+
   private void setNextIElementsAsElement() {
     if (hasIElements()) {
       // all modes but MODE_SELECT do sth special only when a name is present
@@ -206,13 +205,13 @@ public class XmlTreeHandler {
           children = getElement().getParentElement().getChildren();
         }
         setIElements(children.iterator());
-        while (!((Object) getElement()).equals(getIElements().next())) {
+        while (!getElement().equals(getIElements().next())) {
         }
       }
     }
   }
 
-  // ###################################
+
   private void setAttribute(Attribute a) {
     _attribute = a;
   }
@@ -222,7 +221,7 @@ public class XmlTreeHandler {
   }
 
   private boolean hasAttribute() {
-    return getAttribute() != null;
+    return null != getAttribute();
   }
 
   private void eraseAttribute() {
@@ -233,7 +232,6 @@ public class XmlTreeHandler {
 
   private Attribute _attribute = null;
 
-  // ###################################
   private void setCousinsAncestor(Element ancestor) {
     _cousinsAncestor = ancestor;
   }
@@ -247,12 +245,11 @@ public class XmlTreeHandler {
   }
 
   private boolean hasCousinsAncestor() {
-    return _cousinsAncestor != null;
+    return null != _cousinsAncestor;
   }
 
   private Element _cousinsAncestor = null;
 
-  // ###################################
   private boolean isElementCousinsAncestor() {
     if (!hasElement()) {
       return false;
@@ -260,7 +257,7 @@ public class XmlTreeHandler {
     if (!hasCousinsAncestor()) {
       return getElement().isRootElement();
     }
-    return ((Object) getCousinsAncestor()).equals(getElement());
+    return getCousinsAncestor().equals(getElement());
   }
 
   private boolean isParentCousinsAncestor() {
@@ -272,7 +269,7 @@ public class XmlTreeHandler {
     }
     Element a = getCousinsAncestor();
     Element p = getElement().getParentElement();
-    return ((Object) a).equals(p);
+    return a.equals(p);
   }
 
   private void setElementCousinsAncestor() {
@@ -292,7 +289,7 @@ public class XmlTreeHandler {
     }
   }
 
-  // ###################################
+
   private void eraseAll() {
     eraseAttribute();
     eraseName();
@@ -301,7 +298,7 @@ public class XmlTreeHandler {
     eraseCousinsAncestor();
   }
 
-  // ###################################
+
   public boolean isElement() {
     return hasElement();
   }
@@ -359,10 +356,10 @@ public class XmlTreeHandler {
 
   public boolean hasCurrentNodeValue() {
     String value = getCurrentNodeValue();
-    return value != null && !value.trim().equals("");
+    return null != value && !value.trim().isEmpty();
   }
 
-  // ###################################
+
   public boolean isCurrentElementRoot() {
     if (!isElement()) {
       return false;
@@ -371,7 +368,7 @@ public class XmlTreeHandler {
   }
 
   public void gotoRoot() {
-    if (getStartingElement() != null) {
+    if (null != getStartingElement()) {
       eraseAll();
       setElement(getStartingElement().getDocument().getRootElement());
       syncIElementsWithElementAndName();
@@ -401,7 +398,7 @@ public class XmlTreeHandler {
     }
   }
 
-  // ###################################
+
   public boolean hasParent() {
     return isElement() && !isCurrentElementRoot();
   }
@@ -419,7 +416,7 @@ public class XmlTreeHandler {
     }
   }
 
-  // ###################################
+
   public boolean hasNextSibling() {
     if (hasIElements()) {
       return getIElements().hasNext();
@@ -435,7 +432,7 @@ public class XmlTreeHandler {
     }
   }
 
-  // ###################################
+
   private List getNamedChildren() {
     if (!isElement()) {
       return null;
@@ -449,7 +446,7 @@ public class XmlTreeHandler {
         case MODE_UNIQUE:
           // no children => MODE_UPDATE => MODE_INSERT
           if (!children.isEmpty()) {
-            if (children.size() > 1) {
+            if (1 < children.size()) {
               Iterator i = children.iterator();
               boolean passedFirst = false;
               while (i.hasNext()) {
@@ -491,7 +488,7 @@ public class XmlTreeHandler {
 
   private void setFirstNamedChild() {
     List children = getNamedChildren();
-    if (children == null) {
+    if (null == children) {
       eraseAll();
     } else {
       setElement((Element) children.iterator().next());
@@ -499,7 +496,7 @@ public class XmlTreeHandler {
     }
   }
 
-  // ###################################
+
   public boolean hasChildren() {
     if (isElement()) {
       return getCurrentElement().getChildren().isEmpty();
@@ -510,7 +507,7 @@ public class XmlTreeHandler {
   public boolean hasChildren(String name) {
     if (hasChildren()) {
       List children = getElement().getChildren(name);
-      return (children != null) && (!children.isEmpty());
+      return (null != children) && (!children.isEmpty());
     }
     return false;
   }
@@ -525,7 +522,7 @@ public class XmlTreeHandler {
     setFirstNamedChild();
   }
 
-  // ###################################
+
   public void gotoAttribute(String name) {
     if (isElement()) {
       Attribute a = getCurrentElement().getAttribute(name);
@@ -535,19 +532,19 @@ public class XmlTreeHandler {
         case MODE_UNIQUE:
         case MODE_UPDATE:
         case MODE_INSERT:
-          if (a == null) {
+          if (null == a) {
             a = new Attribute(name, "PLEASE GIVE ME A VALUE");
             getCurrentElement().setAttribute(a);
           }
           break;
         case MODE_DELETE:
-          if (a != null) {
+          if (null != a) {
             getCurrentElement().removeAttribute(name);
             a = null;
           }
           break;
       }
-      if (a == null) {
+      if (null == a) {
         eraseAll();
       } else {
         eraseName();
@@ -560,7 +557,7 @@ public class XmlTreeHandler {
     }
   }
 
-  // ###################################
+
   public static final char TYPE_ATTRIBUTE = 'A';
   public static final char TYPE_ELEMENT = 'E';
 
@@ -597,9 +594,8 @@ public class XmlTreeHandler {
     return found;
   }
 
-  // #####################################
   public void pushState() {
-    if (_stateStack == null) {
+    if (null == _stateStack) {
       _stateStack = new LinkedList();
     }
     _stateStack.addFirst(new Object[] { getAttribute(), getElement(),
@@ -607,7 +603,7 @@ public class XmlTreeHandler {
   }
 
   public void popState() {
-    if (_stateStack != null && _stateStack.size() >= 1) {
+    if (null != _stateStack && 1 <= _stateStack.size()) {
       setAttribute((Attribute) ((Object[]) _stateStack.getFirst())[0]);
       setElement((Element) ((Object[]) _stateStack.getFirst())[1]);
       setName((String) ((Object[]) _stateStack.getFirst())[2]);
@@ -619,16 +615,16 @@ public class XmlTreeHandler {
   }
 
   private void removeAllStates() {
-    if (_stateStack != null && _stateStack.size() > 0) {
-      while (_stateStack.size() >= 1) {
+    if (null != _stateStack && 0 < _stateStack.size()) {
+      while (1 <= _stateStack.size()) {
         _stateStack.removeFirst();
       }
     }
   }
 
   private void returnToStartingState() {
-    if (_stateStack != null && _stateStack.size() > 0) {
-      while (_stateStack.size() > 1) {
+    if (null != _stateStack && 0 < _stateStack.size()) {
+      while (1 < _stateStack.size()) {
         _stateStack.removeFirst();
       }
       popState();
@@ -660,7 +656,7 @@ public class XmlTreeHandler {
         case MODE_INSERT:
           char bakMode = getMode();
           // from UPDATE mode, there is no next
-          if (getMode() == MODE_INSERT) {
+          if (MODE_INSERT == getMode()) {
             setMode(MODE_SELECT);
             while (hasNextCousin()) {
               gotoNextCousin();
@@ -734,9 +730,9 @@ public class XmlTreeHandler {
       setMode(MODE_SELECT);
       gotoFirstChildNode(nodeType, nodeName);
       found = currentNodeExists();
-      if (nodeValue != null) {
+      if (null != nodeValue) {
         if (found) {
-          found = getCurrentNodeValue() != null;
+          found = null != getCurrentNodeValue();
         }
         if (found) {
           found = getCurrentNodeValue().trim().equals(nodeValue);
@@ -745,9 +741,9 @@ public class XmlTreeHandler {
       while (!found && hasNextSiblingNode()) {
         gotoNextSiblingNode();
         found = currentNodeExists();
-        if (nodeValue != null) {
+        if (null != nodeValue) {
           if (found) {
-            found = getCurrentNodeValue() != null;
+            found = null != getCurrentNodeValue();
           }
           if (found) {
             found = getCurrentNodeValue().trim().equals(nodeValue);
@@ -837,13 +833,13 @@ public class XmlTreeHandler {
           if (!found) {
             pushState();
             gotoFirstChildNode(nodeType, nodeName);
-            if (nodeValue != null) {
+            if (null != nodeValue) {
               setCurrentNodeValue(nodeValue);
             }
             popState();
           }
           Element e = getCurrentElement();
-          if (e.getParentElement().getChildren(getName()).size() > 1) {
+          if (1 < e.getParentElement().getChildren(getName()).size()) {
             pushState();
             String uniqname = getName();
             gotoParent();
@@ -877,7 +873,7 @@ public class XmlTreeHandler {
           }
           pushState();
           gotoFirstChildNode(nodeType, nodeName);
-          if (nodeValue != null) {
+          if (null != nodeValue) {
             setCurrentNodeValue(nodeValue);
           }
           popState();
@@ -917,13 +913,13 @@ public class XmlTreeHandler {
             gotoNextSiblingNode();
             pushState();
             gotoFirstChildNode(nodeType, nodeName);
-            if (nodeValue != null) {
+            if (null != nodeValue) {
               setCurrentNodeValue(nodeValue);
             }
             popState();
           }
           Element e = getCurrentElement();
-          if (e.getParentElement().getChildren(getName()).size() > 1) {
+          if (1 < e.getParentElement().getChildren(getName()).size()) {
             pushState();
             String uniqname = getName();
             gotoParent();
@@ -952,7 +948,7 @@ public class XmlTreeHandler {
           gotoNextCousin();
           pushState();
           gotoFirstChildNode(nodeType, nodeName);
-          if (nodeValue != null) {
+          if (null != nodeValue) {
             setCurrentNodeValue(nodeValue);
           }
           popState();

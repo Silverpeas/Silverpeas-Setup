@@ -24,13 +24,11 @@
 
 package org.silverpeas.file;
 
-import java.util.Properties;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -41,21 +39,6 @@ public class FileUtilTest {
   public FileUtilTest() {
   }
 
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-  }
-
-  @Before
-  public void setUp() {
-  }
-
-  @After
-  public void tearDown() {
-  }
 
   @Test
   public void simpleTest() throws Exception {

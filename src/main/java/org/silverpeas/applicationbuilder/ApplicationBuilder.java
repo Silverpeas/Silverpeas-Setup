@@ -26,9 +26,9 @@ package org.silverpeas.applicationbuilder;
 
 import org.silverpeas.applicationbuilder.maven.MavenContribution;
 import org.silverpeas.applicationbuilder.maven.MavenRepository;
-import java.io.File;
+import org.silverpeas.file.DirectoryLocator;
 
-import org.silverpeas.installedtree.DirectoryLocator;
+import java.io.File;
 
 /**
  * The main class of the ApplicationBuilder tool. Controls the overall sequence of the process.
@@ -142,37 +142,37 @@ public class ApplicationBuilder {
       // identify the contribution
       Log.add("");
       Log.add("ADDING \"" + maContrib.getPackageName() + "\" of type \"" +
-          maContrib.getPackageType() + "\"");
+          maContrib.getPackageType() + '"');
       // libraries
-      if (maContrib.getLibraries() != null) {
+      if (null != maContrib.getLibraries()) {
         Log.add("merging libraries");
         appBuilder.getEAR().addLibraries(maContrib.getLibraries());
       }
       // client
-      if (maContrib.getClientPart() != null) {
+      if (null != maContrib.getClientPart()) {
         Log.add("merging client part");
         appBuilder.getEAR().addLibrary(maContrib.getClientPart());
       }
 
       // WAR
-      if (maContrib.getWARPart() != null) {
+      if (null != maContrib.getWARPart()) {
         Log.add("merging WAR part");
         appBuilder.getEAR().getWAR().mergeWARPart(maContrib.getWARPart());
       }
       // EJBs
-      if (maContrib.getEJBs() != null) {
+      if (null != maContrib.getEJBs()) {
         Log.add("adding EJBs");
         appBuilder.getEAR().addEJBs(maContrib.getEJBs());
       }
 
-      if (maContrib.getExternals() != null) {
+      if (null != maContrib.getExternals()) {
         Log.add("adding External Wars");
         appBuilder.getEAR().addExternalWars(maContrib.getExternals());
       }
 
     }
 
-    if (appBuilder.getExternalRepository() != null) {
+    if (null != appBuilder.getExternalRepository()) {
       // loop the external contributions
       MavenContribution[] lesContributionsExternes =
           appBuilder.getExternalRepository().getContributions();
@@ -180,27 +180,27 @@ public class ApplicationBuilder {
         // identify the contribution
         Log.add("");
         Log.add("ADDING \"" + maContrib.getPackageName() + "\" of type \"" +
-            maContrib.getPackageType() + "\"");
+            maContrib.getPackageType() + '"');
         // client
-        if (maContrib.getClientPart() != null) {
+        if (null != maContrib.getClientPart()) {
           Log.add("merging client part");
         }
         // libraries
-        if (maContrib.getLibraries() != null) {
+        if (null != maContrib.getLibraries()) {
           Log.add("merging libraries");
         }
         // WAR
-        if (maContrib.getWARPart() != null) {
+        if (null != maContrib.getWARPart()) {
           Log.add("merging WAR part");
           appBuilder.getEAR().getWAR().mergeWARPart(maContrib.getWARPart());
         }
         // EJBs
-        if (maContrib.getEJBs() != null) {
+        if (null != maContrib.getEJBs()) {
           Log.add("adding EJBs");
           appBuilder.getEAR().addEJBs(maContrib.getEJBs());
         }
         // External WARs
-        if (maContrib.getExternals() != null) {
+        if (null != maContrib.getExternals()) {
           Log.add("adding External Wars");
           appBuilder.getEAR().addExternalWars(maContrib.getExternals());
         }
@@ -212,10 +212,10 @@ public class ApplicationBuilder {
     Log.add("");
     Log.setEchoAsDotEnabled(false);
     Log.echo("OK : \"" + appBuilder.getEAR().getName() + "\" successfully builded");
-    Log.echo("Please find them in \"" + DirectoryLocator.getLibraryHome() + "\"");
+    Log.echo("Please find them in \"" + DirectoryLocator.getLibraryHome() + '"');
     System.out.println(
         "Full log is available in \"" + DirectoryLocator.getLogHome() + File.separator +
-        Log.getName() + "\"");
+        Log.getName() + '"');
   }
 
   private static void endLoggingWithErrors() {

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
 /**
  * TODO : replace with commons-io
@@ -45,7 +46,7 @@ public final class FileUtil {
    * Utility method to copy a file from one directory to another
    */
   public static void copyFile(final String fromPath, final String toPath) throws IOException {
-    copyFile(new File(fromPath), new File(toPath));
+    FileUtils.copyFileToDirectory(new File(fromPath), new File(toPath));
   }
 
   /**
@@ -53,8 +54,7 @@ public final class FileUtil {
    */
   public static void copyFile(final String fileName, final String fromDir, final String toDir)
       throws IOException {
-    copyFile(new File(fromDir + File.separator + fileName), new File(toDir
-        + File.separator + fileName));
+    FileUtils.copyFile(new File(fromDir,fileName), new File(toDir,fileName));
   }
 
   /**
@@ -79,7 +79,7 @@ public final class FileUtil {
    * @see
    */
   public static void copyDir(final String fromDir, final String toDir) throws IOException {
-    copyDir(new File(fromDir), new File(toDir));
+    FileUtils.copyDirectory(new File(fromDir), new File(toDir));
   }
 
   /**
@@ -105,44 +105,14 @@ public final class FileUtil {
     }
   }
 
-  /**
-   * ---------------------------------------------------------------------
-   * @param file
-   * @param c
-   * @return
-   * @throws FileNotFoundException
-   * @see
-   */
-  public static InputStream getInputStream(File file, Class c)
-      throws FileNotFoundException {
-    InputStream rtn = null;
-    if (file != null) {
-      try {
-        rtn = new FileInputStream(file);
-      } catch (FileNotFoundException fnfex) {
-        String s = file.toString();
-        int i = s.indexOf(File.separator);
-        if (i >= 0) {
-          s = s.substring(i);
-          s = StringUtil.sReplace("\\", "/", s);
-          rtn = c.getResourceAsStream(s);
-        }
-        throw fnfex;
-      }
-    }
-    return rtn;
-  }
+
 
   /**
    * Utility method to get extension of a file return empty String if @file doesn't exist or if @file
    * doesn't have extension
    */
   public static String getExtension(final File file) throws IOException {
-    String extension = "";
-    if (file.isFile()) {
-      extension = getExtension(file.getName());
-    }
-    return extension;
+    return FilenameUtils.getExtension(file.getName());
   }
 
   /**

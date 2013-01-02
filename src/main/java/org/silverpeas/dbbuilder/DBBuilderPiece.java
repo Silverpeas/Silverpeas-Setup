@@ -20,28 +20,27 @@
  */
 package org.silverpeas.dbbuilder;
 
-import java.io.File;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+import org.silverpeas.dbbuilder.sql.DbProcParameter;
+import org.silverpeas.dbbuilder.sql.QueryExecutor;
+import org.silverpeas.file.StringUtil;
+
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Method;
-
-import org.silverpeas.file.StringUtil;
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.dbbuilder.sql.QueryExecutor;
-import org.silverpeas.dbbuilder.sql.DbProcParameter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.util.Enumeration;
-import java.util.Properties;
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Enumeration;
+import java.util.Properties;
 
 public abstract class DBBuilderPiece {
 
   // identifiant unique pour toute la session
-  private static Integer increment = new Integer(0);
+  private static Integer increment = 0;
   // identifiant de la pièce si elle est stockée en base
   private String actionInternalID = null;
   // nom de la pièce ou du fichier
@@ -88,7 +87,7 @@ public abstract class DBBuilderPiece {
       for (Enumeration e = res.keys(); e.hasMoreElements();) {
         String key = (String) e.nextElement();
         String value = res.getProperty(key);
-        content = StringUtil.sReplace("${" + key + "}", value, content);
+        content = StringUtil.sReplace("${" + key + '}', value, content);
       }
     }
   }
@@ -207,7 +206,7 @@ public abstract class DBBuilderPiece {
     try {
       // insertion SR_UNINSTITEMS
       Long theLong = new Long(System.currentTimeMillis());
-      String itemID = theLong.toString() + "-" + getIncrement().toString();
+      String itemID = theLong.toString() + '-' + getIncrement().toString();
       pstmt = connexion.prepareStatement("insert into SR_UNINSTITEMS(SR_ITEM_ID, "
           + "SR_PACKAGE, SR_ACTION_TAG, SR_ITEM_ORDER, SR_FILE_NAME, SR_FILE_TYPE, SR_DELIMITER, "
           + "SR_KEEP_DELIMITER, SR_DBPROC_NAME) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -234,7 +233,7 @@ public abstract class DBBuilderPiece {
     } catch (Exception ex) {
       ex.printStackTrace();
       throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : "
-          + ex.getMessage() + "\n", ex);
+          + ex.getMessage() + '\n', ex);
     } finally {
       if (pstmt != null) {
         pstmt.close();
@@ -256,7 +255,7 @@ public abstract class DBBuilderPiece {
       stmt.executeUpdate(currentInstruction);
     } catch (Exception e) {
       throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : "
-          + e.getMessage() + "\n\t\t***STATEMENT ON ERROR IS : " + "\n"
+          + e.getMessage() + "\n\t\t***STATEMENT ON ERROR IS : " + '\n'
           + currentInstruction + "\n\t\t" + pieceName, e);
     } finally {
 
@@ -279,7 +278,7 @@ public abstract class DBBuilderPiece {
       QueryExecutor.executeProcedure(connection, currentInstruction, params);
     } catch (Exception e) {
       throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : "
-          + e.getMessage() + "\n\t\t***STATEMENT ON ERROR IS : " + "\n"
+          + e.getMessage() + "\n\t\t***STATEMENT ON ERROR IS : " + '\n'
           + currentInstruction, e);
     }
   }
@@ -287,7 +286,7 @@ public abstract class DBBuilderPiece {
   public void executeJavaInvoke(String currentInstruction, Object myClass)
       throws Exception {
     if (traceMode) {
-      DBBuilder.printMessageln("\t\t>" + myClass.getClass().getName() + "."
+      DBBuilder.printMessageln("\t\t>" + myClass.getClass().getName() + '.'
           + currentInstruction + "()");
     }
     ((DbBuilderDynamicPart) myClass).setConnection(connection);
@@ -307,7 +306,7 @@ public abstract class DBBuilderPiece {
     if (s == null) {
       return s;
     }
-    return "'" + StringUtil.sReplace("'", "''", s) + "'";
+    return '\'' + StringUtil.sReplace("'", "''", s) + '\'';
   }
 
   private String[] getSubStrings(String str) {
@@ -316,7 +315,7 @@ public abstract class DBBuilderPiece {
     if ((str.length() - nbS * maxl) > 0) {
       nbS++;
     }
-    String tmpS = new String(str);
+    String tmpS = str;
     String[] retS = new String[nbS];
     for (int i = 0; i < nbS; i++) {
       if (i == nbS - 1) {
@@ -334,10 +333,9 @@ public abstract class DBBuilderPiece {
   }
 
   private String getContentFromDB(String itemID) throws Exception {
-    Connection connexion = null;
     StringBuilder dbContent = new StringBuilder("");
     try {
-      connexion = ConnectionFactory.getConnection();
+      Connection connexion = ConnectionFactory.getConnection();
       PreparedStatement pstmt = connexion.prepareStatement("select SR_SEQ_NUM, SR_TEXT from "
           + "SR_SCRIPTS where SR_ITEM_ID = ? order by 1");
       pstmt.setString(1, itemID);
@@ -350,7 +348,7 @@ public abstract class DBBuilderPiece {
     } catch (Exception e) {
       throw new Exception("\n\t\t***ERROR RETURNED BY THE JVM : "
           + e.getMessage() + "\n\t\t\t(" + "select SR_SEQ_NUM, SR_TEXT from "
-          + "SR_SCRIPTS where SR_ITEM_ID = '" + itemID + "'  order by 1" + ")");
+          + "SR_SCRIPTS where SR_ITEM_ID = '" + itemID + "'  order by 1" + ')');
     }
     return dbContent.toString();
   }

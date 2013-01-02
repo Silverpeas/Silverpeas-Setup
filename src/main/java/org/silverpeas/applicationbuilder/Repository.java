@@ -24,13 +24,13 @@
 
 package org.silverpeas.applicationbuilder;
 
+import org.silverpeas.file.DirectoryLocator;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.silverpeas.installedtree.DirectoryLocator;
 
 /**
  * @todo vérifier l'existence des répertoires attendus avant de laisser planter X fois pour les

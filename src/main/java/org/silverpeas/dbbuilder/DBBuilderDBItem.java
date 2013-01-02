@@ -59,7 +59,7 @@ public class DBBuilderDBItem extends DBBuilderItem {
     OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(f), "UTF-8");
     try {
       out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-      out.write("<" + CONTRIBUTION_TAG + " " + MODULENAME_ATTRIB + "=\"" + module + "\">\n");
+      out.write('<' + CONTRIBUTION_TAG + ' ' + MODULENAME_ATTRIB + "=\"" + module + "\">\n");
 
       if (dbInfos != null) {
         int nbValues = dbInfos.size();
@@ -68,16 +68,16 @@ public class DBBuilderDBItem extends DBBuilderItem {
             Map<String, Object> h = dbInfos.get(i);
             String tag = (String) h.get("SR_ACTION_TAG");
             out.write("        <" + tag + ">\n");
-            out.write("            <" + ROW_TAG + " " + FILENAME_ATTRIB + "=\"" + (String) h.get(
+            out.write("            <" + ROW_TAG + ' ' + FILENAME_ATTRIB + "=\"" + h.get(
                 "SR_ITEM_ID") + "\" ");
             String valueHash = h.get("SR_ITEM_ORDER").toString();
 
             out.write(DBORDER_ATTRIB + "=\"" + new Integer(valueHash) + "\" ");
-            out.write(FILETYPE_ATTRIB + "=\"" + (String) h.get("SR_FILE_TYPE") + "\" ");
+            out.write(FILETYPE_ATTRIB + "=\"" + h.get("SR_FILE_TYPE") + "\" ");
 
             if (h.containsKey("SR_DELIMITER")) {
               if (h.get("SR_DELIMITER") != null) {
-                out.write(FILEDELIMITER_ATTRIB + "=\"" + (String) h.get("SR_DELIMITER") + "\" ");
+                out.write(FILEDELIMITER_ATTRIB + "=\"" + h.get("SR_DELIMITER") + "\" ");
               }
             }
             if (h.containsKey("SR_KEEP_DELIMITER")) {
@@ -92,7 +92,7 @@ public class DBBuilderDBItem extends DBBuilderItem {
             }
             if (h.containsKey("SR_DBPROC_NAME")) {
               if (h.get("SR_DBPROC_NAME") != null) {
-                out.write(FILEDBPROCNAME_ATTRIB + "=\"" + (String) h.get("SR_DBPROC_NAME") + "\" ");
+                out.write(FILEDBPROCNAME_ATTRIB + "=\"" + h.get("SR_DBPROC_NAME") + "\" ");
               }
             }
             out.write("/>\n");
@@ -131,7 +131,7 @@ public class DBBuilderDBItem extends DBBuilderItem {
           new Object[] { getModule() });
     } catch (Exception e) {
       throw new Exception("\n\t\t***ERROR RETURNED BY THE JVM : " + e.getMessage() + "\n\t\t\t("
-          + SELECT_CONTENT_FROM_DB + ")");
+          + SELECT_CONTENT_FROM_DB + ')');
     } finally {
       if (connexion != null) {
         connexion.close();

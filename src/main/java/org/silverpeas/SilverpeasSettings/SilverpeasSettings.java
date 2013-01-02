@@ -22,6 +22,18 @@ package org.silverpeas.SilverpeasSettings;
 
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.silverpeas.applicationbuilder.AppBuilderException;
+import org.silverpeas.applicationbuilder.XmlDocument;
+import org.silverpeas.file.*;
+import org.silverpeas.xml.XmlTransformer;
+import org.silverpeas.xml.XmlTreeHandler;
+import org.silverpeas.xml.transform.XPathTransformer;
+import org.silverpeas.xml.xpath.XPath;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,26 +53,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.silverpeas.SilverpeasSettings.xml.XmlTransformer;
-import org.silverpeas.SilverpeasSettings.xml.transform.XPathTransformer;
-import org.silverpeas.applicationbuilder.AppBuilderException;
-import org.silverpeas.applicationbuilder.XmlDocument;
-import org.silverpeas.file.BackupFile;
-import org.silverpeas.file.FileUtil;
-import org.silverpeas.file.GestionVariables;
-import org.silverpeas.file.ModifFile;
-import org.silverpeas.file.ModifProperties;
-import org.silverpeas.file.ModifText;
-import org.silverpeas.file.ModifTextSilverpeas;
-import org.silverpeas.file.ModifXMLSilverpeas;
-import org.silverpeas.file.RegexpElementMotif;
-import org.silverpeas.installedtree.DirectoryLocator;
-import org.silverpeas.xml.XmlTreeHandler;
-import org.silverpeas.xml.xpath.XPath;
 
 public class SilverpeasSettings {
 
@@ -111,14 +103,14 @@ public class SilverpeasSettings {
   }
 
   public static char getXmlMode(String textualMode) {
-    if (textualMode == null || textualMode.isEmpty()) {
+    if (null == textualMode || textualMode.isEmpty()) {
       return XmlTreeHandler.MODE_UPDATE;
     }
     return _modeMap.get(textualMode.toLowerCase()).charValue();
   }
 
   public static String getXmlModeString(String textualMode) {
-    if (textualMode == null || textualMode.isEmpty()) {
+    if (null == textualMode || textualMode.isEmpty()) {
       return "default(update)";
     }
     return textualMode;
@@ -135,21 +127,21 @@ public class SilverpeasSettings {
     boolean baseUnixSep;
     int nbLevel;
     // removes drive
-    if (relBase != null && relBase.length() >= 2 && relBase.charAt(1) == ':') {
+    if (null != relBase && 2 <= relBase.length() && ':' == relBase.charAt(1)) {
       relBase = relBase.substring(2);
     }
     // detects file separator
-    baseUnixSep = (relBase != null && relBase.indexOf('/') != -1);
+    baseUnixSep = (null != relBase && -1 != relBase.indexOf('/'));
     // removes starting file separator
-    if (relBase != null && relBase.length() >= 1 && relBase.charAt(0) == (baseUnixSep ? '/' : '\\')) {
+    if (null != relBase && 1 <= relBase.length() && relBase.charAt(0) == (baseUnixSep ? '/' : '\\')) {
       relBase = relBase.substring(1);
     }
     // removes ending file separator
-    if (relBase != null && relBase.length() >= 1 && relBase.endsWith(baseUnixSep ? "/" : "\\")) {
+    if (null != relBase && 1 <= relBase.length() && relBase.endsWith(baseUnixSep ? "/" : "\\")) {
       relBase = relBase.substring(0, relBase.length() - 2);
     }
     // detects number of levels
-    if (relBase == null || relBase.length() == 0) {
+    if (null == relBase || 0 == relBase.length()) {
       nbLevel = 0;
     } else {
       StringTokenizer st = new StringTokenizer(relBase, baseUnixSep ? "/" : "\\");
@@ -157,20 +149,20 @@ public class SilverpeasSettings {
     }
     String resultBase = null;
     for (int i = 0; i < nbLevel; i++) {
-      if (i == 0) {
+      if (0 == i) {
         resultBase = "..";
       } else {
         resultBase += (baseUnixSep ? "/" : "\\") + "..";
       }
     }
     // removes drive
-    if (result != null && result.length() >= 2 && result.charAt(1) == ':') {
+    if (null != result && 2 <= result.length() && ':' == result.charAt(1)) {
       result = result.substring(2);
     }
     // detects file separator
-    baseUnixSep = (result != null && result.indexOf('/') != -1);
+    baseUnixSep = (null != result && -1 != result.indexOf('/'));
     // adds starting file separator
-    if (result != null && result.length() >= 1 && result.charAt(0) != (baseUnixSep ? '/' : '\\')) {
+    if (null != result && 1 <= result.length() && result.charAt(0) != (baseUnixSep ? '/' : '\\')) {
       result = (baseUnixSep ? "/" : "\\") + result;
     }
     result = resultBase + result;
@@ -189,7 +181,7 @@ public class SilverpeasSettings {
       displayMessageln(NEW_LINE
           + "************************************************************************");
       displayMessageln("start settings of Silverpeas (" + new java.util.Date() + ").");
-      if (args.length != 0) {
+      if (0 != args.length) {
         throw new Exception("parameters forbidden");
       }
       File dirXml = new File(DIR_SETTINGS);
@@ -403,7 +395,7 @@ public class SilverpeasSettings {
   public static void printError(Exception ex) {
     StringWriter buffer = new StringWriter(2000);
     try {
-      if (bufLog != null) {
+      if (null != bufLog) {
         ex.printStackTrace(new PrintWriter(buffer));
         displayMessageln(NEW_LINE + buffer.toString());
         bufLog.close();
@@ -415,7 +407,7 @@ public class SilverpeasSettings {
   }
 
   public static void printError(String errMsg) {
-    if (bufLog != null) {
+    if (null != bufLog) {
       displayMessageln(NEW_LINE + errMsg);
       bufLog.close();
     }
@@ -427,7 +419,7 @@ public class SilverpeasSettings {
   }
 
   public static void displayMessage(String msg) {
-    if (bufLog != null) {
+    if (null != bufLog) {
       bufLog.print(msg);
       System.out.print(".");
     } else {
@@ -439,7 +431,7 @@ public class SilverpeasSettings {
     Element root = fXml.getDocument().getRootElement(); // Get the root element
     @SuppressWarnings("unchecked")
     List<Element> listeDependencies = root.getChildren(DEPENDENCIES_TAG);
-    if (listeDependencies != null && !listeDependencies.isEmpty()) {
+    if (null != listeDependencies && !listeDependencies.isEmpty()) {
       for (Element eltDependencies : listeDependencies) {
         @SuppressWarnings("unchecked")
         List<Element> listeDependencyFiles = eltDependencies.getChildren(SETTINGSFILE_TAG);
@@ -452,7 +444,7 @@ public class SilverpeasSettings {
               found = true;
             }
           }
-          if (found == false) {
+          if (!found) {
             return false;
           }
         }
@@ -485,7 +477,7 @@ public class SilverpeasSettings {
         String name = eltVar.getAttributeValue(FILE_NAME_ATTRIB);
         String value = gv.resolveAndEvalString(eltVar.getAttributeValue(VALUE_TAG));
         String relativePath = eltVar.getAttributeValue(RELATIVE_VALUE_ATTRIB);
-        if (relativePath != null && !relativePath.equals("")) {
+        if (null != relativePath && !relativePath.isEmpty()) {
           relativePath = gv.resolveAndEvalString(relativePath);
           value = getRelativePath(relativePath, value);
         }
@@ -539,9 +531,9 @@ public class SilverpeasSettings {
   protected static void executeScript(String dir, Element scriptElt, GestionVariables gv) throws
       Exception {
     String script = gv.resolveAndEvalString(scriptElt.getAttributeValue(FILE_NAME_ATTRIB));
-    if (scriptEngine != null) {
+    if (null != scriptEngine) {
       Binding withVariables = bindToVariables(gv);
-      if (dir != null && !dir.trim().isEmpty()) {
+      if (null != dir && !dir.trim().isEmpty()) {
         withVariables.setVariable("filesetRoot", gv.resolveAndEvalString(dir));
       }
       scriptEngine.run(script, withVariables);

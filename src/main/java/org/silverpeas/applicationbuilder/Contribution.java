@@ -26,10 +26,10 @@
 
 package org.silverpeas.applicationbuilder;
 
+import org.silverpeas.file.DirectoryLocator;
+
 import java.io.File;
 import java.util.Arrays;
-
-import org.silverpeas.installedtree.DirectoryLocator;
 
 /**
  * Uses one contribution file to provide the elements that can be included directly in the target
@@ -139,11 +139,11 @@ public class Contribution extends XmlDocument implements Comparable {
     }
     theEJBs = new ApplicationBuilderItem[names.length];
     boolean errorFound = false;
+    File ejbContribHomeDir = new File(DirectoryLocator.getEjbContribHome());
     for (int i = 0; i < names.length; i++) {
-      theEJBs[i] = new ApplicationBuilderItem(new File(DirectoryLocator
-          .getEjbContribHome()), names[i]);
+      theEJBs[i] = new ApplicationBuilderItem(ejbContribHomeDir, names[i]);
       if (!theEJBs[i].getPath().exists() || !theEJBs[i].getPath().canRead()) {
-        Log.add("\"" + theEJBs[i].getPath().getAbsolutePath()
+        Log.add('"' + theEJBs[i].getPath().getAbsolutePath()
             + "\" not found or not readable");
         errorFound = true;
       }
@@ -201,17 +201,16 @@ public class Contribution extends XmlDocument implements Comparable {
       return;
     }
     theLibrairies = new ReadOnlyArchive[names.length];
-    ReadOnlyArchive oneLib = null;
     boolean errorFound = false;
     for (int i = 0; i < names.length; i++) {
       try {
-        theLibrairies[i] = new ReadOnlyArchive(new File(DirectoryLocator
-            .getLibContribHome()), names[i]);
+        theLibrairies[i] = new ReadOnlyArchive(new File(DirectoryLocator.getLibContribHome()),
+            names[i]);
       } catch (AppBuilderException abe) {
         Log.add(abe);
         errorFound = true;
-      } // if
-    } // for
+      }
+    }
     if (errorFound) {
       theLibrairies = null;
       throw new AppBuilderException();
