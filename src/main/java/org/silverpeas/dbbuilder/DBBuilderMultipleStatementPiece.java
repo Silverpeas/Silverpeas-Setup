@@ -20,7 +20,7 @@
  */
 package org.silverpeas.dbbuilder;
 
-import org.silverpeas.file.StringUtil;
+import org.silverpeas.util.StringUtil;
 
 import java.sql.Connection;
 import java.util.ArrayList;

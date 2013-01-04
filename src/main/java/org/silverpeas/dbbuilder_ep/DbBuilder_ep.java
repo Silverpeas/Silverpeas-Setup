@@ -22,7 +22,7 @@ package org.silverpeas.dbbuilder_ep;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.dbbuilder.util.Configuration;
+import org.silverpeas.util.file.FileUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,8 +38,7 @@ public class DbBuilder_ep extends DbBuilderDynamicPart {
 
   static {
     try {
-      Properties propFile =
-          Configuration.loadResource("/org/silverpeas/domains/domainSP.properties");
+      Properties propFile = FileUtil.loadResource("/org/silverpeas/domains/domainSP.properties");
       m_PasswordEncryption = propFile.getProperty("database.SQLPasswordEncryption", "");
       needEncryption = ("CryptUnix").equalsIgnoreCase(m_PasswordEncryption);
     } catch (Exception e) {
@@ -67,7 +66,8 @@ public class DbBuilder_ep extends DbBuilderDynamicPart {
           if (clearPassword == null) {
             clearPassword = "";
           }
-          stmtUpdate = connection.prepareStatement("UPDATE DomainSP_User SET password = ? WHERE id= ?");
+          stmtUpdate =
+              connection.prepareStatement("UPDATE DomainSP_User SET password = ? WHERE id= ?");
           stmtUpdate.setString(1, jcrypt.crypt("SP", clearPassword));
           stmtUpdate.setInt(2, rs.getInt("id"));
           stmtUpdate.executeUpdate();

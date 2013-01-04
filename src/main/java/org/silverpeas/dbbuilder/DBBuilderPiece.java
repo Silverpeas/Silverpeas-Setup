@@ -24,7 +24,7 @@ import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.dbbuilder.sql.DbProcParameter;
 import org.silverpeas.dbbuilder.sql.QueryExecutor;
-import org.silverpeas.file.StringUtil;
+import org.silverpeas.util.StringUtil;
 
 import java.io.DataInputStream;
 import java.io.File;

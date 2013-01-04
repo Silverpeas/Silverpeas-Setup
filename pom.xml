@@ -40,11 +40,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.silverpeas.core</groupId>
-      <artifactId>lib-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.dbunit</groupId>
       <artifactId>dbunit</artifactId>
       <scope>test</scope>
@@ -115,6 +110,14 @@
       <artifactId>commons-io</artifactId>
     </dependency>
     <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
     </dependency>
@@ -144,6 +147,45 @@
       <artifactId>commons-dbutils</artifactId>
       <version>1.5</version>
     </dependency>
+
+     <dependency>
+      <groupId>javax.jcr</groupId>
+      <artifactId>jcr</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-jcr-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-jcr-server</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.jackrabbit</groupId>
+          <artifactId>jackrabbit-webdav</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-fileupload</groupId>
+          <artifactId>commons-fileupload</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-spi-commons</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -167,7 +209,7 @@
               <addClasspath>true</addClasspath>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <mainClass>org.silverpeas.SilverpeasSettings.SilverpeasSettings</mainClass>
+              <mainClass>org.silverpeas.settings.SilverpeasSettings</mainClass>
               <classpathLayoutType>custom</classpathLayoutType>
               <customClasspathLayout>lib/$${artifact.artifactId}.$${artifact.extension}</customClasspathLayout>
             </manifest>
@@ -194,4 +236,5 @@
       </plugin>
     </plugins>
   </build>
+
 </project>

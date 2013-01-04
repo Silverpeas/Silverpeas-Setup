@@ -1,32 +1,27 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 //Source file: R:\\StraProduct\\Pkg1.0\\Dev\\SrcJava\\Java\\ApplicationBuilder\\JBuilderEnv\\src\\com\\silverpeas\\applicationbuilder\\Contribution.java
-
 package org.silverpeas.applicationbuilder;
 
-import org.silverpeas.file.DirectoryLocator;
+import org.silverpeas.util.file.DirectoryLocator;
 
 import java.io.File;
 import java.util.Arrays;
@@ -40,26 +35,30 @@ import java.util.Arrays;
  */
 public class Contribution extends XmlDocument implements Comparable {
 
-  /** root tag */
+  /**
+   * root tag
+   */
   private static final String CONTRIBUTION_TAG = "contribution";
-
-  /** root attributes */
+  /**
+   * root attributes
+   */
   private static final String PRODUCT_ATTRIB = "product";
   private static final String TYPE_ATTRIB = "type";
   private static final String VERSION_ATTRIB = "version";
-
-  /** root children */
+  /**
+   * root children
+   */
   private static final String WEB_APP_TAG = "web-application";
   private static final String EJB_TAG = "ejb";
   private static final String CLIENT_TAG = "client";
   private static final String LIB_TAG = "library";
-
-  /** attributes */
+  /**
+   * attributes
+   */
   private ReadOnlyArchive theClientPart = null;
   private ApplicationBuilderItem[] theEJBs = null;
   private ReadOnlyArchive theWARPart = null;
   private ReadOnlyArchive[] theLibrairies = null;
-
   private String packageType = null;
 
   public Contribution(File contributionHome, String name)
@@ -193,7 +192,7 @@ public class Contribution extends XmlDocument implements Comparable {
   }
 
   /**
-	 */
+   */
   private void setLibraries() throws AppBuilderException {
     String names[] = getTagValues(LIB_TAG);
     if (names == null) {

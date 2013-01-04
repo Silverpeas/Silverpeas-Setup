@@ -1,40 +1,35 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 /**
- * Titre :        dbBuilder
- * Description :  Builder des BDs Silverpeas
- * Copyright :    Copyright (c) 2001
- * Société :      Silverpeas
+ * Titre : dbBuilder Description : Builder des BDs Silverpeas Copyright : Copyright (c) 2001 Société
+ * : Silverpeas
+ *
  * @author ATH
- * @version 1.0
- * Modifications:
- * 11/2004 - DLE - Modification ordre de passage des scripts (init après contraintes)
+ * @version 1.0 Modifications: 11/2004 - DLE - Modification ordre de passage des scripts (init après
+ * contraintes)
  */
 package org.silverpeas.dbbuilder;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.lang3.CharEncoding;
 import org.jdom.Element;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.dbbuilder.sql.FileInformation;
@@ -48,7 +43,7 @@ import org.silverpeas.dbbuilder.util.Action;
 import org.silverpeas.dbbuilder.util.CommandLineParameters;
 import org.silverpeas.dbbuilder.util.Configuration;
 import org.silverpeas.dbbuilder.util.DatabaseType;
-import org.silverpeas.file.FileUtil;
+import org.silverpeas.util.file.FileUtil;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.BufferedWriter;
@@ -70,6 +65,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.io.File.separatorChar;
 import static org.silverpeas.dbbuilder.Console.NEW_LINE;
 import static org.silverpeas.dbbuilder.DBBuilderItem.*;
 import static org.silverpeas.dbbuilder.util.Action.*;
@@ -88,7 +84,6 @@ public class DBBuilder {
   public static final String DBBuilderAppVersion = "V5";
   // Fichier log
   protected static Console log;
-
   static public final String CREATE_TABLE_TAG = "create_table";
   static public final String CREATE_INDEX_TAG = "create_index";
   static public final String CREATE_CONSTRAINT_TAG = "create_constraint";
@@ -151,7 +146,7 @@ public class DBBuilder {
       printMessageln("Start Database Build using Silverpeas DBBuilder v. " + DBBuilderAppVersion
           + " (" + TODAY + ").");
       // Lecture des variables d'environnement à partir de dbBuilderSettings
-      dbBuilderResources = Configuration.loadResource(
+      dbBuilderResources = FileUtil.loadResource(
           "/org/silverpeas/dbBuilder/settings/dbBuilderSettings.properties");
       // Lecture des paramètres d'entrée
       params = new CommandLineParameters(args);
@@ -183,9 +178,8 @@ public class DBBuilder {
         DBXmlDocument destXml = new DBXmlDocument(dirXml, MASTER_DBCONTRIBUTION_FILE);
         if (!destXml.getPath().exists()) {
           destXml.getPath().createNewFile();
-          BufferedWriter destXmlOut =
-              new BufferedWriter(new OutputStreamWriter(new FileOutputStream(destXml.getPath(),
-              false), "UTF-8"));
+          BufferedWriter destXmlOut = new BufferedWriter(new OutputStreamWriter(
+              new FileOutputStream(destXml.getPath(), false), CharEncoding.UTF_8));
           destXmlOut.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
           destXmlOut.newLine();
           destXmlOut.write("<allcontributions>");
@@ -208,19 +202,19 @@ public class DBBuilder {
         printMessageln("Ignored contribution files are :");
         int ignoredFiles = 0;
 
-        for (File f : listeFileXml) {
-          if (f.isFile() && "xml".equals(FileUtil.getExtension(f))
-              && !(FIRST_DBCONTRIBUTION_FILE.equalsIgnoreCase(f.getName()))
-              && !(MASTER_DBCONTRIBUTION_FILE.equalsIgnoreCase(f.getName()))) {
-            DBXmlDocument fXml = new DBXmlDocument(dirXml, f.getName());
+        for (File xmlFile : listeFileXml) {
+          if (xmlFile.isFile() && "xml".equals(FileUtil.getExtension(xmlFile))
+              && !(FIRST_DBCONTRIBUTION_FILE.equalsIgnoreCase(xmlFile.getName()))
+              && !(MASTER_DBCONTRIBUTION_FILE.equalsIgnoreCase(xmlFile.getName()))) {
+            DBXmlDocument fXml = new DBXmlDocument(dirXml, xmlFile.getName());
             fXml.load();
             // vérification des dépendances
             // & prise en compte uniquement si dependences OK
             if (hasUnresolvedRequirements(listeFileXml, fXml)) {
-              printMessageln('\t' + f.getName() + " (because of unresolved requirements).");
+              printMessageln('\t' + xmlFile.getName() + " (because of unresolved requirements).");
               ignoredFiles++;
             } else if (ACTION_ENFORCE_UNINSTALL == params.getAction()) {
-              printMessageln('\t' + f.getName() + " (because of " + ACTION_ENFORCE_UNINSTALL
+              printMessageln('\t' + xmlFile.getName() + " (because of " + ACTION_ENFORCE_UNINSTALL
                   + " mode).");
               ignoredFiles++;
             } else {
@@ -284,19 +278,17 @@ public class DBBuilder {
         List<String> itemsList = new ArrayList<String>();
 
         boolean foundDBBuilder = false;
-        for (String p : packagesIntoDB) {
-          if (!packagesIntoFile.containsKey(p)) {
+        for (String dbPackage : packagesIntoDB) {
+          if (!packagesIntoFile.containsKey(dbPackage)) {
             // Package en base et non en contribution -> candidat à desinstallation
-            if (DBBUILDER_MODULE.equalsIgnoreCase(p)) // le module a desinstaller est dbbuilder, on
-            // le garde sous le coude pour le traiter en dernier
-            {
+            if (DBBUILDER_MODULE.equalsIgnoreCase(dbPackage)) {
               foundDBBuilder = true;
             } else if (ACTION_ENFORCE_UNINSTALL == params.getAction()) {
-              if (p.equals(params.getModuleName())) {
-                itemsList.add(0, p);
+              if (dbPackage.equals(params.getModuleName())) {
+                itemsList.add(0, dbPackage);
               }
             } else {
-              itemsList.add(0, p);
+              itemsList.add(0, dbPackage);
             }
           }
         }
@@ -310,9 +302,9 @@ public class DBBuilder {
             itemsList.add(itemsList.size(), DBBUILDER_MODULE);
           }
         }
-        for (String p : itemsList) {
-          printMessageln("**** Treating " + p + " ****");
-          DBBuilderDBItem tmpdbbuilderItem = new DBBuilderDBItem(p);
+        for (String item : itemsList) {
+          printMessageln("**** Treating " + item + " ****");
+          DBBuilderDBItem tmpdbbuilderItem = new DBBuilderDBItem(item);
           mergeActionsToDo(tmpdbbuilderItem, destXml, processesToCacheIntoDB, sqlMetaInstructions);
         }
 
@@ -429,7 +421,7 @@ public class DBBuilder {
     if (pdbbuilderItem instanceof org.silverpeas.dbbuilder.DBBuilderFileItem) {
       DBBuilderFileItem dbbuilderItem = (DBBuilderFileItem) pdbbuilderItem;
       int iversionDB = -1;
-      if (!versionDB.equals(DBBuilderFileItem.NOTINSTALLED)) {
+      if (!versionDB.equals(NOTINSTALLED)) {
         iversionDB = Integer.parseInt(versionDB);
       }
       int iversionFile = Integer.parseInt(versionFile);
@@ -455,8 +447,8 @@ public class DBBuilder {
             || ACTION_CONSTRAINTS_INSTALL == params.getAction()
             || ACTION_CONSTRAINTS_UNINSTALL == params.getAction()) {
           if (-1 == iversionDB) {
-            printMessageln('\t' + package_name + " will be installed with version "
-                + versionFile + '.');
+            printMessageln('\t' + package_name + " will be installed with version " + versionFile +
+                '.');
             tags_to_merge = TAGS_TO_MERGE_4_INSTALL;
             blocks_merge = new VersionTag[1];
             blocks_merge[0] = new VersionTag(CURRENT_TAG, versionFile);
@@ -465,8 +457,7 @@ public class DBBuilder {
                 dbbuilderItem.getFileXml());
             // inscription du module en base
             sqlMetaInstructions.addInstruction(dbbuilderItem.getModule(),
-                new InstallSQLInstruction(
-                versionFile, package_name));
+                new InstallSQLInstruction(versionFile, package_name));
           } else {
             printMessageln('\t' + package_name + " will be upgraded from " + versionDB + " to "
                 + versionFile + '.');
@@ -476,7 +467,7 @@ public class DBBuilder {
             for (int i = 0; i < iversionFile - iversionDB; i++) {
               String sversionFile = "000" + (iversionDB + i);
               sversionFile = sversionFile.substring(sversionFile.length() - 3);
-              blocks_merge[i] = new VersionTag(DBBuilderFileItem.PREVIOUS_TAG, sversionFile);
+              blocks_merge[i] = new VersionTag(PREVIOUS_TAG, sversionFile);
             }
             // module upgradé -> il faut stocker en base sa nouvelle procedure de uninstall
             processesToCacheIntoDB.addInformation(dbbuilderItem.getModule(), package_name,
@@ -484,14 +475,13 @@ public class DBBuilder {
 
             // desinscription du module en base
             sqlMetaInstructions.addInstruction(dbbuilderItem.getModule(),
-                new UninstallSQLInstruction(
-                versionFile, package_name));
+                new UninstallSQLInstruction(versionFile, package_name));
           }
         } else if (ACTION_OPTIMIZE == params.getAction()) {
           printMessageln('\t' + package_name + " will be optimized.");
           tags_to_merge = TAGS_TO_MERGE_4_OPTIMIZE;
           blocks_merge = new VersionTag[1];
-          blocks_merge[0] = new VersionTag(DBBuilderFileItem.CURRENT_TAG, versionFile);
+          blocks_merge[0] = new VersionTag(CURRENT_TAG, versionFile);
         }
 
         // construction du xml global des actions d'upgrade de la base
@@ -635,19 +625,16 @@ public class DBBuilder {
           nbFiles++;
           if (FILEATTRIBSTATEMENT_VALUE.equals(value)) {
             // piece de type Single Statement
-            dbBuilderPiece =
-                new DBBuilderSingleStatementPiece(name, name + '(' + order + ')', nomTag, order.
-                intValue(), params.isVerbose());
+            dbBuilderPiece = new DBBuilderSingleStatementPiece(name, name + '(' + order + ')',
+                nomTag, order.intValue(), params.isVerbose());
           } else if (FILEATTRIBSEQUENCE_VALUE.equals(value)) {
             // piece de type Single Statement
-            dbBuilderPiece =
-                new DBBuilderMultipleStatementPiece(name, name + '(' + order + ')', nomTag, order.
-                intValue(), params.isVerbose(), delimiter, keepdelimiter);
+            dbBuilderPiece = new DBBuilderMultipleStatementPiece(name, name + '(' + order + ')',
+                nomTag, order.intValue(), params.isVerbose(), delimiter, keepdelimiter);
           } else if (FILEATTRIBDBPROC_VALUE.equals(value)) {
             // piece de type Database Procedure
-            dbBuilderPiece =
-                new DBBuilderDBProcPiece(name, name + '(' + order + ')', nomTag, order.intValue(),
-                params.isVerbose(), dbprocname);
+            dbBuilderPiece = new DBBuilderDBProcPiece(name, name + '(' + order + ')', nomTag,
+                order.intValue(), params.isVerbose(), dbprocname);
 
           }
           if (null != dbBuilderPiece) {
@@ -664,8 +651,7 @@ public class DBBuilder {
           String name = getCleanPath(eltFile.getAttributeValue(FILENAME_ATTRIB));
           String value = eltFile.getAttributeValue(FILETYPE_ATTRIB);
           String delimiter = eltFile.getAttributeValue(FILEDELIMITER_ATTRIB);
-          String skeepdelimiter =
-              eltFile.getAttributeValue(FILEKEEPDELIMITER_ATTRIB);
+          String skeepdelimiter = eltFile.getAttributeValue(FILEKEEPDELIMITER_ATTRIB);
           String dbprocname = eltFile.getAttributeValue(FILEDBPROCNAME_ATTRIB);
           boolean keepdelimiter = (null != skeepdelimiter && skeepdelimiter.equals("YES"));
           String classname = eltFile.getAttributeValue(FILECLASSNAME_ATTRIB);
@@ -674,26 +660,24 @@ public class DBBuilder {
           nbFiles++;
           if (FILEATTRIBSTATEMENT_VALUE.equals(value)) {
             // piece de type Single Statement
-            dbBuilderPiece =
-                new DBBuilderSingleStatementPiece(
-                Configuration.getPiecesFilesDir() + File.separatorChar + name,
-                nomTag, params.isVerbose());
+            dbBuilderPiece = new DBBuilderSingleStatementPiece(Configuration.getPiecesFilesDir()
+                + separatorChar + name, nomTag, params.isVerbose());
           } else if (FILEATTRIBSEQUENCE_VALUE.equals(value)) {
             dbBuilderPiece =
                 new DBBuilderMultipleStatementPiece(
-                Configuration.getPiecesFilesDir() + File.separatorChar + name,
+                Configuration.getPiecesFilesDir() + separatorChar + name,
                 nomTag, params.isVerbose(), delimiter, keepdelimiter);
           } else if (FILEATTRIBDBPROC_VALUE.equals(value)) {
             // piece de type Database Procedure
             dbBuilderPiece =
                 new DBBuilderDBProcPiece(
-                Configuration.getPiecesFilesDir() + File.separatorChar + name, nomTag,
+                Configuration.getPiecesFilesDir() + separatorChar + name, nomTag,
                 params.isVerbose(), dbprocname);
           } else if (FILEATTRIBJAVALIB_VALUE.equals(value)) {
             // piece de type Java invoke
             dbBuilderPiece =
                 new DBBuilderDynamicLibPiece(
-                Configuration.getPiecesFilesDir() + File.separatorChar + name,
+                Configuration.getPiecesFilesDir() + separatorChar + name,
                 nomTag, params.isVerbose(), classname, methodname);
           }
           if (null != dbBuilderPiece) {
@@ -706,9 +690,8 @@ public class DBBuilder {
         printMessageln('\t' + tagsToProcess[i] + " : (none)");
       }
     }
-    final List<SQLInstruction> sqlMetaInstructions =
-        metaInstructions.getInstructions(moduleRoot.getAttributeValue(
-        DBXmlDocument.ATT_MODULE_ID));
+    final List<SQLInstruction> sqlMetaInstructions = metaInstructions.getInstructions(
+        moduleRoot.getAttributeValue(DBXmlDocument.ATT_MODULE_ID));
     // Mise à jour des versions en base
     if (sqlMetaInstructions.isEmpty()) {
       printMessageln("\tdbbuilder meta base maintenance : (none)");
@@ -763,22 +746,22 @@ public class DBBuilder {
               if (valueU.equals(FILEATTRIBSTATEMENT_VALUE)) {
                 // piece de type Single Statement
                 pU =
-                    new DBBuilderSingleStatementPiece(Configuration.getPiecesFilesDir() +
-                    File.separatorChar
+                    new DBBuilderSingleStatementPiece(Configuration.getPiecesFilesDir()
+                    + separatorChar
                     + nameU, tagsToProcessU[i], params.isVerbose());
                 pU.cacheIntoDB(connection, pName, iFile);
               } else if (valueU.equals(FILEATTRIBSEQUENCE_VALUE)) {
                 // piece de type Single Statement
                 pU =
-                    new DBBuilderMultipleStatementPiece(Configuration.getPiecesFilesDir() +
-                    File.separatorChar
+                    new DBBuilderMultipleStatementPiece(Configuration.getPiecesFilesDir()
+                    + separatorChar
                     + nameU, tagsToProcessU[i], params.isVerbose(), delimiterU,
                     keepdelimiterU);
                 pU.cacheIntoDB(connection, pName, iFile);
               } else if (valueU.equals(FILEATTRIBDBPROC_VALUE)) {
                 // piece de type Database Procedure
                 pU = new DBBuilderDBProcPiece(
-                    Configuration.getPiecesFilesDir() + File.separatorChar + nameU,
+                    Configuration.getPiecesFilesDir() + separatorChar + nameU,
                     tagsToProcessU[i], params.isVerbose(), dbprocnameU);
                 pU.cacheIntoDB(connection, pName, iFile);
               }
@@ -795,8 +778,8 @@ public class DBBuilder {
   }
 
   private static String getCleanPath(String name) {
-    String path = name.replace('/', File.separatorChar);
-    return path.replace('\\', File.separatorChar);
+    String path = name.replace('/', separatorChar);
+    return path.replace('\\', separatorChar);
   }
 
   private DBBuilder() {

@@ -1,42 +1,37 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.dbbuilder_ep;
 
-/****************************************************************************
- * jcrypt.java Java-based implementation of the unix crypt command Based upon C source code written
- * by Eric Young, eay@psych.uq.oz.au
- ****************************************************************************/
-
+/**
+ * ************************************************************************** jcrypt.java Java-based
+ * implementation of the unix crypt command Based upon C source code written by Eric Young,
+ * eay@psych.uq.oz.au **************************************************************************
+ */
 // package com.stratelia.silverpeas.util;
-
 public class jcrypt {
+
   private jcrypt() {
   }
 
   private static final int ITERATIONS = 16;
-
   private static final int con_salt[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -49,10 +44,8 @@ public class jcrypt {
       0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36,
       0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x00, 0x00, 0x00,
       0x00, 0x00, };
-
   private static final boolean shifts2[] = { false, false, true, true, true,
       true, true, true, false, true, true, true, true, true, true, false };
-
   private static final int skb[][] = {
       {
         /* for C bits (numbered as per FIPS 46) 1 2 3 4 5 6 */
@@ -174,7 +167,6 @@ public class jcrypt {
       0x04040820, 0x00000822, 0x04000822, 0x00040822, 0x04040822,
       0x00002820, 0x04002820, 0x00042820, 0x04042820, 0x00002822,
       0x04002822, 0x00042822, 0x04042822, }, };
-
   private static final int SPtrans[][] = {
       {
         /* nibble 0 */
@@ -296,7 +288,6 @@ public class jcrypt {
       0x08000020, 0x00208000, 0x00008020, 0x08008020, 0x08200000,
       0x00000020, 0x08208000, 0x00208020, 0x00000000, 0x08000000,
       0x08200020, 0x00008000, 0x00208020 } };
-
   private static final int cov_2char[] = { 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33,
       0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46,
       0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52,

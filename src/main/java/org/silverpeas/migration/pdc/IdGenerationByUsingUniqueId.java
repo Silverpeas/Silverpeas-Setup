@@ -45,7 +45,6 @@ public class IdGenerationByUsingUniqueId extends DbBuilderDynamicPart {
       "insert into UniqueId(maxId, tableName) values(?, ?)";
   private static final String GREATER_ID_FETCHING = "select max(id) from {0}";
   private static final String[] TABLES_TO_MIGRATE = { "PdcPosition", "PdcClassification" };
-
   private boolean defaultAutocommitStatus = true;
 
   public void migrate() throws Exception {

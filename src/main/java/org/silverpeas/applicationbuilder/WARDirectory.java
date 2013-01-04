@@ -1,28 +1,26 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.applicationbuilder;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -46,7 +44,6 @@ public class WARDirectory extends ApplicationBuilderItem {
 
   private File warDir = null;
   private Map<String, String> alreadyAddedFiles = new HashMap<String, String>();
-
   int BUFSIZE = 16384;
   byte[] data = new byte[BUFSIZE];
 
@@ -73,11 +70,10 @@ public class WARDirectory extends ApplicationBuilderItem {
     OutputStream out = null;
     try {
       File entry = getNormalizedEntry(xmlDoc.getLocation());
-      out = new BufferedOutputStream(new FileOutputStream(new File(entry,
-          xmlDoc.getName())));
+      out = new BufferedOutputStream(new FileOutputStream(new File(entry, xmlDoc.getName())));
       xmlDoc.saveTo(out);
       out.flush();
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new AppBuilderException(getName() + " : impossible to add the document \""
           + xmlDoc.getArchivePath() + '"', e);
     } finally {
@@ -96,11 +92,9 @@ public class WARDirectory extends ApplicationBuilderItem {
     try {
       add(entry, entry.getPath().toURI().toURL().openStream());
     } catch (MalformedURLException mue) {
-      throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + '"', mue);
+      throw new AppBuilderException(getName() + " : could not add \"" + entry.getName() + '"', mue);
     } catch (IOException ioe) {
-      throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + '"', ioe);
+      throw new AppBuilderException(getName() + " : could not add \"" + entry.getName() + '"', ioe);
     }
   }
 
@@ -142,9 +136,9 @@ public class WARDirectory extends ApplicationBuilderItem {
     for (int iEntry = 0; iEntry < entries.length; iEntry++) {
       if (!filterOn || !entriesToExclude.contains(entries[iEntry].getArchivePath())) {
         if (alreadyAddedFiles.containsKey(entries[iEntry].getArchivePath())) {
-          Log.add(getName() + " : already added from \"" +
-              alreadyAddedFiles.get(entries[iEntry].getArchivePath()) + "\" : \""
-              + archive.getName() + '!' + entries[iEntry].getArchivePath() + "\" ");
+          Log.add(getName() + " : already added from \"" + alreadyAddedFiles.get(entries[iEntry].
+              getArchivePath()) + "\" : \"" + archive.getName() + '!'
+              + entries[iEntry].getArchivePath() + "\" ");
         } else {
           alreadyAddedFiles.put(entries[iEntry].getArchivePath(), archive.getName());
           add(entries[iEntry], archive.getEntry(entries[iEntry]));
@@ -164,7 +158,7 @@ public class WARDirectory extends ApplicationBuilderItem {
       if (out != null) {
         out.close();
       }
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new AppBuilderException("Impossible to close the stream", e);
     }
   }
@@ -187,25 +181,18 @@ public class WARDirectory extends ApplicationBuilderItem {
       } else {
         destEntry = warDir;
       }
-      out = new BufferedOutputStream(new FileOutputStream(new File(destEntry,
-          entry.getName())));
+      out = new BufferedOutputStream(new FileOutputStream(new File(destEntry, entry.getName())));
     } catch (Exception e) {
-      throw new AppBuilderException(getName()
-          + " : impossible to create new entry \"" + entry.getArchivePath()
-          + '"', e);
+      throw new AppBuilderException(getName() + " : impossible to create new entry \""
+          + entry.getArchivePath() + '"', e);
     }
     try {
-      int bytesRead;
-      while ((bytesRead = contents.read(data, 0, BUFSIZE)) > 0) {
-        out.write(data, 0, bytesRead);
-      }
-      contents.close();
-      out.flush();
-    } catch (Exception e) {
-      throw new AppBuilderException(getName()
-          + " : impossible to write contents of \"" + entry.getArchivePath()
-          + '"', e);
+      IOUtils.copy(contents, out);
+    } catch (IOException e) {
+      throw new AppBuilderException(getName() + " : impossible to write contents of \""
+          + entry.getArchivePath() + '"', e);
     } finally {
+      IOUtils.closeQuietly(contents);
       close(out);
     }
   }

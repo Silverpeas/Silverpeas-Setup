@@ -37,7 +37,6 @@ import java.io.PrintWriter;
 public final class Console {
 
   public static final String NEW_LINE = System.getProperty("line.separator");
-
   private File logFile;
   private PrintWriter logBuffer;
 
@@ -59,7 +58,6 @@ public final class Console {
    * Creates and open a console upon the standard system output.
    */
   public Console() {
-
   }
 
   public void printError(String errMsg, Exception ex) {
