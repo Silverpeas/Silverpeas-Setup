@@ -20,13 +20,14 @@
  */
 package org.silverpeas.util.xml.transform;
 
-import org.jdom.Element;
-import org.silverpeas.util.GestionVariables;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.jdom.Element;
+
+import org.silverpeas.util.GestionVariables;
 
 import static org.silverpeas.settings.SilverpeasSettings.*;
 
@@ -56,11 +57,11 @@ public class XmlConfiguration {
         } else {
           for (Element eltValue : eltValues) {
             String relativePath = eltValue.getAttributeValue(RELATIVE_VALUE_ATTRIB);
-            if (relativePath != null && relativePath != null && !relativePath.isEmpty()) {
+            if (relativePath != null && !relativePath.isEmpty()) {
               relativePath = gv.resolveAndEvalString(relativePath);
             }
             String location = eltValue.getAttributeValue(VALUE_LOCATION_ATTRIB);
-            if (location != null && location != null && !location.isEmpty()) {
+            if (location != null && !location.isEmpty()) {
               location = gv.resolveAndEvalString(location);
             }
             parameter.addValue(new Value(location, relativePath, gv.resolveAndEvalString(

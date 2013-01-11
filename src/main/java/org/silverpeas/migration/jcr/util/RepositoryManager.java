@@ -23,49 +23,59 @@
  */
 package org.silverpeas.migration.jcr.util;
 
-import org.apache.jackrabbit.api.JackrabbitRepository;
-import org.apache.jackrabbit.commons.JcrUtils;
-import org.apache.jackrabbit.core.RepositoryFactoryImpl;
-import org.silverpeas.util.SilverpeasHomeResolver;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.jcr.SimpleCredentials;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.nodetype.InvalidNodeTypeDefinitionException;
+import javax.jcr.nodetype.NodeTypeExistsException;
+
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
+import org.apache.jackrabbit.api.JackrabbitRepository;
+import org.apache.jackrabbit.commons.JcrUtils;
+import org.apache.jackrabbit.commons.cnd.CndImporter;
+import org.apache.jackrabbit.commons.cnd.ParseException;
+import org.apache.jackrabbit.core.RepositoryFactoryImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.silverpeas.util.SilverpeasHomeResolver;
 
 /**
  * @author ehugonnet
  */
 public class RepositoryManager {
 
+  private static final Logger logger = LoggerFactory.getLogger(RepositoryManager.class);
   private JackrabbitRepository repository;
 
   public RepositoryManager() {
     try {
-      String conf = getClass().getClassLoader().getResource("repository.xml").toURI().toURL().
-          toString();
-      String repositoryHome = SilverpeasHomeResolver.getHome() + File.separatorChar + "data"
-          + File.separatorChar + "jackrabbit";
+      String conf = SilverpeasHomeResolver.getHome() + File.separatorChar + "setup"
+          + File.separatorChar + "jackrabbit" + File.separatorChar + "repository.xml";
+      String repositoryHome = SilverpeasHomeResolver.getDataHome() + File.separatorChar
+          + "jackrabbit";
       initRepository(repositoryHome, conf);
-    } catch (URISyntaxException ex) {
-      Logger.getLogger(RepositoryManager.class.getName()).log(Level.SEVERE, null, ex);
-    } catch (MalformedURLException ex) {
-      Logger.getLogger(RepositoryManager.class.getName()).log(Level.SEVERE, null, ex);
     } catch (RepositoryException ex) {
-      Logger.getLogger(RepositoryManager.class.getName()).log(Level.SEVERE, null, ex);
+      logger.error("Error during JCR repository initalisation", ex);
+    } catch (IOException ex) {
+      logger.error("Error during JCR repository initalisation", ex);
     }
   }
 
-  public RepositoryManager(String repositoryHome, String conf) {
+  public RepositoryManager(String repositoryHome, String repositoryXml) {
     try {
-      initRepository(repositoryHome, conf);
+      initRepository(repositoryHome, repositoryXml);
     } catch (RepositoryException ex) {
-      Logger.getLogger(RepositoryManager.class.getName()).log(Level.SEVERE, null, ex);
+      logger.error("Error during JCR repository initalisation", ex);
     }
   }
 
@@ -74,10 +84,31 @@ public class RepositoryManager {
     parameters.put(RepositoryFactoryImpl.REPOSITORY_HOME, repositoryHome);
     parameters.put(RepositoryFactoryImpl.REPOSITORY_CONF, conf);
     repository = (JackrabbitRepository) JcrUtils.getRepository(parameters);
+    Reader reader = new InputStreamReader(
+        this.getClass().getClassLoader().getResourceAsStream("silverpeas-jcr.txt"), Charsets.UTF_8);
+    try {
+      Session session = getSession();
+      CndImporter.registerNodeTypes(reader, session);
+      session.save();
+      session.logout();
+    } catch (InvalidNodeTypeDefinitionException ex) {
+      logger.error("Error during JCR repository initalisation", ex);
+    } catch (NodeTypeExistsException ex) {
+      logger.error("Error during JCR repository initalisation", ex);
+    } catch (UnsupportedRepositoryOperationException ex) {
+      logger.error("Error during JCR repository initalisation", ex);
+    } catch (ParseException ex) {
+      logger.error("Error during JCR repository initalisation", ex);
+    } catch (IOException ex) {
+      logger.error("Error during JCR repository initalisation", ex);
+    } finally {
+      IOUtils.closeQuietly(reader);
+    }
   }
 
   public Session getSession() throws RepositoryException {
-    return repository.login(/* new SilverpeasSystemCredentials() */);
+    return repository.
+        login(new SimpleCredentials("admin", "admin".toCharArray())/* new SilverpeasSystemCredentials() */);
   }
 
   public void logout(Session session) {

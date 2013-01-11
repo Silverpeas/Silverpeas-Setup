@@ -122,6 +122,9 @@ public class DateUtil {
    * @throws ParseException
    */
   public static Date parse(String date) throws ParseException {
+    if (!StringUtil.isDefined(date)) {
+      return null;
+    }
     synchronized (DATE_PARSER) {
       return DATE_PARSER.parse(date);
     }
@@ -135,6 +138,9 @@ public class DateUtil {
    * @throws ParseException
    */
   public static Date parse(String date, String format) throws ParseException {
+    if (!StringUtil.isDefined(date)) {
+      return null;
+    }
     SimpleDateFormat sdf = new SimpleDateFormat(format);
     return sdf.parse(date);
   }

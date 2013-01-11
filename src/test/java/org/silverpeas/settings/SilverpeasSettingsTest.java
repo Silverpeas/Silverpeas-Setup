@@ -49,8 +49,8 @@ import static org.silverpeas.settings.SilverpeasSettings.*;
  */
 public class SilverpeasSettingsTest {
 
-  private static final String resourcesDir = System.getProperty("basedir") + separatorChar +
-       "target" + separatorChar + "test-classes" + separatorChar;
+  private static final String resourcesDir = System.getProperty("basedir") + separatorChar
+      + "target" + separatorChar + "test-classes" + separatorChar;
 
   public SilverpeasSettingsTest() {
   }
@@ -62,7 +62,6 @@ public class SilverpeasSettingsTest {
     System.setProperty("JBOSS_HOME", resourcesDir);
   }
 
-
   /**
    * Test of loadGlobalVariables method, of class settings.
    *
@@ -71,11 +70,11 @@ public class SilverpeasSettingsTest {
   @Test
   public void testLoadGlobalVariables() throws Exception {
     SAXBuilder builder = new SAXBuilder();
-    Document doc = builder.build(new File(
-        resourcesDir + "expected" + separatorChar + "MergedSettings.xml"));
+    Document doc = builder.build(new File(resourcesDir + "expected" + separatorChar
+        + "MergedSettings.xml"));
     // Get the root element
     Element root = doc.getRootElement();
-    GestionVariables gv = SilverpeasSettings.loadGlobalVariables(new File(
+    GestionVariables gv = new SilverpeasSettings().loadGlobalVariables(new File(
         resourcesDir + "expected"), root);
     Assert.assertEquals("test@silverpeas.com", gv.getValue("ADMIN_EMAIL"));
     Assert.assertEquals("http://www.silverpeas.com", gv.getValue("URL_SERVER"));
@@ -86,7 +85,7 @@ public class SilverpeasSettingsTest {
   @Test
   public void testLoadConfiguration() throws Exception {
     File dir = new File(resourcesDir + "xml");
-    GestionVariables properties = SilverpeasSettings.loadConfiguration(dir);
+    GestionVariables properties = new SilverpeasSettings().loadConfiguration(dir);
     Assert.assertEquals("c:/toto", properties.getValue("SILVERPEAS_HOME"));
     Assert.assertEquals("http://localhost:8000", properties.getValue("URL_SERVER"));
     Assert.assertEquals("80", properties.getValue("JBOSS_LISTEN_PORT"));
@@ -103,12 +102,12 @@ public class SilverpeasSettingsTest {
     File dirXml = new File(resourcesDir + "xml");
     XmlDocument fileXml = new XmlDocument(dirXml, SILVERPEAS_SETTINGS);
     fileXml.load();
-    mergeConfigurationFiles(fileXml, dirXml);
+    new SilverpeasSettings().mergeConfigurationFiles(fileXml, dirXml);
     fileXml.setOutputEncoding("UTF-8");
     XMLOutputter output = new XMLOutputter(Format.getPrettyFormat());
 
-    File tempDir = new File(System.getProperty("basedir") + separatorChar + "target" +
-         separatorChar + "temp");
+    File tempDir = new File(System.getProperty("basedir") + separatorChar + "target" + separatorChar
+        + "temp");
     tempDir.mkdirs();
     File mergedFile = new File(tempDir, "merge_result.xml");
     OutputStream out = new FileOutputStream(mergedFile);
@@ -117,8 +116,8 @@ public class SilverpeasSettingsTest {
     @SuppressWarnings("unchecked")
     List<String> resultLines = FileUtils.readLines(mergedFile, "UTF-8");
     @SuppressWarnings("unchecked")
-    List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + "expected" +
-         separatorChar + "MergedSettings.xml"), "UTF-8");
+    List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + "expected"
+        + separatorChar + "MergedSettings.xml"), "UTF-8");
     Assert.assertNotNull(resultLines);
     Assert.assertEquals(expectedtLines.size(), resultLines.size());
     for (int i = 0; i < resultLines.size(); i++) {
@@ -144,25 +143,27 @@ public class SilverpeasSettingsTest {
     values = new ArrayList<Element>(2);
     values.add(getValueElement("@docBase", "${SILVERPEAS_DATA_HOME_DEPENDANT}/data/weblib"));
     values.add(getValueElement("@path", "/weblib"));
-    element.addContent(getParameterElement("/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/" +
-         "Host[@name='localhost']/Context[@path='/weblib']", "update", values));
+    element.addContent(getParameterElement(
+        "/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/"
+        + "Host[@name='localhost']/Context[@path='/weblib']", "update", values));
     values = new ArrayList<Element>(2);
     values.add(getValueElement("@docBase", "${SILVERPEAS_DATA_HOME_DEPENDANT}/data/website"));
     values.add(getValueElement("@path", "/website"));
-    element.addContent(getParameterElement("//Service[@name='jboss.web']/Engine[@name='jboss.web']" +
-         "/Host[@name='localhost']/Context[@path='/website']", "update", values));
+    element.addContent(getParameterElement("//Service[@name='jboss.web']/Engine[@name='jboss.web']"
+        + "/Host[@name='localhost']/Context[@path='/website']", "update", values));
     values = new ArrayList<Element>(2);
     values.add(getValueElement("@docBase", "${SILVERPEAS_HOME_DEPENDANT}/help/fr"));
     values.add(getValueElement("@path", "/help_fr"));
-    element.addContent(getParameterElement("/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/" +
-         "Host[@name='localhost']/Context[@path='/help_fr']", "update", values));
-    xmlfile(dir, element, gestion);
+    element.addContent(getParameterElement(
+        "/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/"
+        + "Host[@name='localhost']/Context[@path='/help_fr']", "update", values));
+    new SilverpeasSettings().xmlfile(dir, element, gestion);
     @SuppressWarnings("unchecked")
-    List<String> resultLines = FileUtils.readLines(new File(resourcesDir + "transform" +
-         separatorChar + "jbossweb-tomcat55.sar" + separatorChar + "server.xml"), "UTF-8");
+    List<String> resultLines = FileUtils.readLines(new File(resourcesDir + "transform"
+        + separatorChar + "jbossweb-tomcat55.sar" + separatorChar + "server.xml"), "UTF-8");
     @SuppressWarnings("unchecked")
-    List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + "expected_transform" +
-         separatorChar + "server.xml"), "UTF-8");
+    List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + "expected_transform"
+        + separatorChar + "server.xml"), "UTF-8");
     Assert.assertNotNull(resultLines);
     Assert.assertEquals(expectedtLines.size(), resultLines.size());
     for (int i = 0; i < resultLines.size(); i++) {

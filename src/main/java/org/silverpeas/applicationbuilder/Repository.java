@@ -20,13 +20,14 @@
  */
 package org.silverpeas.applicationbuilder;
 
-import org.silverpeas.util.file.DirectoryLocator;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.silverpeas.util.Console;
+import org.silverpeas.util.file.DirectoryLocator;
 
 /**
  * @todo vérifier l'existence des répertoires attendus avant de laisser planter X fois pour les
@@ -40,22 +41,23 @@ public class Repository {
    */
   private class ContributionFilter implements FilenameFilter {
 
-    private String contributionFileSuffix = "-contribution.xml";
+    private final String contributionFileSuffix = "-contribution.xml";
 
-    public ContributionFilter() {
+    ContributionFilter() {
     }
 
+    @Override
     public boolean accept(java.io.File dir, String name) {
       return name.toLowerCase().endsWith(contributionFileSuffix.toLowerCase());
     }
   } // ContributionFilter
-
   private Contribution[] theContributions = null;
-  private List theBusContributions = null;
-  private List thePeasContributions = null;
-  private String appServerSpecificSubdir = null;
+  private List<Contribution> theBusContributions = null;
+  private List<Contribution> thePeasContributions = null;
+  private final Console console;
 
-  public Repository() throws AppBuilderException {
+  public Repository(final Console console) throws AppBuilderException {
+    this.console = console;
     setContributions();
   }
 
@@ -67,11 +69,11 @@ public class Repository {
     return theContributions;
   }
 
-  public List getBusContributions() {
+  public List<Contribution> getBusContributions() {
     return theBusContributions;
   }
 
-  public List getPeasContributions() {
+  public List<Contribution> getPeasContributions() {
     return thePeasContributions;
   }
 
@@ -87,26 +89,25 @@ public class Repository {
       contributionNames = new String[0];
     }
     theContributions = new Contribution[contributionNames.length];
-    thePeasContributions = new ArrayList();
-    theBusContributions = new ArrayList();
+    thePeasContributions = new ArrayList<Contribution>();
+    theBusContributions = new ArrayList<Contribution>();
     int errorCount = 0;
     for (int i = 0; i < contributionNames.length; i++) {
       try {
-        theContributions[i] = new Contribution(contribDir, contributionNames[i]);
+        theContributions[i] = new Contribution(contribDir, contributionNames[i], console);
         if (theContributions[i].isApplicativeBusPackage()) {
           theBusContributions.add(theContributions[i]);
         } else {
           thePeasContributions.add(theContributions[i]);
         }
       } catch (AppBuilderException abe) {
-        Log.add(abe);
+        console.printError("Error in abtaining the contributions ", abe);
         errorCount++;
         errorFound = true;
       }
     }
     if (errorFound) {
-      throw new AppBuilderException("found errors related to "
-          + Integer.toString(errorCount) + " contribution files");
+      throw new AppBuilderException("found errors related to " + errorCount + " contribution files");
     }
     Arrays.sort(theContributions);
   }

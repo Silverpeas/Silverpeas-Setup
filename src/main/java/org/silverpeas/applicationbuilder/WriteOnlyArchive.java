@@ -33,34 +33,41 @@ import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
+import org.apache.commons.io.IOUtils;
+import org.silverpeas.util.Console;
+
 /**
  * Convenient class for building archive
+ *
  * @author Silverpeas
  * @version 1.0/B
  * @since 1.0/B
  */
 public class WriteOnlyArchive extends ApplicationBuilderItem {
 
+  protected Console console;
   protected static final String MANIFEST_PATH = "META-INF" + File.separator + "MANIFEST.MF";
   private Set<String> alreadyAddedDirs = new HashSet<String>();
   private Map<String, String> alreadyAddedFiles = new HashMap<String, String>();
   private JarOutputStream jarOut = null;
-  int BUFSIZE = 16384;
-  byte[] data = new byte[BUFSIZE];
 
   /**
    * Builder for a write only archive.
+   *
    * @param directory The absolute path to the directory hosting the archive
    * @param fileName The name of the archive in the file system
    * @since 1.0
    */
-  public WriteOnlyArchive(File directory, String fileName) throws AppBuilderException {
+  public WriteOnlyArchive(File directory, String fileName, Console sonsole) throws
+      AppBuilderException {
     super(directory, fileName);
+    this.console = console;
     setOutputStream();
   }
 
   /**
    * Adds an XML file in the archive by the means of streams.
+   *
    * @param xmlDoc the XML document to add in the archive
    * @since 1.0
    * @roseuid 3AAF4D630303
@@ -75,14 +82,14 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
       getOutputStream().flush();
       getOutputStream().closeEntry();
     } catch (Exception e) {
-      throw new AppBuilderException(getName()
-          + " : impossible to add the document \"" + xmlDoc.getArchivePath()
-          + '"', e);
+      throw new AppBuilderException(getName() + " : impossible to add the document \""
+          + xmlDoc.getArchivePath() + '"', e);
     }
   }
 
   /**
    * Adds an entry to the archive. The entry added is fetched from the file system
+   *
    * @param entry the file to add
    * @since 1.0
    * @roseuid 3AAF55F2017D
@@ -91,16 +98,15 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
     try {
       add(entry, entry.getPath().toURI().toURL().openStream());
     } catch (MalformedURLException mue) {
-      throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + '"', mue);
+      throw new AppBuilderException(getName() + " : could not add \"" + entry.getName() + '"', mue);
     } catch (IOException ioe) {
-      throw new AppBuilderException(getName() + " : could not add \""
-          + entry.getName() + '"', ioe);
+      throw new AppBuilderException(getName() + " : could not add \"" + entry.getName() + '"', ioe);
     }
   }
 
   /**
    * Merges an archive with this archive.
+   *
    * @param archive the archive to merge
    * @since 1.0
    */
@@ -110,6 +116,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
 
   /**
    * Merges an archive with this archive filtering the entries to exclude one of them.
+   *
    * @param archive the archive to merge
    * @param entryToExclude the entry to exclude from merge. Contains the archive path of the entry
    * to exclude.
@@ -124,30 +131,29 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
 
   /**
    * Merges an archive with this archive filtering the entries to exclude some of them.
+   *
    * @param archive the archive to merge
    * @param entriesToExclude the entries to exclude from merge. Contains the archive paths of the
    * entries to exclude.
-   * @since 1.0
+   * @throws AppBuilderException
    */
-  public void mergeWith(ReadOnlyArchive archive, Set entriesToExclude)
-      throws AppBuilderException {
+  public void mergeWith(ReadOnlyArchive archive, Set<String> entriesToExclude) throws AppBuilderException {
     ApplicationBuilderItem[] entries = archive.getEntries();
-    ApplicationBuilderItem myEntry = null;
-    boolean filterOn = ((entriesToExclude != null) && (!entriesToExclude
-        .isEmpty()));
-    for (int iEntry = 0; iEntry < entries.length; iEntry++) {
-      if (!filterOn
-          || !entriesToExclude.contains(entries[iEntry].getArchivePath())) {
-        if (alreadyAddedFiles.containsKey(entries[iEntry].getArchivePath())) {
-          Log.add(getName()
-              + " : already added from \""
-              + alreadyAddedFiles.get(entries[iEntry].getArchivePath()) + "\" : \""
-              + archive.getName() + '!' + entries[iEntry].getArchivePath()
-              + "\" ");
+    boolean filterOn = ((entriesToExclude != null) && (!entriesToExclude.isEmpty()));
+    for (ApplicationBuilderItem myEntry : entries) {
+      if (!filterOn || !entriesToExclude.contains(myEntry.getArchivePath())) {
+        if (alreadyAddedFiles.containsKey(myEntry.getArchivePath())) {
+          console.printMessage(getName() + " : already added from \"" + alreadyAddedFiles.get(
+              myEntry.getArchivePath()) + "\" : \"" + archive.getName() + '!' + myEntry.
+              getArchivePath() + "\" ");
         } else {
-          alreadyAddedFiles.put(entries[iEntry].getArchivePath(), archive
-              .getName());
-          add(entries[iEntry], archive.getEntry(entries[iEntry]));
+          alreadyAddedFiles.put(myEntry.getArchivePath(), archive.getName());
+          InputStream contents = archive.getEntry(myEntry);
+          try {
+            add(myEntry, contents);
+          } finally {
+            IOUtils.closeQuietly(contents);
+          }
         }
       }
     }
@@ -155,6 +161,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
 
   /**
    * When all entries have been added, call this method to close the archive
+   *
    * @roseuid 3AB1EAFE02FD
    */
   public void close() throws AppBuilderException {
@@ -168,35 +175,31 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
   /**
    * Adds a new entry from a stream. The entry is placed and named according to the entry. It can be
    * usefull when merging two archives.
+   *
    * @param entry the description of the new entry
    * @param in the stream carrying the contents of the new entry
    * @since 1.0
-   * @roseuid 3AB26A5F00FD
    */
-  public void add(ApplicationBuilderItem entry, InputStream contents)
-      throws AppBuilderException {
+  public void add(ApplicationBuilderItem entry, InputStream contents) throws AppBuilderException {
     try {
       addDirectory(entry.getLocation());
       ZipEntry destEntry = getNormalizedEntry(entry.getArchivePath());
       destEntry.setSize(entry.getSize());
       getOutputStream().putNextEntry(destEntry);
     } catch (Exception e) {
-      throw new AppBuilderException(getName()
-          + " : impossible to create new entry \"" + entry.getArchivePath()
-          + '"', e);
+      throw new AppBuilderException(getName() + " : impossible to create new entry \"" + entry.
+          getArchivePath() + '"', e);
     }
     try {
-      int bytesRead;
-      while ((bytesRead = contents.read(data, 0, BUFSIZE)) > 0) {
-        getOutputStream().write(data, 0, bytesRead);
-      }
+      IOUtils.copy(contents, getOutputStream());
       contents.close();
       getOutputStream().flush();
       getOutputStream().closeEntry();
     } catch (Exception e) {
-      throw new AppBuilderException(getName()
-          + " : impossible to write contents of \"" + entry.getArchivePath()
-          + '"', e);
+      throw new AppBuilderException(getName() + " : impossible to write contents of \"" + entry.
+          getArchivePath() + '"', e);
+    } finally {
+      IOUtils.closeQuietly(contents);
     }
   }
 
@@ -210,8 +213,7 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
       jarOut = new JarOutputStream(out);
       jarOut.setMethod(JarOutputStream.DEFLATED);
     } catch (Exception e) {
-      throw new AppBuilderException(getPath().getAbsolutePath()
-          + " : impossible to create", e);
+      throw new AppBuilderException(getPath().getAbsolutePath() + " : impossible to create", e);
     }
   }
 
@@ -223,11 +225,9 @@ public class WriteOnlyArchive extends ApplicationBuilderItem {
       return;
     }
     if (directory.lastIndexOf(File.separator) != -1) {
-      addDirectory(directory
-          .substring(0, directory.lastIndexOf(File.separator)));
+      addDirectory(directory.substring(0, directory.lastIndexOf(File.separator)));
     }
-    getOutputStream().putNextEntry(
-        getNormalizedEntry(directory + File.separator));
+    getOutputStream().putNextEntry(getNormalizedEntry(directory + File.separator));
     alreadyAddedDirs.add(directory);
   }
 

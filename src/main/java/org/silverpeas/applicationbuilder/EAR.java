@@ -21,12 +21,13 @@
 package org.silverpeas.applicationbuilder;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.silverpeas.util.Console;
 
 /**
  * This class dispatches the contributions parts in the target structures and then creates the
  * archive.
+ *
  * @author Silverpeas
  * @version 1.0/B
  * @since 1.0/B
@@ -35,6 +36,7 @@ public class EAR extends EARDirectory {
 
   /**
    * The name of the application archive to build
+   *
    * @since 1.0/B
    */
   private static final String NAME = "silverpeas.ear";
@@ -42,30 +44,27 @@ public class EAR extends EARDirectory {
   private AppDescriptor theAppDescriptor = null;
   private WAR theWAR = null;
 
-  public EAR(File directory) throws AppBuilderException {
-    super(directory, NAME);
+  public EAR(File directory, Console console) throws AppBuilderException {
+    super(directory, NAME, console);
     //
     setWAR(this.earDir);
     setAppDescriptor();
     setName(NAME);
   }
 
-  /**
-   * @roseuid 3AAE4A2B024E
-   */
-  public void addLibrary(ApplicationBuilderItem library)
-      throws AppBuilderException {
+  public void addLibrary(ApplicationBuilderItem library) throws AppBuilderException {
     library.setLocation(LIB_DIRECTORY);
     add(library);
-    // Adds the library's name to the application descriptor
     getAppDescriptor().setClientInfos(LIB_DIRECTORY + '/' + library.getName());
   }
 
   /**
    * Adds a set of libraries and updates the application descriptor
+   *
+   * @param libraries
+   * @throws AppBuilderException
    */
-  public void addLibraries(ApplicationBuilderItem[] libraries)
-      throws AppBuilderException {
+  public void addLibraries(ApplicationBuilderItem[] libraries) throws AppBuilderException {
     for (int i = 0; i < libraries.length; i++) {
       addLibrary(libraries[i]);
     }
@@ -73,53 +72,49 @@ public class EAR extends EARDirectory {
 
   /**
    * When all entries have been added, call this method to close the archive
-   * @roseuid 3AB1EAFE02FD
+   *
+   * @throws AppBuilderException
    */
   public void close() throws AppBuilderException {
-    // WAR
     getWAR().close();
     try {
-      if (getWAR().getPath() != null && getWAR().getPath().exists()
-          && !getWAR().getPath().delete()) {
-        Log.add("WARNING : could not delete \"" + getWAR().getName() + "\" from temporary space");
+      if (getWAR().getPath() != null && getWAR().getPath().exists() && !getWAR().getPath().delete()) {
+        console.printMessage("WARNING : could not delete \"" + getWAR().getName()
+            + "\" from temporary space");
       }
     } catch (Exception e) {
-      Log.add("WARNING : could not delete \"" + getWAR().getName() + "\" from temporary space");
-      Log.add(e);
+      console.printError("WARNING : could not delete \"" + getWAR().getName()
+          + "\" from temporary space", e);
     }
-    // Application descriptor
     add(getAppDescriptor());
   }
 
   /**
-   * Adds a set of EJBs and updates the application descriptor
-   * @roseuid 3AAFC08C01E2
+   * Adds a set of EJBs and updates the application descriptor.
+   *
+   * @param srcEjbs
+   * @throws AppBuilderException
    */
   public void addEJBs(ApplicationBuilderItem[] srcEjbs) throws AppBuilderException {
     for (ApplicationBuilderItem srcEjb : srcEjbs) {
       add(srcEjb);
-      // Adds the EJB name to the application descriptor
       getAppDescriptor().addEJBName(srcEjb.getName());
     }
   }
 
   /**
    * @return the WAR object
-   * @since 1.0/B
-   * @roseuid 3AAFC0FC0084
    */
   public WAR getWAR() {
     return theWAR;
   }
 
   private void setWAR(File directory) throws AppBuilderException {
-    theWAR = new WAR(directory);
+    theWAR = new WAR(directory, console);
   }
 
   /**
    * @return the AppDescriptor object
-   * @since 1.0
-   * @roseuid 3AB10CAE03BF
    */
   public AppDescriptor getAppDescriptor() {
     return theAppDescriptor;
@@ -127,14 +122,13 @@ public class EAR extends EARDirectory {
 
   private void setAppDescriptor() throws AppBuilderException {
     theAppDescriptor = new AppDescriptor();
-    getAppDescriptor().setWARInfos(getWAR().getName(),
-        ApplicationBuilder.getApplicationRoot());
+    getAppDescriptor().setWARInfos(getWAR().getName(), ApplicationBuilder.getApplicationRoot());
   }
 
   void addExternalWars(ReadOnlyArchive[] externals) throws AppBuilderException {
     for (ReadOnlyArchive externalArchive : externals) {
-      ExternalWar externalWar =
-          new ExternalWar(externalArchive.getHome(), externalArchive.getName());
+      ExternalWar externalWar = new ExternalWar(externalArchive.getHome(),externalArchive.getName(),
+          console);
       String warName = externalWar.getName();
       getAppDescriptor().setWARInfos(warName, warName.substring(0, warName.lastIndexOf('.')));
       add(externalWar);

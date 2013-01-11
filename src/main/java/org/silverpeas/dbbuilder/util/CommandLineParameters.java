@@ -20,16 +20,20 @@
  */
 package org.silverpeas.dbbuilder.util;
 
-import org.silverpeas.dbbuilder.DBBuilder;
 import java.util.Locale;
-import static org.silverpeas.dbbuilder.util.Action.*;
+
+import org.silverpeas.util.Console;
+import org.silverpeas.dbbuilder.DBBuilder;
+
+import static org.silverpeas.dbbuilder.util.Action.ACTION_ENFORCE_UNINSTALL;
+import static org.silverpeas.dbbuilder.util.Action.ACTION_NONE;
 
 /**
  * Parse the command line paramters for launching the DBBuilder.
  * @author ehugonnet
  */
 public class CommandLineParameters {
-
+  private Console console;
   private static final String USAGE =
       "DBBuilder usage: DBBuilder <action> -T <Targeted DB Server type> [-v(erbose)] [-s(imulate)]\n"
           + "where <action> == -C(onnection only) | -I(nstall only) | -U(ninstall only) | -O(ptimize only) | -A(ll) | -S(tatus) | -FU(Force Uninstall) <module> \n "
@@ -40,7 +44,8 @@ public class CommandLineParameters {
   private boolean simulate = false;
   private String moduleName = null;
 
-  public CommandLineParameters(String[] commandLineArgs) throws Exception {
+  public CommandLineParameters(Console console, String[] commandLineArgs) throws Exception {
+    this.console = console;
     testParams(commandLineArgs);
   }
 
@@ -88,21 +93,21 @@ public class CommandLineParameters {
       String curArg = args[i];
       if ("-T".equals(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         if (null != dbType) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         getDBType = true;
       } else if (ACTION_NONE != Action.getAction(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         if (null != action) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         action = Action.getAction(curArg);
@@ -111,19 +116,19 @@ public class CommandLineParameters {
         }
       } else if ("-v".equals(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         verbose = true;
       } else if ("-s".equals(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         simulate = true;
       } else {
         if (!getDBType && !getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         if (getDBType) {
@@ -136,12 +141,12 @@ public class CommandLineParameters {
       }
     }
     if (null == dbType || null == action) {
-      DBBuilder.printError(USAGE);
+      console.printError(USAGE);
       throw new Exception();
     }
 
     if (null == moduleName && getModuleName) {
-      DBBuilder.printError(USAGE);
+      console.printError(USAGE);
       throw new Exception();
     }
 

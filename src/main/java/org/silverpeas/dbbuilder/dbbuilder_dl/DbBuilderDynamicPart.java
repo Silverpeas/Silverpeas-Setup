@@ -20,7 +20,7 @@
  */
 package org.silverpeas.dbbuilder.dbbuilder_dl;
 
-import org.silverpeas.dbbuilder.Console;
+import org.silverpeas.util.Console;
 import java.sql.Connection;
 
 /**

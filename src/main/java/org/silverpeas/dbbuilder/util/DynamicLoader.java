@@ -20,10 +20,6 @@
  */
 package org.silverpeas.dbbuilder.util;
 
-import org.apache.commons.io.FileUtils;
-import org.silverpeas.dbbuilder.DBBuilder;
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,28 +30,34 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
+
+import org.silverpeas.util.Console;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+
 /**
  * Load the classes for dynamic Databases Operations
  * @author ehugonnet
  */
 public class DynamicLoader {
-
+  private Console console;
   private URLClassLoader loader;
   private static final String JAR_DIRECTORY = "dynamic";
 
-  public DynamicLoader() {
+  public DynamicLoader(Console console) {
+    this.console = console;
     File jarDirectory = new File(Configuration.getPiecesFilesDir(), JAR_DIRECTORY);
     URL[] classpath = new URL[0];
     if (jarDirectory.exists() && jarDirectory.isDirectory()) {
       @SuppressWarnings("unchecked")
       Collection<File> jars = FileUtils.listFiles(jarDirectory, new String[] { "jar" }, true);
       List<URL> urls = new ArrayList<URL>(jars.size());
-      DBBuilder.printMessage("We have found " + jars.size() + " jars files");
+      console.printMessage("We have found " + jars.size() + " jars files");
       for (File jar : jars) {
         try {
           urls.add(jar.toURI().toURL());
           for (URL url : urls) {
-            DBBuilder.printError(url.toString());
+            console.printError(url.toString());
           }
         } catch (MalformedURLException ex) {
           Logger.getLogger(DynamicLoader.class.getName()).log(Level.SEVERE, null, ex);
@@ -73,8 +75,7 @@ public class DynamicLoader {
   public DbBuilderDynamicPart loadDynamicPart(String className) throws InstantiationException,
       IllegalAccessException, ClassNotFoundException {
     @SuppressWarnings("unchecked")
-    Class<DbBuilderDynamicPart> dynamicPart =
-        (Class<DbBuilderDynamicPart>) Class.forName(className,
+    Class<DbBuilderDynamicPart> dynamicPart = (Class<DbBuilderDynamicPart>) Class.forName(className,
         true, loader);
     return dynamicPart.newInstance();
   }

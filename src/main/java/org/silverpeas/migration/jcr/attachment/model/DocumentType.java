@@ -23,12 +23,20 @@
  */
 package org.silverpeas.migration.jcr.attachment.model;
 
+import java.util.regex.Pattern;
+
+import org.silverpeas.util.StringUtil;
+
 /**
  * @author ehugonnet
  */
 public enum DocumentType {
 
-  attachment("attachments"), form("forms"), wysiwyg("wysiwyg"), image("images"), video("video");
+  attachment("attachments"), form("forms"), wysiwyg("wysiwyg"), image("images"), video("video"), node(
+      "node");
+  private static final Pattern nodePattern = Pattern.compile("Node_\\d+Images");
+  private static final Pattern wysiwygImagePattern = Pattern.compile("\\d+Images");
+  private static final Pattern externalWysiwygImagePattern = Pattern.compile("[a-zA-Z]+\\d+Images");
   private String forlderName;
 
   private DocumentType(String folder) {
@@ -54,6 +62,30 @@ public enum DocumentType {
     }
     if (video.forlderName.equals(folder)) {
       return video;
+    }
+    return attachment;
+  }
+
+  public static DocumentType fromOldContext(String oldContext) {
+    if (StringUtil.isDefined(oldContext)) {
+      if ("Images".equalsIgnoreCase(oldContext)) {
+        return attachment;
+      }
+      if ("wysiwyg".equalsIgnoreCase(oldContext)) {
+        return wysiwyg;
+      }
+      if ("XMLFormImages".equalsIgnoreCase(oldContext)) {
+        return form;
+      }
+      if (wysiwygImagePattern.matcher(oldContext).matches()) {
+        return image;
+      }
+      if (nodePattern.matcher(oldContext).matches()) {
+        return node;
+      }
+      if (externalWysiwygImagePattern.matcher(oldContext).matches()) {
+        return image;
+      }
     }
     return attachment;
   }

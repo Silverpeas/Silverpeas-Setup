@@ -27,6 +27,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.silverpeas.util.Console;
+
 /**
  * @author Administrateur
  */
@@ -34,8 +36,10 @@ public class MavenRepository {
 
   private final transient List<MavenContribution> contributions =
       new LinkedList<MavenContribution>();
+  private final Console console;
 
-  public MavenRepository() throws AppBuilderException {
+  public MavenRepository(Console console) throws AppBuilderException {
+    this.console = console;
     init();
   }
 
@@ -50,31 +54,31 @@ public class MavenRepository {
   protected void loadClients() throws AppBuilderException {
     final File[] archives = listArchivesInDirectory(DirectoryLocator.getClientContribHome());
     for (File archive : archives) {
-      contributions.add(new MavenContribution(archive, MavenContribution.TYPE_CLIENT));
+      contributions.add(new MavenContribution(archive, MavenContribution.TYPE_CLIENT, console));
     }
   }
 
   protected void loadWarParts() throws AppBuilderException {
     final File[] archives = listArchivesInDirectory(DirectoryLocator.getWarContribHome());
     for (File archive : archives) {
-      contributions.add(new MavenContribution(archive, MavenContribution.TYPE_WAR));
+      contributions.add(new MavenContribution(archive, MavenContribution.TYPE_WAR, console));
     }
   }
 
   protected void loadEjbs() throws AppBuilderException {
     final File[] archives = listArchivesInDirectory(DirectoryLocator.getEjbContribHome());
-    contributions.add(new MavenContribution(archives, MavenContribution.TYPE_EJB));
+    contributions.add(new MavenContribution(archives, MavenContribution.TYPE_EJB, console));
   }
 
   protected void loadLibrairies() throws AppBuilderException {
     final File[] archives = listArchivesInDirectory(DirectoryLocator.getLibContribHome());
-    contributions.add(new MavenContribution(archives, MavenContribution.TYPE_LIB));
+    contributions.add(new MavenContribution(archives, MavenContribution.TYPE_LIB, console));
   }
 
   protected void loadExternalParts() throws AppBuilderException {
     final File[] archives = listArchivesInDirectory(DirectoryLocator.getExternalFilesHome());
     for (File archive : archives) {
-      contributions.add(new MavenContribution(archive, MavenContribution.TYPE_EXTERNAL));
+      contributions.add(new MavenContribution(archive, MavenContribution.TYPE_EXTERNAL, console));
     }
   }
 

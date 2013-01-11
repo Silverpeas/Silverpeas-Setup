@@ -20,12 +20,14 @@
  */
 package org.silverpeas.applicationbuilder.maven;
 
-import org.silverpeas.applicationbuilder.AppBuilderException;
-import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
-import org.silverpeas.applicationbuilder.ReadOnlyArchive;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.silverpeas.applicationbuilder.AppBuilderException;
+import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
+import org.silverpeas.applicationbuilder.ReadOnlyArchive;
+import org.silverpeas.util.Console;
 
 /**
  * @author Administrateur
@@ -39,18 +41,18 @@ public class MavenContribution {
   public static final int TYPE_EXTERNAL = 4;
   private int type;
   private transient final StringBuffer packageName = new StringBuffer();
-  /**
-   * attributes
-   */
   private ReadOnlyArchive client = null;
   private transient final List<ApplicationBuilderItem> ejbs =
       new ArrayList<ApplicationBuilderItem>();
   private ReadOnlyArchive warPart = null;
   private transient final List<ReadOnlyArchive> librairies = new ArrayList<ReadOnlyArchive>();
   private transient final List<ReadOnlyArchive> externals = new ArrayList<ReadOnlyArchive>();
+  private final Console console;
 
-  public MavenContribution(final File contribution, final int type) throws AppBuilderException {
+  public MavenContribution(final File contribution, final int type, final Console console) throws
+      AppBuilderException {
     this.type = type;
+    this.console = console;
     addContribution(contribution, type);
   }
 
@@ -59,33 +61,39 @@ public class MavenContribution {
     packageName.append(File.pathSeparatorChar).append(' ');
     switch (type) {
       case TYPE_WAR:
-        warPart = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName());
+        warPart = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(), console);
         break;
       case TYPE_EJB:
         ejbs.add(new ApplicationBuilderItem(contribution.getParentFile(), contribution.getName()));
         break;
       case TYPE_CLIENT:
-        client = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName());
+        client = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(), console);
         break;
       case TYPE_LIB:
-        librairies.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName()));
+        librairies.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(),
+            console));
         break;
       case TYPE_EXTERNAL:
-        externals.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName()));
+        externals.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(),
+            console));
         break;
       default:
         break;
     }
   }
 
-  public MavenContribution(final File[] contributions, final int type) throws AppBuilderException {
+  public MavenContribution(final File[] contributions, final int type, final Console console) throws
+      AppBuilderException {
+    this.console = console;
     for (File contribution : contributions) {
       addContribution(contribution, type);
     }
   }
 
   /**
-   * If no client part is contributed, returns <code>null</code>
+   * If no client part is contributed, returns
+   * <code>null</code>
+   *
    * @return the client archive
    * @roseuid 3AAE586D01D4
    */

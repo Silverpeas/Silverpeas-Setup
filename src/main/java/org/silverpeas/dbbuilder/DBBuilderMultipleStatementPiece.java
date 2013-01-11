@@ -20,11 +20,12 @@
  */
 package org.silverpeas.dbbuilder;
 
-import org.silverpeas.util.StringUtil;
-
+import org.silverpeas.util.Console;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.silverpeas.util.StringUtil;
 
 public class DBBuilderMultipleStatementPiece extends DBBuilderPiece {
 
@@ -32,53 +33,47 @@ public class DBBuilderMultipleStatementPiece extends DBBuilderPiece {
   private boolean keepDelimiter = false;
 
   // contructeurs non utilisés
-  private DBBuilderMultipleStatementPiece(String pieceName, String actionName,
+  private DBBuilderMultipleStatementPiece(Console console, String pieceName, String actionName,
       boolean traceMode) throws Exception {
-    super(pieceName, actionName, traceMode);
+    super(console, pieceName, actionName, traceMode);
   }
 
-  private DBBuilderMultipleStatementPiece(String pieceName, String actionName,
+  private DBBuilderMultipleStatementPiece(Console console, String pieceName, String actionName,
       String content, boolean traceMode) throws Exception {
-    super(pieceName, actionName, content, traceMode);
+    super(console, pieceName, actionName, content, traceMode);
   }
 
-  private DBBuilderMultipleStatementPiece(String actionInternalID,
-      String pieceName, String actionName, int itemOrder, boolean traceMode)
-      throws Exception {
-    super(actionInternalID, pieceName, actionName, itemOrder, traceMode);
+  private DBBuilderMultipleStatementPiece(Console console, String actionInternalID, String pieceName,
+      String actionName, int itemOrder, boolean traceMode) throws Exception {
+    super(console, actionInternalID, pieceName, actionName, itemOrder, traceMode);
   }
 
   // Contructeur utilisé pour une pièce de type fichier
-  public DBBuilderMultipleStatementPiece(String pieceName, String actionName,
-      boolean traceMode, String delimiter, boolean keepDelimiter)
-      throws Exception {
-    super(pieceName, actionName, traceMode);
+  public DBBuilderMultipleStatementPiece(Console console, String pieceName, String actionName,
+      boolean traceMode, String delimiter, boolean keepDelimiter) throws Exception {
+    super(console, pieceName, actionName, traceMode);
     moreInitialize(delimiter, keepDelimiter);
   }
 
   // Contructeur utilisé pour une pièce de type chaîne en mémoire
-  public DBBuilderMultipleStatementPiece(String pieceName, String actionName,
-      String content, boolean traceMode, String delimiter, boolean keepDelimiter)
-      throws Exception {
-    super(pieceName, actionName, content, traceMode);
+  public DBBuilderMultipleStatementPiece(Console console, String pieceName, String actionName,
+      String content, boolean traceMode, String delimiter, boolean keepDelimiter) throws Exception {
+    super(console, pieceName, actionName, content, traceMode);
     moreInitialize(delimiter, keepDelimiter);
   }
 
   // Contructeur utilisé pour une pièce stockée en base de données
-  public DBBuilderMultipleStatementPiece(String actionInternalID,
-      String pieceName, String actionName, int itemOrder, boolean traceMode,
-      String delimiter, boolean keepDelimiter) throws Exception {
-    super(actionInternalID, pieceName, actionName, itemOrder, traceMode);
+  public DBBuilderMultipleStatementPiece(Console console, String actionInternalID, String pieceName,
+      String actionName, int itemOrder, boolean traceMode, String delimiter, boolean keepDelimiter)
+      throws Exception {
+    super(console, actionInternalID, pieceName, actionName, itemOrder, traceMode);
     moreInitialize(delimiter, keepDelimiter);
   }
 
-  private void moreInitialize(String delimiter, boolean keepDelimiter)
-      throws Exception {
-
+  private void moreInitialize(String delimiter, boolean keepDelimiter) throws Exception {
     if (delimiter == null) {
       throw new Exception("Missing <delimiter> tag for \"pieceName\" item.");
     }
-
     String d = StringUtil.sReplace("\\n", "\n", delimiter);
     d = StringUtil.sReplace("\\t", "\t", d);
     this.delimiter = d;

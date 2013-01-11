@@ -20,17 +20,26 @@
  */
 package org.silverpeas.dbbuilder.sql;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.logging.Level;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.silverpeas.util.jndi.SimpleMemoryContextFactory;
 
 /**
  * Utility class for obtaining a connection to the database.
+ *
  * @author ehugonnet
  */
 public class ConnectionFactory {
-
+  private final Logger logger = LoggerFactory.getLogger(ConnectionFactory.class);
   private DataSource datasource;
   private static ConnectionFactory instance;
 
@@ -51,6 +60,15 @@ public class ConnectionFactory {
    */
   public void setDatasource(DataSource datasource) {
     this.datasource = datasource;
+    SimpleMemoryContextFactory.setUpAsInitialContext();
+    InitialContext ic;
+    try {
+      ic = new InitialContext();
+      ic.rebind("java:/datasources/DocumentStoreDS", this.datasource);
+    } catch (NamingException ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+    
   }
 
   public static Connection getConnection() throws SQLException {
@@ -58,14 +76,13 @@ public class ConnectionFactory {
   }
 
   public static String getConnectionInfo() throws SQLException {
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder(512);
     Connection connection = null;
     try {
       connection = getConnection();
       DatabaseMetaData metaData = connection.getMetaData();
       String newLine = System.getProperty("line.separator");
-      builder.append(newLine).append("\tRDBMS         : ")
-          .append(metaData.getDatabaseProductName());
+      builder.append(newLine).append("\tRDBMS").append(metaData.getDatabaseProductName());
       builder.append(newLine).append("\tJdbcUrl       : ").append(metaData.getURL());
       builder.append(newLine).append("\tJdbcDriver    : ").append(metaData.getDriverName());
       builder.append(newLine).append("\tUserName      : ").append(metaData.getUserName());
@@ -74,7 +91,6 @@ public class ConnectionFactory {
         connection.close();
       }
     }
-
     return builder.toString();
   }
 }

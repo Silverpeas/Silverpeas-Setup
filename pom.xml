@@ -148,7 +148,7 @@
       <version>1.5</version>
     </dependency>
 
-     <dependency>
+    <dependency>
       <groupId>javax.jcr</groupId>
       <artifactId>jcr</artifactId>
     </dependency>
@@ -189,6 +189,12 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>    
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>
@@ -220,10 +226,11 @@
           </archive>
         </configuration>
       </plugin>
+      <!--
       <plugin>
         <groupId>org.silverpeas.services</groupId>
         <artifactId>code-formatter-plugin</artifactId>
-      </plugin>
+      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

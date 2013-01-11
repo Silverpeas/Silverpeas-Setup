@@ -53,14 +53,21 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.silverpeas.settings.SilverpeasSettings.displayMessageln;
+import org.silverpeas.util.Console;
 
 /**
  * This is the original transformer used by settings since the 5.3 release of Silverpeas. It is
  * using full XPATH capacities for detecting nodes to be updated, inserted or deleted.
+ *
  * @since 5.3
  */
 public class XPathTransformer implements XmlTransformer {
+
+  private final Console console;
+
+  public XPathTransformer(Console console) {
+    this.console = console;
+  }
 
   @Override
   public void xmlfile(String dir, org.jdom.Element eltConfigFile, GestionVariables gv)
@@ -74,7 +81,7 @@ public class XPathTransformer implements XmlTransformer {
     Document doc = null;
     String xmlFile = configuration.getFileName();
     try {
-      displayMessageln(xmlFile);
+      console.printMessage(xmlFile);
       in = new BufferedInputStream(new FileInputStream(xmlFile));
       DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
       docFactory.setValidating(false);
@@ -100,6 +107,7 @@ public class XPathTransformer implements XmlTransformer {
 
   /**
    * Save the resulting DOM tree into a file.
+   *
    * @param xmlFile the target file.
    * @param doc the DOM tree.
    */
@@ -119,13 +127,14 @@ public class XPathTransformer implements XmlTransformer {
 
   /**
    * Transform the DOM tree using the configuration.
+   *
    * @param configuration the transformation configuration.
    * @param doc the DOM tree to be updated.
    */
   protected void applyTransformation(XmlConfiguration configuration, Document doc) {
     List<Parameter> parameters = configuration.getParameters();
     for (Parameter parameter : parameters) {
-      displayMessageln('\t' + parameter.getKey() + " (mode:" + parameter.getMode() + ')');
+      console.printMessage('\t' + parameter.getKey() + " (mode:" + parameter.getMode() + ')');
       Node rootXpathNode = getMatchingNode(parameter.getKey(), doc);
       if (rootXpathNode != null) {
         for (Value value : parameter.getValues()) {
@@ -133,12 +142,12 @@ public class XPathTransformer implements XmlTransformer {
             case XmlTreeHandler.MODE_INSERT: {
               createNewNode(doc, rootXpathNode, value);
             }
-              break;
+            break;
             case XmlTreeHandler.MODE_DELETE: {
               Node deletedNode = getMatchingNode(value.getLocation(), rootXpathNode);
               rootXpathNode.removeChild(deletedNode);
             }
-              break;
+            break;
             case XmlTreeHandler.MODE_UPDATE: {
               Node oldNode = getMatchingNode(value.getLocation(), rootXpathNode);
               if (oldNode == null) {
@@ -167,6 +176,7 @@ public class XPathTransformer implements XmlTransformer {
 
   /**
    * Find the matching node in the specified DOM tree.
+   *
    * @param xpathExpression the XPATh expression.
    * @param doc the DOM tree
    * @return the Node matching the XPATH expression - null otherwise.
@@ -188,6 +198,7 @@ public class XPathTransformer implements XmlTransformer {
   /**
    * Create a new node (element or attribute) to be inserted into the target node as a child or
    * attribute.
+   *
    * @param doc DOM document
    * @param target the target ode
    * @param value the value for creating the new node.

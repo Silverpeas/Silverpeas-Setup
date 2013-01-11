@@ -24,11 +24,11 @@
 package org.silverpeas.migration.contentmanagement;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.silverpeas.dbbuilder.Console;
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import org.silverpeas.util.Console;
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 
 /**
  * Application that can be ran in an explicit way without running DBBuilder for that.
@@ -45,8 +45,7 @@ public class DuplicateContentRemovingApplication {
       migration.setConnection(ConnectionFactory.getConnection());
       migration.migrate();
     } catch (Exception ex) {
-      Logger.getLogger(DuplicateContentRemovingApplication.class.getName()).log(Level.SEVERE, ex.
-          getMessage(), ex);
+      console.printError(ex.getMessage(), ex);
     } finally {
       console.close();
     }
@@ -54,6 +53,6 @@ public class DuplicateContentRemovingApplication {
 
   private static void init() throws IOException {
     new ClassPathXmlApplicationContext("classpath:/spring-jdbc-datasource.xml");
-    console = new Console("duplicateContentRemoving.log");
+    console = new Console("duplicateContentRemoving.log", DuplicateContentRemovingApplication.class);
   }
 }

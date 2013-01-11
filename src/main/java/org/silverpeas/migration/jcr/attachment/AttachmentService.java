@@ -23,16 +23,16 @@
  */
 package org.silverpeas.migration.jcr.attachment;
 
+import java.io.File;
+import java.io.InputStream;
+import java.util.List;
+
 import org.silverpeas.migration.jcr.attachment.model.DocumentType;
 import org.silverpeas.migration.jcr.attachment.model.ForeignPK;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.attachment.model.UnlockContext;
 import org.silverpeas.migration.jcr.attachment.model.WAPrimaryKey;
-
-import java.io.File;
-import java.io.InputStream;
-import java.util.List;
 
 /**
  * @author ehugonnet

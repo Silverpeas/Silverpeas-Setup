@@ -20,6 +20,7 @@
  */
 package org.silverpeas.dbbuilder;
 
+import org.silverpeas.util.Console;
 import java.sql.Connection;
 
 /**
@@ -31,35 +32,34 @@ import java.sql.Connection;
 public class DBBuilderSingleStatementPiece extends DBBuilderPiece {
 
   // Contructeur utilisé pour une pièce de type fichier
-  public DBBuilderSingleStatementPiece(String pieceName, String actionName,
+  public DBBuilderSingleStatementPiece(Console console, String pieceName, String actionName,
       boolean traceMode) throws Exception {
-
-    super(pieceName, actionName, traceMode);
+    super(console, pieceName, actionName, traceMode);
     setInstructions();
   }
 
   // Contructeur utilisé pour une pièce de type chaîne en mémoire
-  public DBBuilderSingleStatementPiece(String pieceName, String actionName,
+  public DBBuilderSingleStatementPiece(Console console,String pieceName, String actionName,
       String content, boolean traceMode) throws Exception {
-
-    super(pieceName, actionName, content, traceMode);
+    super(console, pieceName, actionName, content, traceMode);
     setInstructions();
   }
 
   // Contructeur utilisé pour une pièce stockée en base de données
-  public DBBuilderSingleStatementPiece(String actionInternalID,
-      String pieceName, String actionName, int itemOrder, boolean traceMode)
-      throws Exception {
-    super(actionInternalID, pieceName, actionName, itemOrder, traceMode);
+  public DBBuilderSingleStatementPiece(Console console, String actionInternalID,
+      String pieceName, String actionName, int itemOrder, boolean traceMode) throws Exception {
+    super(console, actionInternalID, pieceName, actionName, itemOrder, traceMode);
     setInstructions();
   }
 
-  public void setInstructions() {
+  @Override
+  public final void setInstructions() {
     instructions = new Instruction[1];
     instructions[0].setInstructionType(Instruction.IN_UPDATE);
     instructions[0].setInstructionText(getContent());
   }
 
+  @Override
   public void cacheIntoDB(Connection connection, String _package, int _itemOrder) throws Exception {
     cacheIntoDB(connection, _package, _itemOrder,
         DBBuilderFileItem.FILEATTRIBSTATEMENT_VALUE, null, null, null);

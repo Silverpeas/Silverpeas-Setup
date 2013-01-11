@@ -20,47 +20,50 @@
  */
 package org.silverpeas.dbbuilder;
 
+import org.silverpeas.util.Console;
+import java.sql.Connection;
+
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.dbbuilder.util.Configuration;
 import org.silverpeas.dbbuilder.util.DynamicLoader;
 import org.silverpeas.util.SilverpeasHomeResolver;
 
-import java.sql.Connection;
-
 public class DBBuilderDynamicLibPiece extends DBBuilderPiece {
 
   private String method;
-  private static DynamicLoader loader = new DynamicLoader();
+  private final DynamicLoader loader;
   private DbBuilderDynamicPart dynamicPart = null;
 
   // contructeurs non utilisés
-  private DBBuilderDynamicLibPiece(String pieceName, String actionName,
+  private DBBuilderDynamicLibPiece(Console console, String pieceName, String actionName,
       boolean traceMode) throws Exception {
-    super(pieceName, actionName, traceMode);
+    super(console, pieceName, actionName, traceMode);
+    loader = new DynamicLoader(console);
   }
 
-  private DBBuilderDynamicLibPiece(String pieceName, String actionName,
+  private DBBuilderDynamicLibPiece(Console console, String pieceName, String actionName,
       String content, boolean traceMode) throws Exception {
-    super(pieceName, actionName, content, traceMode);
+    super(console, pieceName, actionName, content, traceMode);
+    loader = new DynamicLoader(console);
   }
 
   // Contructeur utilisé pour une pièce de type fichier
-  public DBBuilderDynamicLibPiece(String pieceName, String actionName,
+  public DBBuilderDynamicLibPiece(Console console, String pieceName, String actionName,
       boolean traceMode, String className, String methodName) throws Exception {
-    super(pieceName, actionName, traceMode);
+    super(console, pieceName, actionName, traceMode);
+    loader = new DynamicLoader(console);
     moreInitialize(className, methodName);
   }
 
   // Contructeur utilisé pour une pièce de type chaîne en mémoire
-  public DBBuilderDynamicLibPiece(String pieceName, String actionName,
-      String content, boolean traceMode, String className, String methodName)
-      throws Exception {
-    super(pieceName, actionName, content, traceMode);
+  public DBBuilderDynamicLibPiece(Console console, String pieceName, String actionName,
+      String content, boolean traceMode, String className, String methodName) throws Exception {
+    super(console, pieceName, actionName, content, traceMode);
+    loader = new DynamicLoader(console);
     moreInitialize(className, methodName);
   }
 
-  private void moreInitialize(String className, String methodName)
-      throws Exception {
+  private void moreInitialize(String className, String methodName) throws Exception {
     if (className == null) {
       throw new Exception("Missing <classname> tag for \"pieceName\" item.");
     }
@@ -71,9 +74,13 @@ public class DBBuilderDynamicLibPiece extends DBBuilderPiece {
     try {
       dynamicPart = loader.loadDynamicPart(className);
       method = methodName;
-    } catch (Exception e) {
+    } catch (IllegalAccessException e) {
       throw new Exception("Unable to load \"" + className + "\" class.");
-    } // try
+    } catch (ClassNotFoundException e) {
+      throw new Exception("Unable to load \"" + className + "\" class.");
+    } catch (InstantiationException e) {
+      throw new Exception("Unable to load \"" + className + "\" class.");
+    }
     dynamicPart.setSILVERPEAS_HOME(SilverpeasHomeResolver.getHome());
     dynamicPart.setSILVERPEAS_DATA(Configuration.getData());
     dynamicPart.setConsole(getConsole());

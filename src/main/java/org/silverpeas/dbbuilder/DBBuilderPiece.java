@@ -20,12 +20,6 @@
  */
 package org.silverpeas.dbbuilder;
 
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.dbbuilder.sql.DbProcParameter;
-import org.silverpeas.dbbuilder.sql.QueryExecutor;
-import org.silverpeas.util.StringUtil;
-
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,11 +30,23 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
+
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+import org.silverpeas.dbbuilder.sql.DbProcParameter;
+import org.silverpeas.dbbuilder.sql.QueryExecutor;
+import org.silverpeas.util.Console;
+import org.silverpeas.util.StringUtil;
 
 public abstract class DBBuilderPiece {
 
   // identifiant unique pour toute la session
-  private static Integer increment = 0;
+  private static AtomicInteger increment = new AtomicInteger(0);
   // identifiant de la pièce si elle est stockée en base
   private String actionInternalID = null;
   // nom de la pièce ou du fichier
@@ -57,30 +63,30 @@ public abstract class DBBuilderPiece {
   protected Console console = null;
 
   // Contructeur utilisé pour une pièce de type fichier
-  public DBBuilderPiece(String pieceName, String actionName, boolean traceMode)
+  public DBBuilderPiece(Console console, String pieceName, String actionName, boolean traceMode)
       throws Exception {
-    // mémorise le mode trace
+    this.console = console;
     this.traceMode = traceMode;
-    // mémorise l'action
     this.actionName = actionName;
-    // mémorise le nom de la piece = le nom du fichier
     this.pieceName = pieceName;
-    // Charge le contenu sauf pour un package
     if (pieceName.endsWith(".jar")) {
       content = "";
     } else {
       // charge son contenu sauf pour un jar qui doit être dans le classpath
       File myFile = new File(pieceName);
       if (!myFile.exists() || !myFile.isFile() || !myFile.canRead()) {
-        DBBuilder.printMessageln(Console.NEW_LINE + "\t\t***Unable to load : " + pieceName);
+        console.printMessage("\t\t***Unable to load : " + pieceName);
         throw new Exception("Unable to find or load : " + pieceName);
       }
       int fileSize = (int) myFile.length();
       byte[] data = new byte[fileSize];
       DataInputStream in = new DataInputStream(new FileInputStream(pieceName));
-      in.readFully(data);
-      content = new String(data);
-      in.close();
+      try {
+        in.readFully(data);
+      } finally {
+        IOUtils.closeQuietly(in);
+      }
+      content = new String(data, Charsets.UTF_8);
     }
     Properties res = DBBuilder.getdbBuilderResources();
     if (res != null) {
@@ -93,30 +99,23 @@ public abstract class DBBuilderPiece {
   }
 
   // Contructeur utilisé pour une pièce de type chaîne en mémoire
-  public DBBuilderPiece(String pieceName, String actionName, String content,
+  public DBBuilderPiece(Console console, String pieceName, String actionName, String content,
       boolean traceMode) throws Exception {
-    // mémorise le mode trace
+    this.console = console;
     this.traceMode = traceMode;
-    // mémorise l'action
     this.actionName = actionName;
-    // mémorise le nom du fichier
     this.pieceName = pieceName;
-    // mémorise le contenu
     this.content = content;
   }
 
   // Contructeur utilisé pour une pièce stockée en base de données
-  public DBBuilderPiece(String actionInternalID, String pieceName,
+  public DBBuilderPiece(Console console, String actionInternalID, String pieceName,
       String actionName, int itemOrder, boolean traceMode) throws Exception {
-    // mémorise le mode trace
+    this.console = console;
     this.traceMode = traceMode;
-    // mémorise l'action
     this.actionName = actionName;
-    // mémorise le nom du fichier
     this.pieceName = pieceName;
-    // mémorise l'ID interne de la base
     this.actionInternalID = actionInternalID;
-    // charge et mémorise le contenu
     this.content = getContentFromDB(actionInternalID);
   }
 
@@ -136,12 +135,7 @@ public abstract class DBBuilderPiece {
    * retourne le contenu du fichier
    */
   public String getContent() {
-    // retourne le contenu chargé
     return content;
-  }
-
-  public void setConsole(final Console console) {
-    this.console = console;
   }
 
   public Console getConsole() {
@@ -152,7 +146,6 @@ public abstract class DBBuilderPiece {
    * retourne si oui/non mode trace
    */
   public boolean isTraceMode() {
-    // retourne le mode de trace
     return traceMode;
   }
 
@@ -173,6 +166,8 @@ public abstract class DBBuilderPiece {
 
   /**
    * Execute via JDBC la séquence d'instructions élémentaires conservées sur instructions[]
+   *
+   * @param connection
    */
   public void executeInstructions(Connection connection) throws Exception {
     setConnection(connection);
@@ -203,10 +198,10 @@ public abstract class DBBuilderPiece {
       throws Exception {
     setConnection(connexion);
     PreparedStatement pstmt = null;
+    // insertion SR_UNINSTITEMS
+    long theLong = System.currentTimeMillis();
+    String itemID = String.valueOf(theLong) + '-' + increment.incrementAndGet();
     try {
-      // insertion SR_UNINSTITEMS
-      Long theLong = new Long(System.currentTimeMillis());
-      String itemID = theLong.toString() + '-' + getIncrement().toString();
       pstmt = connexion.prepareStatement("insert into SR_UNINSTITEMS(SR_ITEM_ID, "
           + "SR_PACKAGE, SR_ACTION_TAG, SR_ITEM_ORDER, SR_FILE_NAME, SR_FILE_TYPE, SR_DELIMITER, "
           + "SR_KEEP_DELIMITER, SR_DBPROC_NAME) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -220,6 +215,12 @@ public abstract class DBBuilderPiece {
       pstmt.setInt(8, _keepDelimiter);
       pstmt.setString(9, _dbProcName);
       pstmt.executeUpdate();
+    } catch (Exception ex) {
+      throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : " + ex.getMessage() + '\n', ex);
+    } finally {
+      DbUtils.closeQuietly(pstmt);
+    }
+    try {
       // insertion SR_SCRIPTS
       final String[] subS = getSubStrings(content);
       pstmt = connexion.prepareStatement("insert into SR_SCRIPTS(SR_ITEM_ID, SR_SEQ_NUM, SR_TEXT) "
@@ -231,13 +232,9 @@ public abstract class DBBuilderPiece {
         pstmt.executeUpdate();
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : "
-          + ex.getMessage() + '\n', ex);
+      throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : " + ex.getMessage() + '\n', ex);
     } finally {
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.closeQuietly(pstmt);
     }
   }
 
@@ -248,18 +245,16 @@ public abstract class DBBuilderPiece {
       if (printableInstruction.length() > 147) {
         printableInstruction = printableInstruction.substring(0, 146) + "...";
       }
-      DBBuilder.printMessageln("\t\t>" + printableInstruction);
+      console.printMessage("\t\t>" + printableInstruction);
     }
     Statement stmt = connection.createStatement();
     try {
       stmt.executeUpdate(currentInstruction);
     } catch (Exception e) {
-      throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : "
-          + e.getMessage() + "\n\t\t***STATEMENT ON ERROR IS : " + '\n'
-          + currentInstruction + "\n\t\t" + pieceName, e);
+      throw new Exception("\r\n***ERROR RETURNED BY THE RDBMS : " + e.getMessage()
+          + "\r\n***STATEMENT ON ERROR IS : " + currentInstruction + " " + pieceName, e);
     } finally {
-
-      stmt.close();
+      DbUtils.closeQuietly(stmt);
     }
   }
 
@@ -272,41 +267,37 @@ public abstract class DBBuilderPiece {
       if (printableInstruction.length() > 147) {
         printableInstruction = printableInstruction.substring(0, 146) + "...";
       }
-      DBBuilder.printMessageln("\t\t>" + printableInstruction);
+      console.printMessage("\t\t>" + printableInstruction);
     }
     try {
       QueryExecutor.executeProcedure(connection, currentInstruction, params);
     } catch (Exception e) {
-      throw new Exception("\n\t\t***ERROR RETURNED BY THE RDBMS : "
-          + e.getMessage() + "\n\t\t***STATEMENT ON ERROR IS : " + '\n'
-          + currentInstruction, e);
+      throw new Exception("\r\n***ERROR RETURNED BY THE RDBMS : " + e.getMessage()
+          + "\r\n***STATEMENT ON ERROR IS : " + currentInstruction, e);
     }
   }
 
-  public void executeJavaInvoke(String currentInstruction, Object myClass)
-      throws Exception {
+  public void executeJavaInvoke(String currentInstruction, Object myClass) throws Exception {
     if (traceMode) {
-      DBBuilder.printMessageln("\t\t>" + myClass.getClass().getName() + '.'
-          + currentInstruction + "()");
+      console.printMessage("\t\t>" + myClass.getClass().getName() + '.' + currentInstruction
+          + "()");
     }
     ((DbBuilderDynamicPart) myClass).setConnection(connection);
-    Method methode = myClass.getClass().getMethod(currentInstruction);
-    if (methode == null) {
+    Method methode;
+    try {
+      methode = myClass.getClass().getMethod(currentInstruction);
+    } catch (NoSuchMethodException e) {
       throw new Exception("No method \"" + currentInstruction
-          + "\" defined for \"" + myClass.getClass().getName() + "\" class.");
+          + "\" defined for \"" + myClass.getClass().getName() + "\" class.", e);
+    } catch (SecurityException e) {
+      throw new Exception("No method \"" + currentInstruction
+          + "\" defined for \"" + myClass.getClass().getName() + "\" class.", e);
     }
     try {
       methode.invoke(myClass);
     } catch (Exception e) {
       throw new Exception("\n\t\t***ERROR RETURNED BY THE JVM : " + e.getMessage(), e);
     }
-  }
-
-  private String getSqlStringValue(String s) {
-    if (s == null) {
-      return s;
-    }
-    return '\'' + StringUtil.sReplace("'", "''", s) + '\'';
   }
 
   private String[] getSubStrings(String str) {
@@ -328,27 +319,27 @@ public abstract class DBBuilderPiece {
     return retS;
   }
 
-  private synchronized Integer getIncrement() {
-    return increment++;
-  }
-
   private String getContentFromDB(String itemID) throws Exception {
     StringBuilder dbContent = new StringBuilder("");
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
     try {
       Connection connexion = ConnectionFactory.getConnection();
-      PreparedStatement pstmt = connexion.prepareStatement("select SR_SEQ_NUM, SR_TEXT from "
-          + "SR_SCRIPTS where SR_ITEM_ID = ? order by 1");
+      pstmt = connexion.prepareStatement(
+          "select SR_SEQ_NUM, SR_TEXT from SR_SCRIPTS where SR_ITEM_ID = ? order by 1");
       pstmt.setString(1, itemID);
-      ResultSet rs = pstmt.executeQuery();
+      rs = pstmt.executeQuery();
       while (rs.next()) {
         dbContent = dbContent.append(rs.getString("SR_TEXT"));
       }
-      rs.close();
-      pstmt.close();
+
     } catch (Exception e) {
-      throw new Exception("\n\t\t***ERROR RETURNED BY THE JVM : "
-          + e.getMessage() + "\n\t\t\t(" + "select SR_SEQ_NUM, SR_TEXT from "
-          + "SR_SCRIPTS where SR_ITEM_ID = '" + itemID + "'  order by 1" + ')');
+      throw new Exception("\r\n***ERROR RETURNED BY THE JVM : " + e.getMessage() 
+          + "\r\n(select SR_SEQ_NUM, SR_TEXT from SR_SCRIPTS where SR_ITEM_ID = '" + itemID
+          + "'  order by 1)");
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(pstmt);
     }
     return dbContent.toString();
   }

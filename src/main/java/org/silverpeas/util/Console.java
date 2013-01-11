@@ -21,77 +21,102 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.dbbuilder;
+package org.silverpeas.util;
 
-import org.silverpeas.dbbuilder.util.Configuration;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.silverpeas.dbbuilder.util.Configuration;
 
 /**
  * Console into which messages are displayed. It wraps the source into which messages are printed
  * out.
  */
-public final class Console {
+public class Console {
 
-  public static final String NEW_LINE = System.getProperty("line.separator");
+  private final Logger logger;
   private File logFile;
   private PrintWriter logBuffer;
+  private boolean echoAsDotEnabled = true;
 
   /**
    * Creates and open a console upon the specified file. All messages will be printed into the file.
    * The file will be created in the directory provided by the Configuration.getLogDir() method.
+   *
    * @param fileName the name of the file into which the messages will be printed.
+   * @param builderClass the class of the builder.
    * @throws IOException if an error occurs while creating the console.
    */
-  public Console(final String fileName) throws IOException {
-    logFile = new File(Configuration.getLogDir() + File.separator
-        + fileName);
-    logFile.getParentFile().mkdirs();
-    logBuffer =
-        new PrintWriter(new BufferedWriter(new FileWriter(logFile.getAbsolutePath(), true)));
+  public Console(final String fileName, final Class builderClass) throws IOException {
+    logger = LoggerFactory.getLogger(builderClass);
+    logFile = new File(Configuration.getLogDir(), fileName);
+    FileUtils.forceMkdir(logFile.getParentFile());
+    logBuffer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+        logFile.getAbsolutePath(), true), Charsets.UTF_8)));
+  }
+
+  public Console(final Class builderClass) {
+    logger = LoggerFactory.getLogger(builderClass);
   }
 
   /**
    * Creates and open a console upon the standard system output.
    */
   public Console() {
+    logger = LoggerFactory.getLogger(Console.class);
   }
 
   public void printError(String errMsg, Exception ex) {
-    printError(errMsg);
+    printMessage(errMsg, true);
     if (null != logBuffer) {
       ex.printStackTrace(logBuffer);
-      logBuffer.close();
     }
+    logger.error(errMsg, ex);
   }
 
   public void printError(String errMsg) {
-    if (null != logBuffer) {
-      printMessageln(NEW_LINE);
-      printMessageln(errMsg);
-      logBuffer.close();
-    }
-    System.out.println(NEW_LINE + errMsg + NEW_LINE);
-  }
-
-  public void printMessageln(String msg) {
-    printMessage(msg);
-    printMessage(NEW_LINE);
+    printMessage(errMsg, true);
+    logger.error(errMsg);
   }
 
   public void printMessage(String msg) {
+    printMessage(msg, false);
+  }
+
+  public void printTrace(String msg) {
+    logger.debug(msg);
+  }
+
+  private void printMessage(String msg, boolean isError) {
     if (null != logBuffer) {
       logBuffer.print(msg);
+    }
+    if (echoAsDotEnabled) {
       System.out.print(".");
     } else {
-      System.out.print(msg);
+      System.out.println(msg);
+    }
+    if (!isError) {
+      logger.info(msg);
     }
   }
 
   public void close() {
-    logBuffer.close();
+    if (null != logBuffer) {
+      logBuffer.close();
+    }
+  }
+
+  public void setEchoAsDotEnabled(boolean on) {
+    echoAsDotEnabled = on;
   }
 }

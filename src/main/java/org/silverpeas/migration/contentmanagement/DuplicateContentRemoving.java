@@ -23,9 +23,6 @@
  */
 package org.silverpeas.migration.contentmanagement;
 
-import org.silverpeas.dbbuilder.Console;
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,6 +30,9 @@ import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.util.Console;
 
 /**
  * DB migration to remove any duplicate content instances in the database underlying at Silverpeas.
@@ -135,39 +135,35 @@ public class DuplicateContentRemoving extends DbBuilderDynamicPart {
 
     int duplicateContentCount = executeQuery(DUPLICATE_CONTENT_COUNT_QUERY).get(0);
     String duplicateContents = "Number of duplicate content: " + duplicateContentCount;
-    console.printMessageln(duplicateContents);
+    console.printMessage(duplicateContents);
     System.out.println();
     System.out.println(duplicateContents);
 
     int classifiedContents = executeQuery(DUPLICATE_CLASSIFIED_CONTENT_COUNT_QUERY).get(0);
-    console.printMessageln("Number of duplicate content that are classified on the PdC: "
+    console.printMessage("Number of duplicate content that are classified on the PdC: "
         + classifiedContents);
 
-    console.printMessageln(
-        "Delete the unclassified redundant instances of duplicate contents");
+    console.printMessage("Delete the unclassified redundant instances of duplicate contents");
     List<Integer> contentsToDelete =
         executeQuery(UNCLASSIFIED_REDUNDANT_CONTENT_INSTANCES_TO_DELETE);
     int deletedContents1 = executeDeletion(CONTENT_INSTANCE_DELETION, contentsToDelete);
     assertEquals(contentsToDelete.size(), deletedContents1);
-    console.printMessageln("-> number of redundant instances deleted: " + deletedContents1);
+    console.printMessage("-> number of redundant instances deleted: " + deletedContents1);
 
-    console.printMessageln(
-        "Delete the rest of unclassified redundant instances of duplicate contents");
+    console.printMessage("Delete the rest of unclassified redundant instances of duplicate contents");
     contentsToDelete =
         executeQuery(UNCLASSIFIED_REDUNDANT_CONTENT_INSTANCE_WITH_HIGHER_ID_TO_DELETE);
     int deletedContents2 = executeDeletion(CONTENT_INSTANCE_DELETION, contentsToDelete);
     assertEquals(contentsToDelete.size(), deletedContents2);
-    console.printMessageln("-> number of redundant instances deleted: " + deletedContents2);
+    console.printMessage("-> number of redundant instances deleted: " + deletedContents2);
 
-    console.printMessageln(
-        "Delete the exceptional redundant instances of duplicate classified content");
+    console.printMessage("Delete the exceptional redundant instances of duplicate classified content");
     int deletedContents3 = deleteRedundantClassifiedInstances();
-    console.printMessageln("-> number of redundant instances deleted: " + deletedContents3);
+    console.printMessage("-> number of redundant instances deleted: " + deletedContents3);
 
     String deletedContents = "Total number of deleted redundant instances: " + (deletedContents1
-        + deletedContents2
-        + deletedContents3);
-    console.printMessageln(deletedContents);
+        + deletedContents2 + deletedContents3);
+    console.printMessage(deletedContents);
     System.out.println();
     System.out.println(deletedContents);
 

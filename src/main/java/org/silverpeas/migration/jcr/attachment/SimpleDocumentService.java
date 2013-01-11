@@ -23,7 +23,20 @@
  */
 package org.silverpeas.migration.jcr.attachment;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.List;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
 import org.apache.commons.io.IOUtils;
+
 import org.silverpeas.migration.jcr.attachment.model.DocumentType;
 import org.silverpeas.migration.jcr.attachment.model.ForeignPK;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
@@ -34,28 +47,17 @@ import org.silverpeas.migration.jcr.attachment.repository.DocumentRepository;
 import org.silverpeas.migration.jcr.util.RepositoryManager;
 import org.silverpeas.util.StringUtil;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
-import java.util.List;
-
 public class SimpleDocumentService implements AttachmentService {
 
   private final DocumentRepository repository;
   private final RepositoryManager repositoryManager;
 
-  public SimpleDocumentService(String repositoryHome, String conf) {
-    repositoryManager = new RepositoryManager(repositoryHome, conf);
+  public SimpleDocumentService(String repositoryHome, String repositoryXml) throws AttachmentException {
+    repositoryManager = new RepositoryManager(repositoryHome, repositoryXml);
     repository = new DocumentRepository(repositoryManager);
   }
 
-  public SimpleDocumentService() {
+  public SimpleDocumentService() throws AttachmentException{
     repositoryManager = new RepositoryManager();
     repository = new DocumentRepository(repositoryManager);
   }
@@ -73,7 +75,6 @@ public class SimpleDocumentService implements AttachmentService {
     try {
       session = repositoryManager.getSession();
       SimpleDocumentPK docPk = repository.createDocument(session, document);
-
       session.save();
       SimpleDocument createdDocument = repository.findDocumentById(session, docPk, document.
           getLanguage());
@@ -227,9 +228,8 @@ public class SimpleDocumentService implements AttachmentService {
     Session session = null;
     try {
       session = repositoryManager.getSession();
-      SimpleDocument document = repository
-          .findDocumentById(session, new SimpleDocumentPK(context.getAttachmentId()),
-          context.getLang());
+      SimpleDocument document = repository.findDocumentById(session,
+          new SimpleDocumentPK(context.getAttachmentId()), context.getLang());
       if (!context.isForce() && document.isReadOnly() && !document.getEditedBy().equals(context.
           getUserId())) {
         return false;
