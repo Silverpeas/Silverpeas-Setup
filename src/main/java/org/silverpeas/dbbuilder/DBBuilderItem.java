@@ -20,23 +20,16 @@
  */
 package org.silverpeas.dbbuilder;
 
-/**
- * Titre : dbBuilder Description : Builder des BDs Silverpeas Copyright : Copyright (c) 2001 Société
- * : Stratélia Silverpeas
- *
- * @author ATH
- * @version 1.0
- */
-import org.apache.commons.dbutils.DbUtils;
-import org.jdom.Element;
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.dbutils.DbUtils;
+import org.jdom.Element;
+
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 
 public abstract class DBBuilderItem {
 
@@ -114,13 +107,13 @@ public abstract class DBBuilderItem {
     ResultSet rs = null;
     String version = NOTINSTALLED;
     try {
-      pstmt =
-          connection.prepareStatement("SELECT SR_VERSION FROM SR_PACKAGES where SR_PACKAGE = ?");
+      pstmt = connection.prepareStatement("SELECT SR_VERSION FROM SR_PACKAGES where SR_PACKAGE = ?");
       pstmt.setString(1, module);
       rs = pstmt.executeQuery();
       if (rs.next()) {
         version = rs.getString("SR_VERSION");
       }
+    } catch (SQLException sqlex) {
     } finally {
       DbUtils.close(rs);
       DbUtils.close(pstmt);
@@ -130,19 +123,17 @@ public abstract class DBBuilderItem {
   }
 
   public Element getUniqueBlock(String b, String v) throws Exception {
-    List listeCurrent = getRoot().getChildren(b);
+    List<Element> listeCurrent = (List<Element>) getRoot().getChildren(b);
     if (listeCurrent == null) {
       throw new Exception(getModule() + ": no <" + b
           + "> tag found for this module into contribution file.");
     }
-    if (listeCurrent.size() == 0) {
+    if (listeCurrent.isEmpty()) {
       throw new Exception(getModule() + ": no <" + b
           + "> tag found for this module into contribution file.");
     }
-    Iterator iterCurrent = listeCurrent.iterator();
     Element myElement = null;
-    while (iterCurrent.hasNext()) {
-      Element eltCurrent = (Element) iterCurrent.next();
+    for (Element eltCurrent : listeCurrent) {
       if (eltCurrent.getAttributeValue(DBBuilderFileItem.VERSION_ATTRIB).equals(v)) {
         myElement = eltCurrent;
       }
