@@ -41,6 +41,7 @@ public interface AttachmentService {
 
   /**
    * Create file attached to an object who is identified by the foreignId.
+   *
    * @param document the document to be created.
    * @param content the binary content of the document.
    * @return the stored document.
@@ -51,6 +52,7 @@ public interface AttachmentService {
 
   /**
    * Create file attached to an object who is identified by the foreignId.
+   *
    * @param document the document to be created.
    * @param content the binary content of the document.
    * @return the stored document.
@@ -60,6 +62,7 @@ public interface AttachmentService {
 
   /**
    * Search the document.
+   *
    * @param primaryKey the primary key of document.
    * @param lang the lang of the document.
    * @return java.util.Vector: a collection of AttachmentDetail
@@ -69,6 +72,7 @@ public interface AttachmentService {
 
   /**
    * Search all files attached to a foreign object.
+   *
    * @param foreignKey : the primary key of foreign object.
    * @param lang the language of the documents.
    * @return the list of attached documents.
@@ -78,6 +82,7 @@ public interface AttachmentService {
 
   /**
    * Search all documents (files, xmlform content, wysiwyg) attached to a foreign object.
+   *
    * @param foreignKey : the primary key of foreign object.
    * @param lang the language of the documents.
    * @return the list of attached documents.
@@ -87,6 +92,7 @@ public interface AttachmentService {
 
   /**
    * Search all file attached to a foreign object.
+   *
    * @param foreignKey : the primary key of foreign object.
    * @param type : the type of document
    * @param lang the lang for the documents.
@@ -98,12 +104,14 @@ public interface AttachmentService {
 
   /**
    * To update the document : status, metadata but not its content.
+   *
    * @param document
    */
   void updateAttachment(SimpleDocument document);
 
   /**
    * To update a document content by updating or adding some content.
+   *
    * @param document
    * @param content
    */
@@ -111,6 +119,7 @@ public interface AttachmentService {
 
   /**
    * To update a document content by updating or adding some content.
+   *
    * @param document
    * @param content
    */
@@ -118,6 +127,7 @@ public interface AttachmentService {
 
   /**
    * Checkout a file to be updated by user.
+   *
    * @param attachmentId the id of the attachemnt to be locked.
    * @param userId : the user locking and modifying the attachment.
    * @param language the language of the attachment.
@@ -128,6 +138,7 @@ public interface AttachmentService {
 
   /**
    * Release a locked file.
+   *
    * @param context : the unlock parameters.
    * @return false if the file is locked - true if the unlock succeeded.
    * @throws AttachmentException
@@ -136,6 +147,7 @@ public interface AttachmentService {
 
   /**
    * Find documents with the same name attached to the specified foreign id.
+   *
    * @param fileName the name of the file.
    * @param pk the id of the document.
    * @param lang the language of the document.
@@ -144,4 +156,9 @@ public interface AttachmentService {
    */
   public SimpleDocument findExistingDocument(SimpleDocumentPK pk, String fileName,
       ForeignPK foreign, String lang);
+
+  /**
+   * Shutdowns the repository.
+   */
+  public void shutdown();
 }

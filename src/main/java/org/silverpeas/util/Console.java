@@ -42,7 +42,7 @@ import org.silverpeas.dbbuilder.util.Configuration;
  * out.
  */
 public class Console {
-
+  private static final String newline = System.getProperty("line.separator");
   private final Logger logger;
   private File logFile;
   private PrintWriter logBuffer;
@@ -88,6 +88,16 @@ public class Console {
     logger.error(errMsg);
   }
 
+  public void printWarning(String errMsg) {
+    printMessage(errMsg, true);
+    logger.warn(errMsg);
+  }
+
+  public void printWarning(String errMsg, Exception ex) {
+    printMessage(errMsg, true);
+    logger.warn(errMsg, ex);
+  }
+
   public void printMessage(String msg) {
     printMessage(msg, false);
   }
@@ -103,7 +113,7 @@ public class Console {
     if (echoAsDotEnabled) {
       System.out.print(".");
     } else {
-      System.out.println(msg);
+      System.out.println(newline + msg + newline);
     }
     if (!isError) {
       logger.info(msg);

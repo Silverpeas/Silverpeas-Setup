@@ -117,7 +117,7 @@ public class RepositoryManager {
     }
   }
 
-  public void close() {
+  public void shutdown() {
     this.repository.shutdown();
   }
 }

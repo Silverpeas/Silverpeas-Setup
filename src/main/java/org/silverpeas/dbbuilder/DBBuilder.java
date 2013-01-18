@@ -20,7 +20,6 @@
  */
 package org.silverpeas.dbbuilder;
 
-import org.silverpeas.util.Console;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -59,6 +58,7 @@ import org.silverpeas.dbbuilder.util.Action;
 import org.silverpeas.dbbuilder.util.CommandLineParameters;
 import org.silverpeas.dbbuilder.util.Configuration;
 import org.silverpeas.dbbuilder.util.DatabaseType;
+import org.silverpeas.util.Console;
 import org.silverpeas.util.file.FileUtil;
 
 import static java.io.File.separatorChar;
@@ -75,7 +75,6 @@ import static org.silverpeas.dbbuilder.util.Action.*;
 public class DBBuilder {
 
   public static final ResourceBundle messages = java.util.ResourceBundle.getBundle("messages");
-  public final static Date TODAY = new java.util.Date();
   // Version application
   public static final String DBBuilderAppVersion = messages.getString("silverpeas.version");
   // Fichier log
@@ -131,15 +130,17 @@ public class DBBuilder {
    * @see
    */
   public static void main(String[] args) {
-    new ClassPathXmlApplicationContext("classpath:/spring-jdbc-datasource.xml");
+    ClassPathXmlApplicationContext springContext = new ClassPathXmlApplicationContext(
+        "classpath:/spring-jdbc-datasource.xml");
     try {
       // Ouverture des traces
+      Date startDate = new Date();
       System.out.println(MessageFormat.format(messages.getString("dbbuilder.start"),
-          DBBuilderAppVersion, TODAY));
+          DBBuilderAppVersion, startDate));
       console = new Console(DBBuilder.class);
       console.printMessage("*************************************************************");
       console.printMessage(MessageFormat.format(messages.getString("dbbuilder.start"),
-          DBBuilderAppVersion, TODAY));
+          DBBuilderAppVersion, startDate));
       // Lecture des variables d'environnement à partir de dbBuilderSettings
       dbBuilderResources = FileUtil.loadResource(
           "/org/silverpeas/dbBuilder/settings/dbBuilderSettings.properties");
@@ -186,7 +187,8 @@ public class DBBuilder {
             // vérification des dépendances
             // & prise en compte uniquement si dependences OK
             if (hasUnresolvedRequirements(listeFileXml, fXml)) {
-              console.printMessage('\t' + xmlFile.getName() + " (because of unresolved requirements).");
+              console.printMessage('\t' + xmlFile.getName()
+                  + " (because of unresolved requirements).");
               ignoredFiles++;
             } else if (ACTION_ENFORCE_UNINSTALL == params.getAction()) {
               console.printMessage('\t' + xmlFile.getName() + " (because of "
@@ -306,15 +308,20 @@ public class DBBuilder {
         console.printMessage("Finally DB Status :");
         checkDBStatus();
       }
-      console.printMessage(MessageFormat.format(messages.getString("dbbuilder.success"), TODAY));
-      System.out.println(MessageFormat.format(messages.getString("dbbuilder.success"), TODAY));
+      Date endDate = new Date();
+      console.printMessage(MessageFormat.format(messages.getString("dbbuilder.success"), endDate));
+      System.out.println("*******************************************************************");
+      System.out.println(MessageFormat.format(messages.getString("dbbuilder.success"), endDate));
     } catch (Exception e) {
       e.printStackTrace();
       console.printError(e.getMessage(), e);
-      console.printError(MessageFormat.format(messages.getString("dbbuilder.failure"), TODAY));
-      System.out.println(MessageFormat.format(messages.getString("dbbuilder.failure"), TODAY));
+      Date endDate = new Date();
+      console.printError(MessageFormat.format(messages.getString("dbbuilder.failure"), endDate));
+      System.out.println("*******************************************************************");
+      System.out.println(MessageFormat.format(messages.getString("dbbuilder.failure"), endDate));
       System.exit(1);
     } finally {
+      springContext.close();
       console.close();
     }
   } // main
@@ -359,7 +366,7 @@ public class DBBuilder {
       versionDB = pdbbuilderItem.getVersionFromDB();
       versionFile = pdbbuilderItem.getVersionFromFile();
     } catch (Exception e) {
-      e.printStackTrace();
+      console.printError("", e);
       return;
     }
     String[] tags_to_merge = null;
@@ -438,8 +445,7 @@ public class DBBuilder {
           try {
             xmlFile.mergeWith(pdbbuilderItem, tags_to_merge, blocks_merge);
           } catch (Exception e) {
-            console.printMessage("Error with " + pdbbuilderItem.getModule() + ' ' + e.getMessage());
-            e.printStackTrace();
+            console.printError("Error with " + pdbbuilderItem.getModule() + ' ' + e.getMessage(), e);
           }
         }
       }
@@ -563,18 +569,15 @@ public class DBBuilder {
           if (FILEATTRIBSTATEMENT_VALUE.equals(value)) {
             // piece de type Single Statement
             dbBuilderPiece = new DBBuilderSingleStatementPiece(console, name, name + '(' + order
-                + ')',
-                nomTag, order.intValue(), params.isVerbose());
+                + ')', nomTag, order.intValue(), params.isVerbose());
           } else if (FILEATTRIBSEQUENCE_VALUE.equals(value)) {
             // piece de type Single Statement
-            dbBuilderPiece =
-                new DBBuilderMultipleStatementPiece(console, name, name + '(' + order + ')',
-                nomTag, order.intValue(), params.isVerbose(), delimiter, keepdelimiter);
+            dbBuilderPiece = new DBBuilderMultipleStatementPiece(console, name, name + '(' + order
+                + ')', nomTag, order.intValue(), params.isVerbose(), delimiter, keepdelimiter);
           } else if (FILEATTRIBDBPROC_VALUE.equals(value)) {
             // piece de type Database Procedure
             dbBuilderPiece = new DBBuilderDBProcPiece(console, name, name + '(' + order + ')',
-                nomTag,
-                order.intValue(), params.isVerbose(), dbprocname);
+                nomTag, order.intValue(), params.isVerbose(), dbprocname);
 
           }
           if (null != dbBuilderPiece) {
@@ -595,8 +598,7 @@ public class DBBuilder {
           boolean keepdelimiter = (null != skeepdelimiter && skeepdelimiter.equals("YES"));
           String classname = eltFile.getAttributeValue(FILECLASSNAME_ATTRIB);
           String methodname = eltFile.getAttributeValue(FILEMETHODNAME_ATTRIB);
-          console.printMessage('\t' + tagsToProcess[i] + " : name : " + name + "\t type : "
-              + value);
+          console.printMessage('\t' + tagsToProcess[i] + " : name : " + name + "\t type : " + value);
           nbFiles++;
           if (FILEATTRIBSTATEMENT_VALUE.equals(value)) {
             // piece de type Single Statement
@@ -668,12 +670,11 @@ public class DBBuilder {
               String nameU = getCleanPath(eltFileU.getAttributeValue(
                   DBBuilderFileItem.FILENAME_ATTRIB));
               String valueU = eltFileU.getAttributeValue(DBBuilderFileItem.FILETYPE_ATTRIB);
-              String delimiterU =
-                  eltFileU.getAttributeValue(DBBuilderFileItem.FILEDELIMITER_ATTRIB);
-              String skeepdelimiterU =
-                  eltFileU.getAttributeValue(DBBuilderFileItem.FILEKEEPDELIMITER_ATTRIB);
-              String dbprocnameU =
-                  eltFileU.getAttributeValue(DBBuilderFileItem.FILEDBPROCNAME_ATTRIB);
+              String delimiterU = eltFileU.getAttributeValue(DBBuilderFileItem.FILEDELIMITER_ATTRIB);
+              String skeepdelimiterU = eltFileU.getAttributeValue(
+                  DBBuilderFileItem.FILEKEEPDELIMITER_ATTRIB);
+              String dbprocnameU = eltFileU.getAttributeValue(
+                  DBBuilderFileItem.FILEDBPROCNAME_ATTRIB);
               boolean keepdelimiterU = (null != skeepdelimiterU && skeepdelimiterU.equals("YES"));
               console.printMessage('\t' + tagsToProcessU[i] + " : name : " + nameU + "\t type : "
                   + valueU);
@@ -691,8 +692,7 @@ public class DBBuilder {
               } else if (valueU.equals(FILEATTRIBDBPROC_VALUE)) {
                 // piece de type Database Procedure
                 pU = new DBBuilderDBProcPiece(console, Configuration.getPiecesFilesDir()
-                    + separatorChar
-                    + nameU, tagsToProcessU[i], params.isVerbose(), dbprocnameU);
+                    + separatorChar + nameU, tagsToProcessU[i], params.isVerbose(), dbprocnameU);
                 pU.cacheIntoDB(connection, pName, iFile);
               }
               iFile++;
