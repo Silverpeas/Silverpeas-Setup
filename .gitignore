@@ -5,3 +5,6 @@ nbactions.xml
 *.iml
 .sonar-ide.properties
 .idea
+.settings
+.classpath
+.project
