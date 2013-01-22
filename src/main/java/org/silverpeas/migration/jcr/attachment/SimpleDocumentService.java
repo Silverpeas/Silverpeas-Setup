@@ -91,6 +91,26 @@ public class SimpleDocumentService implements AttachmentService {
     }
   }
 
+  /**
+   * Delete a given attachment.
+   *
+   * @param document the attachmentDetail object to deleted.
+   */
+  @Override
+  public void deleteAttachment(SimpleDocument document) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      repository.fillNodeName(session, document);
+      repository.deleteDocument(session, document.getPk());
+      session.save();
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
   @Override
   public SimpleDocument searchDocumentById(SimpleDocumentPK primaryKey, String lang) {
     Session session = null;
@@ -148,8 +168,6 @@ public class SimpleDocumentService implements AttachmentService {
     Session session = null;
     try {
       session = repositoryManager.getSession();
-      SimpleDocument oldAttachment =
-          repository.findDocumentById(session, document.getPk(), document.getLanguage());
       repository.fillNodeName(session, document);
       repository.updateDocument(session, document);
       session.save();
