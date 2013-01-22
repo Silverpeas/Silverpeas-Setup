@@ -57,6 +57,13 @@ public interface AttachmentService {
    * @throws AttachmentException
    */
   SimpleDocument createAttachment(SimpleDocument document, File content) throws AttachmentException;
+  
+  /**
+   * Delete a given attachment.
+   *
+   * @param document the document to deleted.
+   */
+  void deleteAttachment(SimpleDocument document);
 
   /**
    * Search the document.
