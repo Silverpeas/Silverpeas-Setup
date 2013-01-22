@@ -37,37 +37,40 @@ public enum DocumentType {
   private static final Pattern nodePattern = Pattern.compile("Node_\\d+Images");
   private static final Pattern wysiwygImagePattern = Pattern.compile("\\d+Images");
   private static final Pattern externalWysiwygImagePattern = Pattern.compile("[a-zA-Z]+\\d+Images");
-  private String forlderName;
+  private String folderName;
 
   private DocumentType(String folder) {
-    this.forlderName = folder;
+    this.folderName = folder;
   }
 
   public String getForlderName() {
-    return forlderName;
+    return folderName;
   }
 
   public static DocumentType fromFolderName(String folder) {
-    if (attachment.forlderName.equals(folder)) {
+    if (attachment.folderName.equals(folder)) {
       return attachment;
     }
-    if (form.forlderName.equals(folder)) {
+    if (form.folderName.equals(folder)) {
       return form;
     }
-    if (wysiwyg.forlderName.equals(folder)) {
+    if (wysiwyg.folderName.equals(folder)) {
       return wysiwyg;
     }
-    if (image.forlderName.equals(folder)) {
+    if (image.folderName.equals(folder)) {
       return image;
     }
-    if (video.forlderName.equals(folder)) {
+    if (video.folderName.equals(folder)) {
       return video;
     }
     return attachment;
   }
 
-  public static DocumentType fromOldContext(String oldContext) {
+  public static DocumentType fromOldContext(String instanceId, String oldContext) {
     if (StringUtil.isDefined(oldContext)) {
+      if(instanceId.startsWith("classifieds") && "Images".equalsIgnoreCase(oldContext)) {
+        return form;
+      }
       if ("Images".equalsIgnoreCase(oldContext)) {
         return attachment;
       }
