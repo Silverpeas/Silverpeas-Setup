@@ -52,18 +52,20 @@ public class SimpleDocumentService implements AttachmentService {
   private final DocumentRepository repository;
   private final RepositoryManager repositoryManager;
 
-  public SimpleDocumentService(String repositoryHome, String repositoryXml) throws AttachmentException {
+  public SimpleDocumentService(String repositoryHome, String repositoryXml) throws
+      AttachmentException {
     repositoryManager = new RepositoryManager(repositoryHome, repositoryXml);
     repository = new DocumentRepository(repositoryManager);
   }
 
-  public SimpleDocumentService() throws AttachmentException{
+  public SimpleDocumentService() throws AttachmentException {
     repositoryManager = new RepositoryManager();
     repository = new DocumentRepository(repositoryManager);
   }
 
   /**
    * Create file attached to an object who is identified by the foreignId.
+   *
    * @param document the document to be created.
    * @param content the binary content of the document.
    * @return the stored document.
@@ -237,6 +239,7 @@ public class SimpleDocumentService implements AttachmentService {
 
   /**
    * Release a locked file.
+   *
    * @param context : the unlock parameters.
    * @return false if the file is locked - true if the unlock succeeded.
    * @throws AttachmentException
@@ -278,6 +281,7 @@ public class SimpleDocumentService implements AttachmentService {
 
   /**
    * Lock a file so it can be edited by an user.
+   *
    * @param attachmentId
    * @param userId
    * @param language
@@ -334,13 +338,17 @@ public class SimpleDocumentService implements AttachmentService {
     Session session = null;
     try {
       session = repositoryManager.getSession();
-      return repository
-          .listDocumentsByForeignIdAndType(session, foreignKey.getInstanceId(), foreignKey.
-          getId(), type, lang);
+      return repository.listDocumentsByForeignIdAndType(session, foreignKey.getInstanceId(),
+          foreignKey.getId(), type, lang);
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     } finally {
       repositoryManager.logout(session);
     }
+  }
+
+  @Override
+  public void shutdown() {
+    this.repositoryManager.shutdown();
   }
 }

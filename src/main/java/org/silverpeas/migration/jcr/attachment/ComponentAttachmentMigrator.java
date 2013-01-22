@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.concurrent.Callable;
 
+import javax.jcr.ItemExistsException;
 import org.apache.commons.dbutils.DbUtils;
 
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
@@ -171,26 +172,41 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       ParseException, IOException {
     console.printMessage("Creating document " + document.getFilename() + " for " + file.
         getAbsolutePath());
-    SimpleDocument result = service.createAttachment(document, file);
-    createTranslations(result);
+    try {
+      SimpleDocument result = service.createAttachment(document, file);
+      createTranslations(result);
+    } catch (AttachmentException ex) {
+      if (ex.getCause() instanceof ItemExistsException) {
+        console.printWarning("Document " + document.getFilename() + " for " + file.
+            getAbsolutePath() + " seems to exists already", ex);
+      } else {
+        throw ex;
+      }
+    }
   }
 
   protected File getAttachmenFile(String instanceId, String context, String physicalName) throws
       IOException {
-    String directory = SilverpeasHomeResolver.getDataHome() + separatorChar + "workspaces"
-        + separatorChar + instanceId + separatorChar + "Attachment" + separatorChar + context;
-    directory = directory.replace('/', separatorChar);
-    File file = new File(directory, physicalName);
+    String baseDirectory = SilverpeasHomeResolver.getDataHome() + separatorChar + "workspaces"
+        + separatorChar + instanceId;
+    String contextDirectory = "";
+    if (context != null) {
+      contextDirectory = context;
+    }
+    String attachmentDirectory = (baseDirectory + separatorChar + "Attachment" + separatorChar
+        + contextDirectory).replace('/', separatorChar);
+    String directory = (baseDirectory + separatorChar + contextDirectory)
+        .replace('/', separatorChar);
+    File file = new File(attachmentDirectory, physicalName);
     if (!file.exists() || !file.isFile()) {
-      console.printError("File " + physicalName + " not found in " + directory);
-      directory = SilverpeasHomeResolver.getDataHome() + separatorChar + "workspaces"
-          + separatorChar + instanceId + separatorChar + context;
-      directory = directory.replace('/', separatorChar);
       file = new File(directory, physicalName);
       if (!file.exists() || !file.isFile()) {
         file = null;
       }
-      console.printError("File " + physicalName + " not found in " + directory);
+    }
+    if (file == null) {
+      console.printError("File " + physicalName + " not found in " + attachmentDirectory + " or in "
+          + directory);
     }
     return file;
   }

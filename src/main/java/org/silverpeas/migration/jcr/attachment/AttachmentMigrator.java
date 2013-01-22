@@ -47,7 +47,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
     this.service = new SimpleDocumentService();
   }
 
-  public void migrateAttachments() throws Exception {    
+  public void migrateAttachments() throws Exception {
     long totalNumberOfMigratedFiles = 0L;
     List<ComponentAttachmentMigrator> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
@@ -58,12 +58,13 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
         throw ex;
       } catch (Exception ex) {
         getConsole().printError("Error during migration of attachments " + ex, ex);
-        executor.shutdown();
         throw ex;
+      } finally {
+        executor.shutdown();
       }
     }
     getConsole().printMessage("Nb of migrated documents : " + totalNumberOfMigratedFiles);
-
+    this.service.shutdown();
   }
 
   protected List<ComponentAttachmentMigrator> buildComponentMigrators() throws SQLException {
