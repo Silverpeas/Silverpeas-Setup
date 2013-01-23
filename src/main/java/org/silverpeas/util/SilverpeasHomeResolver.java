@@ -27,17 +27,15 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SilverpeasHomeResolver {
 
   private static final String HOME_KEY = "silverpeas.home";
   private static final String ENV_KEY = "SILVERPEAS_HOME";
   private static String silverpeasHome = null;
-  private static Properties configuration = null;
+  private static GestionVariables configuration = null;
   private static boolean abortOnError = true;
-  private static final Logger logger = LoggerFactory.getLogger(SilverpeasHomeResolver.class);
+  private static final Console console = new Console(SilverpeasHomeResolver.class);
 
   /**
    * If set to TRUE, program is exited if Silverpeas install location cannot be found. Else, a
@@ -58,19 +56,18 @@ public class SilverpeasHomeResolver {
   /**
    * Finds Silverpeas install directory Silverpeas install location may be set by using
    * -Dsilverpeas.home=<i>location</i> on java command line
+   *
    * @return the silverpeas home directory
    */
   public static String getHome() {
     if (silverpeasHome == null) {
-      if (!System.getProperties().containsKey(HOME_KEY)
-          && !System.getenv().containsKey(ENV_KEY)) {
-        System.err.println("### CANNOT FIND SILVERPEAS INSTALL LOCATION ###");
-        System.err.println("please use \"-D" + HOME_KEY
+      if (!System.getProperties().containsKey(HOME_KEY) && !System.getenv().containsKey(ENV_KEY)) {
+        console.printError("### CANNOT FIND SILVERPEAS INSTALL LOCATION ###");
+        console.printError("please use \"-D" + HOME_KEY
             + "=<install location>\" on the command line");
-        System.err
-            .println("or define the SILVERPEAS_HOME environment variable.");
+        console.printError("or define the SILVERPEAS_HOME environment variable.");
         if (getAbortOnError()) {
-          System.err.println("### ABORTED ###");
+          console.printError("### ABORTED ###");
           System.exit(1);
         }
       }
@@ -87,14 +84,14 @@ public class SilverpeasHomeResolver {
       try {
         configuration = loadConfiguration();
       } catch (IOException ex) {
-        logger.warn("Error loading configuration", ex);
+        console.printWarning("Error loading configuration", ex);
         throw ex;
       }
     }
-    return configuration.getProperty("SILVERPEAS_DATA_HOME");
+    return configuration.resolveAndEvalString("${SILVERPEAS_DATA_HOME}");
   }
 
-  private static Properties loadConfiguration() throws IOException {
+  private static GestionVariables loadConfiguration() throws IOException {
     Properties defaultConfig = new Properties();
     InputStream in = SilverpeasHomeResolver.class.getClassLoader().getResourceAsStream(
         "default_config.properties");
@@ -104,7 +101,8 @@ public class SilverpeasHomeResolver {
       IOUtils.closeQuietly(in);
     }
     Properties config = new Properties(defaultConfig);
-    File configFile = new File(getHome() + "/setup/settings", "config.properties");
+    File configFile = new File(getHome() + File.separatorChar + "setup" + File.separatorChar
+        + "settings", "config.properties");
     if (configFile.exists() && configFile.isFile()) {
       in = new FileInputStream(configFile);
       try {
@@ -113,7 +111,7 @@ public class SilverpeasHomeResolver {
         IOUtils.closeQuietly(in);
       }
     }
-    return config;
+    return new GestionVariables(config);
   }
 
   private SilverpeasHomeResolver() {

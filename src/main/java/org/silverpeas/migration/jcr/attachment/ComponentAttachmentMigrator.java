@@ -30,10 +30,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.jcr.ItemExistsException;
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.FileUtils;
 
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.attachment.model.DocumentType;
@@ -111,7 +114,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
         File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
             rs.getString("attachmentphysicalname"));
         if (file != null) {
-          createDocument(document, file);
+          createDocument(document, rs.getString("attachmentcontext"), file);
           nbMigratedDocuments++;
         }
       }
@@ -125,8 +128,10 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
     return nbMigratedDocuments;
   }
 
-  protected void createTranslations(SimpleDocument document) throws SQLException, ParseException,
-      IOException {
+  protected Set<File> createTranslations(SimpleDocument document, String context) throws
+      SQLException,
+      ParseException, IOException {
+    Set<File> files = new HashSet<File>(5);
     PreparedStatement pstmt = null;
     ResultSet rs = null;
     Connection connection = getConnection();
@@ -150,13 +155,13 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             rs.getString("attachmentinfo"), rs.getLong("attachmentsize"), contentType, author,
             DateUtil.parse(rs.getString("attachmentcreationdate")), rs.getString("xmlform"));
         document.setFile(attachment);
-        document.setDocumentType(DocumentType.fromOldContext(rs.getString("attachmentcontext")));
-        File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
-            rs.getString("attachmentphysicalname"));
+        File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
+            "attachmentphysicalname"));
         if (file != null) {
           console.printMessage("Creating translation " + document.getFilename() + " for " + file.
               getAbsolutePath());
           service.createAttachment(document, file);
+          files.add(file);
         }
       }
     } catch (SQLException sqlex) {
@@ -166,15 +171,19 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       DbUtils.closeQuietly(pstmt);
       DbUtils.closeQuietly(connection);
     }
+    return files;
   }
 
-  protected void createDocument(SimpleDocument document, File file) throws SQLException,
+  protected void createDocument(SimpleDocument document, String context, File file) throws
+      SQLException,
       ParseException, IOException {
     console.printMessage("Creating document " + document.getFilename() + " for " + file.
         getAbsolutePath());
     try {
       SimpleDocument result = service.createAttachment(document, file);
-      createTranslations(result);
+      Set<File> files = createTranslations(result, context);
+      files.add(file);
+      //cleanAll(result.getOldSilverpeasId(), files);
     } catch (AttachmentException ex) {
       if (ex.getCause() instanceof ItemExistsException) {
         console.printWarning("Document " + document.getFilename() + " for " + file.
@@ -211,27 +220,28 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
     return file;
   }
 
-  protected void cleanAll(long oldSilverpeasId, Connection connection) throws SQLException {
+  protected void cleanAll(long oldSilverpeasId, Set<File> files) throws SQLException {
+    Connection connection = getConnection();
     PreparedStatement deleteTranslations = null;
+    PreparedStatement deleteAttachment = null;
     try {
       deleteTranslations = connection.prepareStatement(DELETE_ATTACHMENT_TRANSLATIONS);
       deleteTranslations.setLong(1, oldSilverpeasId);
       deleteTranslations.executeUpdate();
-    } catch (SQLException ex) {
-      throw ex;
-    } finally {
       DbUtils.closeQuietly(deleteTranslations);
-    }
-    PreparedStatement deleteAttachment = null;
-    try {
       deleteAttachment = connection.prepareStatement(DELETE_ATTACHMENT);
       deleteAttachment.setLong(1, oldSilverpeasId);
       deleteAttachment.executeUpdate();
+      for (File file : files) {
+        FileUtils.deleteQuietly(file);
+      }
       connection.commit();
     } catch (SQLException ex) {
       throw ex;
     } finally {
+      DbUtils.closeQuietly(deleteTranslations);
       DbUtils.closeQuietly(deleteAttachment);
+      DbUtils.closeQuietly(connection);
     }
   }
 

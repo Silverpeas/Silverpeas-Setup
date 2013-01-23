@@ -182,6 +182,7 @@ public class DocumentRepository {
    * @param destination the foreingId holding reference to the copy.
    * @return
    * @throws RepositoryException
+   * @throws IOException  
    */
   public SimpleDocumentPK copyDocument(Session session, HistorisedDocument document,
       WAPrimaryKey destination) throws RepositoryException, IOException {
@@ -368,7 +369,7 @@ public class DocumentRepository {
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
     ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
-        getPath() + instanceId + '/' + SimpleDocument.ATTACHMENTS_FOLDER);
+        getPath() + instanceId + '/' + DocumentType.attachment.getFolderName());
     Comparison oldSilverpeasIdComparison = factory.comparison(factory.propertyValue(
         SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_OLD_ID), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
@@ -519,7 +520,7 @@ public class DocumentRepository {
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
     ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
-        getPath() + instanceId + '/' + type.getForlderName());
+        getPath() + instanceId + '/' + DocumentType.attachment.getFolderName());
     Comparison foreignIdComparison =
         factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_FOREIGN_KEY), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
@@ -697,7 +698,7 @@ public class DocumentRepository {
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
     ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
-        getPath() + instanceId + '/' + SimpleDocument.ATTACHMENTS_FOLDER);
+        getPath() + instanceId + '/' + DocumentType.attachment.getFolderName());
     Comparison ownerComparison =
         factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_OWNER), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory

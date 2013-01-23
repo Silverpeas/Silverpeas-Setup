@@ -23,6 +23,7 @@
  */
 package org.silverpeas.migration.jcr.attachment;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -37,17 +38,22 @@ import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 
 public class AttachmentMigrator extends DbBuilderDynamicPart {
-
+  
   private static final ExecutorService executor = Executors.newFixedThreadPool(10);
   private final SimpleDocumentService service;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
       + "sb_attachment_attachment ORDER BY instanceid";
-
+  public static final String SELECT_MAX_ID =
+      "SELECT maxid FROM uniqueid WHERE tablename = 'sb_attachment_attachment'";
+  public static final String UPDATE_UNIQUEID =
+      "INSERT INTO uniqueid (maxid, tablename) VALUES (?, 'sb_simple_document')";
+  
   public AttachmentMigrator() {
     this.service = new SimpleDocumentService();
   }
-
+  
   public void migrateAttachments() throws Exception {
+    updateUniqueId();
     long totalNumberOfMigratedFiles = 0L;
     List<ComponentAttachmentMigrator> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
@@ -66,7 +72,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
     getConsole().printMessage("Nb of migrated documents : " + totalNumberOfMigratedFiles);
     this.service.shutdown();
   }
-
+  
   protected List<ComponentAttachmentMigrator> buildComponentMigrators() throws SQLException {
     List<ComponentAttachmentMigrator> result = new ArrayList<ComponentAttachmentMigrator>(500);
     Statement stmt = null;
@@ -85,6 +91,36 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       }
       getConsole().printMessage("*************************************************************");
       return result;
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+    }
+  }
+  
+  protected void updateUniqueId() throws SQLException {
+    Statement stmt = null;
+    ResultSet rs = null;
+    long maxId = 0L;
+    getConsole().printMessage("Updating uniqueId");
+    try { 
+      stmt = getConnection().createStatement();
+      rs = stmt.executeQuery(SELECT_MAX_ID);
+      if (rs.next()) {
+        maxId = rs.getLong("maxid");
+      }
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+    }
+    PreparedStatement pstmt = null;
+    try {
+      pstmt = getConnection().prepareStatement(UPDATE_UNIQUEID);
+      pstmt.setLong(1, maxId);
+      pstmt.executeUpdate();      
     } catch (SQLException sqlex) {
       throw sqlex;
     } finally {

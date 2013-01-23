@@ -31,17 +31,16 @@ import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
 
-import static java.io.File.separatorChar;
 
+import static java.io.File.separatorChar;
 /**
+ *
  * @author ehugonnet
  */
 public class SimpleDocument implements Serializable {
 
   private static final long serialVersionUID = 8778738762037114180L;
   public static final String WEBDAV_FOLDER = "webdav";
-  public static final String FORM_FOLDER = "xmlform";
-  public static final String ATTACHMENTS_FOLDER = "attachments";
   public final static String ATTACHMENT_PREFIX = "attach_";
   public final static String VERSION_PREFIX = "version_";
   public final static String FILE_PREFIX = "file_";
@@ -498,6 +497,6 @@ public class SimpleDocument implements Serializable {
   }
 
   public String getFolder() {
-    return documentType.getForlderName();
+    return documentType.getFolderName();
   }
 }
