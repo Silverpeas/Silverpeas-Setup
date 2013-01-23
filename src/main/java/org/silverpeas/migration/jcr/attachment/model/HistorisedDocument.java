@@ -28,6 +28,7 @@ import java.util.List;
  */
 public class HistorisedDocument extends SimpleDocument {
 
+  private static final long serialVersionUID = 1L;
   private List<SimpleDocument> history;
 
   public HistorisedDocument(SimpleDocumentPK pk, String foreignId, int order, SimpleAttachment file) {
@@ -40,6 +41,7 @@ public class HistorisedDocument extends SimpleDocument {
   }
 
   public HistorisedDocument() {
+    super(new SimpleDocumentPK(null), null, 0, true, new SimpleAttachment());
   }
 
   public HistorisedDocument(SimpleDocument doc) {
@@ -50,6 +52,11 @@ public class HistorisedDocument extends SimpleDocument {
     setStatus(doc.getStatus());
     setPublicDocument(doc.isPublic());
     setNodeName(doc.getNodeName());
+  }
+
+  @Override
+  public boolean isVersioned() {
+    return true;
   }
 
   public List<SimpleDocument> getHistory() {
@@ -75,6 +82,7 @@ public class HistorisedDocument extends SimpleDocument {
 
   /**
    * Returns the more recent public version of this document - null if none exists.
+   *
    * @return the more recent public version of this document - null if none exists.
    */
   @Override

@@ -50,6 +50,7 @@ import static org.silverpeas.migration.jcr.util.JcrConstants.*;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
 
 /**
+ *
  * @author ehugonnet
  */
 class DocumentConverter extends AbstractJcrConverter {
@@ -58,8 +59,7 @@ class DocumentConverter extends AbstractJcrConverter {
 
   /**
    * Convert the document history in a list of SimpleDocument.
-   * @param session
-   * @param path
+   *
    * @param lang
    * @return
    * @throws RepositoryException
@@ -117,8 +117,7 @@ class DocumentConverter extends AbstractJcrConverter {
    * @return a collection of SimpleDocument.
    * @throws RepositoryException
    */
-  public List<SimpleDocument> convertNodeIterator(NodeIterator iter, String language)
-      throws RepositoryException {
+  public List<SimpleDocument> convertNodeIterator(NodeIterator iter, String language) throws RepositoryException {
     List<SimpleDocument> result = new ArrayList<SimpleDocument>((int) iter.getSize());
     while (iter.hasNext()) {
       result.add(convertNode(iter.nextNode(), language));
@@ -218,7 +217,7 @@ class DocumentConverter extends AbstractJcrConverter {
   }
 
   public boolean isForm(Node node) throws RepositoryException {
-    return node.getPath().contains('/' + SimpleDocument.FORM_FOLDER + '/');
+    return node.getPath().contains('/' + DocumentType.form.getFolderName() + '/');
   }
 
   public String updateVersion(Node node, String lang, boolean isPublic) throws RepositoryException {

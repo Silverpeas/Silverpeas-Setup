@@ -21,9 +21,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.attachment;
+package org.silverpeas.migration.jcr.version;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -36,26 +35,22 @@ import java.util.concurrent.Future;
 import org.apache.commons.dbutils.DbUtils;
 
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
 
-public class AttachmentMigrator extends DbBuilderDynamicPart {
-  
+public class VersioningMigrator extends DbBuilderDynamicPart {
+
   private static final ExecutorService executor = Executors.newFixedThreadPool(10);
   private final SimpleDocumentService service;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
-      + "sb_attachment_attachment ORDER BY instanceid";
-  public static final String SELECT_MAX_ID =
-      "SELECT maxid FROM uniqueid WHERE tablename = 'sb_attachment_attachment'";
-  public static final String UPDATE_UNIQUEID =
-      "INSERT INTO uniqueid (maxid, tablename) VALUES (?, 'sb_simple_document')";
-  
-  public AttachmentMigrator() {
+      + "sb_version_document ORDER BY instanceid";
+
+  public VersioningMigrator() {
     this.service = new SimpleDocumentService();
   }
-  
-  public void migrateAttachments() throws Exception {
-    updateUniqueId();
+
+  public void migrateDocuments() throws Exception {
     long totalNumberOfMigratedFiles = 0L;
-    List<ComponentAttachmentMigrator> migrators = buildComponentMigrators();
+    List<ComponentDocumentMigrator> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
     for (Future<Long> nbOfMigratedDocuments : result) {
       try {
@@ -69,12 +64,12 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
         executor.shutdown();
       }
     }
-    getConsole().printMessage("Nb of migrated documents : " + totalNumberOfMigratedFiles);
+    getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
     this.service.shutdown();
   }
-  
-  protected List<ComponentAttachmentMigrator> buildComponentMigrators() throws SQLException {
-    List<ComponentAttachmentMigrator> result = new ArrayList<ComponentAttachmentMigrator>(500);
+
+  protected List<ComponentDocumentMigrator> buildComponentMigrators() throws SQLException {
+    List<ComponentDocumentMigrator> result = new ArrayList<ComponentDocumentMigrator>(500);
     Statement stmt = null;
     ResultSet rs = null;
     getConsole().printMessage("All components to be migrated : ");
@@ -82,8 +77,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       stmt = getConnection().createStatement();
       rs = stmt.executeQuery(SELECT_COMPONENTS);
       while (rs.next()) {
-        result.add(
-            new ComponentAttachmentMigrator(rs.getString("instanceid"), service, getConsole()));
+        result.add(new ComponentDocumentMigrator(rs.getString("instanceid"), service, getConsole()));
         getConsole().printMessage(rs.getString("instanceid"));
         if (!rs.isLast()) {
           getConsole().printMessage(", ");
@@ -91,36 +85,6 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       }
       getConsole().printMessage("*************************************************************");
       return result;
-    } catch (SQLException sqlex) {
-      throw sqlex;
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-  }
-  
-  protected void updateUniqueId() throws SQLException {
-    Statement stmt = null;
-    ResultSet rs = null;
-    long maxId = 0L;
-    getConsole().printMessage("Updating uniqueId");
-    try { 
-      stmt = getConnection().createStatement();
-      rs = stmt.executeQuery(SELECT_MAX_ID);
-      if (rs.next()) {
-        maxId = rs.getLong("maxid");
-      }
-    } catch (SQLException sqlex) {
-      throw sqlex;
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    PreparedStatement pstmt = null;
-    try {
-      pstmt = getConnection().prepareStatement(UPDATE_UNIQUEID);
-      pstmt.setLong(1, maxId);
-      pstmt.executeUpdate();      
     } catch (SQLException sqlex) {
       throw sqlex;
     } finally {

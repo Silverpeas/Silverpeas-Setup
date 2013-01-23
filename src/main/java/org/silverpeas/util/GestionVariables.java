@@ -50,6 +50,7 @@ public class GestionVariables {
 
   /**
    * Build the class in charge for all variable operations.
+   *
    * @param defaultConfig the default configuration.
    * @throws IOException
    */
@@ -62,6 +63,9 @@ public class GestionVariables {
   }
 
   /**
+   * @param config the current configuration overloading thedefault one.
+   * @param defaultConfig the default configuration.
+   * @throws IOException
    * @constructor construtor principale de la classe
    */
   public GestionVariables(Properties config, Properties defaultConfig) throws IOException {
@@ -74,6 +78,7 @@ public class GestionVariables {
 
   /**
    * Add a new variable.
+   *
    * @param variable the variable.
    * @param value the variable value.
    */
@@ -83,14 +88,18 @@ public class GestionVariables {
 
   /**
    * modification d'une variable deja existante
+   *
+   * @param varName
+   * @param varValue
    */
-  public void modifyVariable(String pName, String pValue) {
-    listeVariables.remove(pName);
-    listeVariables.put(pName, pValue);
+  public void modifyVariable(String varName, String varValue) {
+    listeVariables.remove(varName);
+    listeVariables.put(varName, varValue);
   }
 
   /**
    * Gets the name of all variables defines in this object
+   *
    * @return an enumeration with all variable names.
    */
   @SuppressWarnings("unchecked")
@@ -102,33 +111,34 @@ public class GestionVariables {
    * Resolution de string les variables doivent etre de la forme ${variable} il n'y a pas de
    * contrainte aux niveaux du nombre de variables utilisees ex: path=c:\tmp rep=\lib\
    * ${path}{$rep}\toto ->c:\tmp\lib\toto
-   * @param pStr
+   *
+   * @param unresolvedString
    * @return
    * @throws IOException
    */
-  public String resolveString(String pStr) throws IOException {
-    String newString = "";
-    int index = pStr.indexOf("${");
+  public String resolveString(String unresolvedString) throws IOException {
+    StringBuilder newString = new StringBuilder("");
+    int index = unresolvedString.indexOf("${");
     if (-1 != index) {
       int index_fin;
-      String tmp = pStr;
+      String currentStringPortion = unresolvedString;
       while (-1 != index) {
-        newString = newString + tmp.substring(0, index);
-        index_fin = tmp.indexOf('}');
-        newString = newString + this.getValue(tmp.substring(index + 2, index_fin));
-        tmp = tmp.substring(index_fin + 1);
-        index = tmp.indexOf("${");
+        newString.append(currentStringPortion.substring(0, index));
+        index_fin = currentStringPortion.indexOf('}');
+        newString.append(getValue(currentStringPortion.substring(index + 2, index_fin)));
+        currentStringPortion = currentStringPortion.substring(index_fin + 1);
+        index = currentStringPortion.indexOf("${");
       }
-      newString = newString + tmp;
-      return newString;
-    } else {
-      return pStr;
+      newString.append(currentStringPortion);
+      return newString.toString();
     }
+    return unresolvedString;
   }
 
   /**
    * Resolves all he varibles of ythe specified String then evaluates dynamically the result using
    * $eval{{.....}}
+   *
    * @param unresolvedString
    * @return
    * @throws IOException
@@ -170,6 +180,7 @@ public class GestionVariables {
 
   /**
    * Return the value for the specified variable.
+   *
    * @param variable : the variable.
    * @return l the value for the specified variable.
    * @throws IOException

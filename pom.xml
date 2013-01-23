@@ -12,7 +12,7 @@
   <artifactId>configuration</artifactId>
   <packaging>jar</packaging>
   <version>5.12-SNAPSHOT</version>
-  <name>Silverpeas Configuration Tools</name>
+  <name>Silverpeas Configuration Tools - ${project.version}</name>
 
   <scm>
     <connection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</connection>
