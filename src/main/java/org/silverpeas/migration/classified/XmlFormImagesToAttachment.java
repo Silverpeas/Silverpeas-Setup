@@ -30,12 +30,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.silverpeas.migration.jcr.attachment.model.DocumentType;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
+import org.silverpeas.migration.jcr.attachment.model.ForeignPK;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.attachment.model.WAPrimaryKey;
 import org.silverpeas.util.StringUtil;
 
 /**
@@ -55,6 +58,34 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       getConsole()
           .printMessage("Migrate Classified Images in XML Form To Attachment and Classified Description in XML Form to Classified DB");
       getConsole().printMessage("");
+      ForeignPK fk = new ForeignPK("2", "classifieds11");
+      List<SimpleDocument> listSimpleDoc = this.service.listAllDocumentsByForeignKey(fk, null);
+      if(listSimpleDoc != null) {
+        if(listSimpleDoc.size() == 0) {
+          getConsole().printError("ERROR Simple Document with foreignId 2 not found");
+        }
+        for(SimpleDocument sd : listSimpleDoc) {
+          getConsole().printError("OK Simple Document id = "+sd.getPk().getId()+
+              "instanceId = "+sd.getInstanceId()+
+              ", folder = "+document.getFolder()+
+              ", oldSilverpeasId = " + sd.getOldSilverpeasId()+
+              ", documentType = " +sd.getDocumentType()+
+              ", foreignId = "+sd.getForeignId()+
+              ", version = "+sd.getMajorVersion()+"."+sd.getMinorVersion()+
+              ", file = "+sd.getFilename());
+        }
+      } else {
+        getConsole().printError("ERROR Simple Document with foreignId 2 not found");
+      }
+      
+      SimpleDocumentPK sdPk = new SimpleDocumentPK(null, "classifieds11");
+      sdPk.setOldSilverpeasId(Long.valueOf("60"));
+      SimpleDocument sd = this.service.searchDocumentById(sdPk, null);
+      if(sd != null) {
+        getConsole().printError("OK Simple Document with oldSilverpeasId 60 found");
+      } else {
+        getConsole().printError("ERROR Simple Document with oldSilverpeasId 60 not found");
+      }
 
       Collection<String> listInstanceId = getListClassifiedInstance();
 
@@ -104,13 +135,15 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                           verifFormatImage(simpleDocument.getFilename());
                       if (verifFormatImage) {
                         getConsole().printMessage("Update attachment context of attachmentId = " +
-                            fieldTemplate.getFieldValue());
+                            simpleDocument.getId() + ", oldSilverpeasId = "+fieldTemplate.getFieldValue());
                         simpleDocument.setDocumentType(DocumentType.attachment);
                         this.service.updateAttachment(simpleDocument);
                       } else {// format Image not correct
-                        getConsole().printMessage("Delete attachment attachmentId = " + fieldTemplate.getFieldValue());
+                        getConsole().printMessage("Format Image not correct, delete attachment attachmentId = " + simpleDocument.getId() + ", oldSilverpeasId = "+fieldTemplate.getFieldValue());
                         this.service.deleteAttachment(simpleDocument);
                       }
+                    } else {
+                      getConsole().printError("ERROR Simple Document with oldSilverpeasId "+fieldTemplate.getFieldValue()+" not found");
                     }
                   } 
                 } else {

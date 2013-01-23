@@ -158,17 +158,17 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             rs.getString("attachmentinfo"), rs.getLong("attachmentsize"), contentType, author,
             DateUtil.parse(rs.getString("attachmentcreationdate")), rs.getString("xmlform"));
         document.setFile(attachment);
-<<<<<<< HEAD
         File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
             "attachmentphysicalname"));
-=======
-        document.setDocumentType(DocumentType.fromOldContext(instanceId, rs.getString("attachmentcontext")));
-        File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
-            rs.getString("attachmentphysicalname"));
->>>>>>> ddc9491... closing feature #3688 Peites annonces, liste enrichie, migration
         if (file != null) {
-          console.printMessage("Creating translation " + document.getFilename() + " for " + file.
-              getAbsolutePath());
+          console.printMessage("Creating translation instanceId = "+document.getInstanceId()+
+        ", folder = "+document.getFolder()+
+        ", oldSilverpeasId = " + document.getOldSilverpeasId()+
+        ", documentType = " +document.getDocumentType()+
+        ", foreignId = "+document.getForeignId()+
+        ", version = "+document.getMajorVersion()+"."+document.getMinorVersion()+
+        ", file = "+document.getFilename() + " for " + file.
+        getAbsolutePath());
           service.createAttachment(document, file);
           files.add(file);
         }

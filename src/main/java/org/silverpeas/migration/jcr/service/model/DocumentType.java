@@ -43,11 +43,7 @@ public enum DocumentType {
     this.folderName = folder;
   }
 
-<<<<<<< HEAD:src/main/java/org/silverpeas/migration/jcr/service/model/DocumentType.java
   public String getFolderName() {
-=======
-  public String getForlderName() {
->>>>>>> ddc9491... closing feature #3688 Peites annonces, liste enrichie, migration:src/main/java/org/silverpeas/migration/jcr/attachment/model/DocumentType.java
     return folderName;
   }
 
@@ -72,10 +68,10 @@ public enum DocumentType {
 
   public static DocumentType fromOldContext(String instanceId, String oldContext) {
     if (StringUtil.isDefined(oldContext)) {
-      if(instanceId.startsWith("classifieds") && "Images".equalsIgnoreCase(oldContext)) {
-        return form;
-      }
       if ("Images".equalsIgnoreCase(oldContext)) {
+        if(instanceId.startsWith("classifieds")) {
+          return form;
+        }
         return attachment;
       }
       if ("wysiwyg".equalsIgnoreCase(oldContext)) {
