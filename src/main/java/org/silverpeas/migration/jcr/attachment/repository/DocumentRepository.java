@@ -368,18 +368,16 @@ public class DocumentRepository {
     QueryManager manager = session.getWorkspace().getQueryManager();
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
-    ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
-        getPath() + instanceId + '/' + DocumentType.attachment.getFolderName());
+    DescendantNode descendantdNodeConstraint = factory.descendantNode(SIMPLE_DOCUMENT_ALIAS,
+        session.getRootNode().getPath() + instanceId);
     Comparison oldSilverpeasIdComparison = factory.comparison(factory.propertyValue(
-        SIMPLE_DOCUMENT_ALIAS,
-        SLV_PROPERTY_OLD_ID), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
-        literal(session.getValueFactory().createValue(oldSilverpeasId)));
-    Comparison versionedComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+        SIMPLE_DOCUMENT_ALIAS, SLV_PROPERTY_OLD_ID), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, 
+        factory.literal(session.getValueFactory().createValue(oldSilverpeasId)));
+    Comparison versionedComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_VERSIONED), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
         literal(session.getValueFactory().createValue(versioned)));
 
-    QueryObjectModel query = factory.createQuery(source, factory.and(childNodeConstraint,
+    QueryObjectModel query = factory.createQuery(source, factory.and(descendantdNodeConstraint,
         factory.and(oldSilverpeasIdComparison, versionedComparison)), null, null);
     QueryResult result = query.execute();
     NodeIterator iter = result.getNodes();
