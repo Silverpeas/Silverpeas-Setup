@@ -43,7 +43,7 @@ public enum DocumentType {
     this.folderName = folder;
   }
 
-  public String getForlderName() {
+  public String getFolderName() {
     return folderName;
   }
 
@@ -68,10 +68,10 @@ public enum DocumentType {
 
   public static DocumentType fromOldContext(String instanceId, String oldContext) {
     if (StringUtil.isDefined(oldContext)) {
-      if(instanceId.startsWith("classifieds") && "Images".equalsIgnoreCase(oldContext)) {
-        return form;
-      }
       if ("Images".equalsIgnoreCase(oldContext)) {
+        if(instanceId.startsWith("classifieds")) {
+          return form;
+        }
         return attachment;
       }
       if ("wysiwyg".equalsIgnoreCase(oldContext)) {

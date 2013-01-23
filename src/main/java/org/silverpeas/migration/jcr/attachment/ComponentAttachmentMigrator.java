@@ -113,6 +113,14 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             rs.getString("attachmentphysicalname"));
         if (file != null) {
           createDocument(document, file);
+          
+          //recherche dans la JCR le document créé
+          SimpleDocument simpleDocument = service.searchDocumentById(pk, null);
+          if(simpleDocument != null) {
+            console.printMessage("Ok getting document for oldSilverpeasId = " + pk.getOldSilverpeasId());
+          } else {
+            console.printMessage("Error getting document for oldSilverpeasId = " + pk.getOldSilverpeasId());
+          }
           nbMigratedDocuments++;
         }
       }
@@ -156,8 +164,14 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
         File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
             rs.getString("attachmentphysicalname"));
         if (file != null) {
-          console.printMessage("Creating translation " + document.getFilename() + " for " + file.
-              getAbsolutePath());
+          console.printMessage("Creating translation instanceId = "+document.getInstanceId()+
+        ", folder = "+document.getFolder()+
+        ", oldSilverpeasId = " + document.getOldSilverpeasId()+
+        ", documentType = " +document.getDocumentType()+
+        ", foreignId = "+document.getForeignId()+
+        ", version = "+document.getMajorVersion()+"."+document.getMinorVersion()+
+        ", file = "+document.getFilename() + " for " + file.
+        getAbsolutePath());
           service.createAttachment(document, file);
         }
       }
@@ -172,7 +186,13 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
 
   protected void createDocument(SimpleDocument document, File file) throws SQLException,
       ParseException, IOException {
-    console.printMessage("Creating document " + document.getFilename() + " for " + file.
+    console.printMessage("Creating document instanceId = "+document.getInstanceId()+
+        ", folder = "+document.getFolder()+
+        ", oldSilverpeasId = " + document.getOldSilverpeasId()+
+        ", documentType = " +document.getDocumentType()+
+        ", foreignId = "+document.getForeignId()+
+        ", version = "+document.getMajorVersion()+"."+document.getMinorVersion()+
+    		", file = "+document.getFilename() + " for " + file.
         getAbsolutePath());
     try {
       SimpleDocument result = service.createAttachment(document, file);
