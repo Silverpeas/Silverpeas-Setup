@@ -23,6 +23,9 @@
  */
 package org.silverpeas.migration.classified;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,6 +40,7 @@ import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
 import org.silverpeas.util.StringUtil;
+
 
 /**
  * @author cbonin
@@ -103,10 +107,15 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                       boolean verifFormatImage =
                           verifFormatImage(simpleDocument.getFilename());
                       if (verifFormatImage) {
-                        getConsole().printMessage("Update attachment context of attachmentId = " +
+                        getConsole().printMessage("Delete attachment with attachmentId = " +
                             simpleDocument.getId() + ", oldSilverpeasId = "+fieldTemplate.getFieldValue());
+                        String attachmentPath = simpleDocument.getAttachmentPath();
+                        File content = new File(attachmentPath);
+                        BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(content));
+                        this.service.deleteAttachment(simpleDocument);
+                        getConsole().printMessage("Create attachment oldSilverpeasId = "+fieldTemplate.getFieldValue()+", context = 'attachment'");
                         simpleDocument.setDocumentType(DocumentType.attachment);
-                        this.service.updateAttachment(simpleDocument);
+                        this.service.createAttachment(simpleDocument, inputStream);
                       } else {// format Image not correct
                         getConsole().printMessage("Format Image not correct, delete attachment attachmentId = " + simpleDocument.getId() + ", oldSilverpeasId = "+fieldTemplate.getFieldValue());
                         this.service.deleteAttachment(simpleDocument);
