@@ -33,6 +33,7 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.model.UnlockContext;
 import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
+import org.silverpeas.util.Console;
 
 /**
  * @author ehugonnet
@@ -167,5 +168,13 @@ public interface AttachmentService {
   *
   * @param document the document to deleted.
   */
-  public void deleteAttachment(SimpleDocument document);
+  void deleteAttachment(SimpleDocument document);
+
+   /** 
+    * Find document image, and move to Attachment context
+    *
+    * @param primaryKey the primary key of the document.
+    * @param console to print message.
+   */
+  public void moveImageContext(SimpleDocumentPK primaryKey, Console console);
 }

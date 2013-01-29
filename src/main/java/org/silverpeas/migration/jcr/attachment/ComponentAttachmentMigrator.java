@@ -161,14 +161,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
         File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
             "attachmentphysicalname"));
         if (file != null) {
-          console.printMessage("Creating translation instanceId = "+document.getInstanceId()+
-        ", folder = "+document.getFolder()+
-        ", oldSilverpeasId = " + document.getOldSilverpeasId()+
-        ", documentType = " +document.getDocumentType()+
-        ", foreignId = "+document.getForeignId()+
-        ", version = "+document.getMajorVersion()+"."+document.getMinorVersion()+
-        ", file = "+document.getFilename() + " for " + file.
-        getAbsolutePath());
+          console.printMessage("Creating translation " + document.getFilename() + " for " + file.
+              getAbsolutePath());
           service.createAttachment(document, file);
           files.add(file);
         }
