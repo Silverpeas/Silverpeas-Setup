@@ -37,16 +37,15 @@ import java.util.concurrent.Callable;
 import org.apache.commons.dbutils.DbUtils;
 
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.migration.jcr.attachment.AttachmentService;
-import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
-import org.silverpeas.migration.jcr.attachment.model.HistorisedDocument;
-import org.silverpeas.migration.jcr.attachment.model.SimpleAttachment;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
+import org.silverpeas.migration.jcr.service.AttachmentService;
+import org.silverpeas.migration.jcr.service.ConverterUtil;
+import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.service.model.UnlockContext;
+import org.silverpeas.migration.jcr.service.model.UnlockOption;
 import org.silverpeas.migration.jcr.version.model.OldDocumentMetadata;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
-import org.silverpeas.migration.jcr.attachment.model.UnlockContext;
-import org.silverpeas.migration.jcr.attachment.model.UnlockOption;
-import org.silverpeas.migration.jcr.util.ConverterUtil;
 import org.silverpeas.migration.jcr.version.model.Version;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
@@ -65,13 +64,14 @@ class ComponentDocumentMigrator implements Callable<Long> {
       + "versionmimetype, versionsize, instanceid, xmlform FROM sb_version_version WHERE "
       + "documentid = ? ORDER BY versionmajornumber, versionminornumber";
   public static final String DELETE_DOCUMENT_VERSIONS =
-      "DELETE sb_version_version WHERE documentid = ?";
-  public static final String DELETE_DOCUMENT = "DELETE sb_version_document WHERE documentid = ?";
+      "DELETE FROM sb_version_version WHERE documentid = ?";
+  public static final String DELETE_DOCUMENT =
+      "DELETE FROM sb_version_document WHERE documentid = ?";
   private final String componentId;
   private final AttachmentService service;
   private final Console console;
 
-  public ComponentDocumentMigrator(String instanceId, SimpleDocumentService service, Console console) {
+  ComponentDocumentMigrator(String instanceId, SimpleDocumentService service, Console console) {
     this.componentId = instanceId;
     this.service = service;
     this.console = console;
@@ -86,7 +86,7 @@ class ComponentDocumentMigrator implements Callable<Long> {
     List<OldDocumentMetadata> documents = listAllDocuments();
     long nbMigratedDocuments = 0L;
     for (OldDocumentMetadata document : documents) {
-      nbMigratedDocuments = nbMigratedDocuments + createVersions(document);
+      nbMigratedDocuments += createVersions(document);
     }
     console.printMessage("Migrating the component " + componentId + " required the migration of "
         + nbMigratedDocuments + " documents");
@@ -118,8 +118,7 @@ class ComponentDocumentMigrator implements Callable<Long> {
       document.setUpdatedBy(version.getCreatedBy());
       if (file != null) {
         if (!StringUtil.isDefined(document.getId())) {
-          SimpleDocument createdDoc = service.createAttachment(document, file);
-          document.setPK(createdDoc.getPk());
+          document = (HistorisedDocument) service.createAttachment(document, file);
         } else {
           service.updateAttachment(document, file);
           UnlockContext context = new UnlockContext(document.getId(), version.getCreatedBy(),
@@ -136,30 +135,40 @@ class ComponentDocumentMigrator implements Callable<Long> {
     }
     console.printMessage("We have migrated  " + nbMigratedDocuments + " for " + metadata.getTitle()
         + " with " + metadata.getHistory().size() + " versions");
+    cleanAll(metadata);
     return nbMigratedDocuments;
   }
 
-  protected void cleanAll(long oldSilverpeasId, Connection connection) throws SQLException {
+  protected void cleanAll(OldDocumentMetadata metadata) throws SQLException {
+    Connection connection = getConnection();
+    connection.setAutoCommit(false);
     PreparedStatement deleteTranslations = null;
-    try {
-      deleteTranslations = connection.prepareStatement(DELETE_DOCUMENT_VERSIONS);
-      deleteTranslations.setLong(1, oldSilverpeasId);
-      deleteTranslations.executeUpdate();
-    } catch (SQLException ex) {
-      throw ex;
-    } finally {
-      DbUtils.closeQuietly(deleteTranslations);
-    }
     PreparedStatement deleteAttachment = null;
     try {
+      deleteTranslations = connection.prepareStatement(DELETE_DOCUMENT_VERSIONS);
+      deleteTranslations.setLong(1, metadata.getOldSilverpeasId());
+      deleteTranslations.executeUpdate();
+      DbUtils.closeQuietly(deleteTranslations);
       deleteAttachment = connection.prepareStatement(DELETE_DOCUMENT);
-      deleteAttachment.setLong(1, oldSilverpeasId);
+      deleteAttachment.setLong(1, metadata.getOldSilverpeasId());
       deleteAttachment.executeUpdate();
       connection.commit();
     } catch (SQLException ex) {
       throw ex;
     } finally {
+      DbUtils.closeQuietly(deleteTranslations);
       DbUtils.closeQuietly(deleteAttachment);
+      DbUtils.closeQuietly(connection);
+    }
+    for (Version version : metadata.getHistory()) {
+      try {
+        File file = version.getAttachment();
+        if (file != null) {
+          ConverterUtil.deleteFile(file);
+        }
+      } catch (IOException ioex) {
+        console.printError("Error deleting file", ioex);
+      }
     }
   }
 

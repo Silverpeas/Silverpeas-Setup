@@ -35,7 +35,7 @@ import java.util.concurrent.Future;
 import org.apache.commons.dbutils.DbUtils;
 
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
+import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 
 public class VersioningMigrator extends DbBuilderDynamicPart {
 
@@ -52,23 +52,23 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
     long totalNumberOfMigratedFiles = 0L;
     List<ComponentDocumentMigrator> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
-    for (Future<Long> nbOfMigratedDocuments : result) {
-      try {
+    try {
+      for (Future<Long> nbOfMigratedDocuments : result) {
         totalNumberOfMigratedFiles += nbOfMigratedDocuments.get();
-      } catch (InterruptedException ex) {
-        throw ex;
-      } catch (Exception ex) {
-        getConsole().printError("Error during migration of attachments " + ex, ex);
-        throw ex;
-      } finally {
-        executor.shutdown();
       }
+    } catch (InterruptedException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      getConsole().printError("Error during migration of attachments " + ex, ex);
+      throw ex;
+    } finally {
+      executor.shutdown();
     }
     getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
     this.service.shutdown();
   }
 
-  protected List<ComponentDocumentMigrator> buildComponentMigrators() throws SQLException {
+  private List<ComponentDocumentMigrator> buildComponentMigrators() throws SQLException {
     List<ComponentDocumentMigrator> result = new ArrayList<ComponentDocumentMigrator>(500);
     Statement stmt = null;
     ResultSet rs = null;

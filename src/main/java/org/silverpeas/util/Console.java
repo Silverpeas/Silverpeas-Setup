@@ -75,7 +75,7 @@ public class Console {
     logger = LoggerFactory.getLogger(Console.class);
   }
 
-  public void printError(String errMsg, Exception ex) {
+  public synchronized void printError(String errMsg, Exception ex) {
     printMessage(errMsg, true);
     if (null != logBuffer) {
       ex.printStackTrace(logBuffer);
@@ -83,30 +83,30 @@ public class Console {
     logger.error(errMsg, ex);
   }
 
-  public void printError(String errMsg) {
+  public synchronized void printError(String errMsg) {
     printMessage(errMsg, true);
     logger.error(errMsg);
   }
 
-  public void printWarning(String errMsg) {
+  public synchronized void printWarning(String errMsg) {
     printMessage(errMsg, true);
     logger.warn(errMsg);
   }
 
-  public void printWarning(String errMsg, Exception ex) {
+  public synchronized void printWarning(String errMsg, Exception ex) {
     printMessage(errMsg, true);
     logger.warn(errMsg, ex);
   }
 
-  public void printMessage(String msg) {
+  public synchronized void printMessage(String msg) {
     printMessage(msg, false);
   }
 
-  public void printTrace(String msg) {
+  public synchronized void printTrace(String msg) {
     logger.debug(msg);
   }
 
-  private void printMessage(String msg, boolean isError) {
+  private synchronized void printMessage(String msg, boolean isError) {
     if (null != logBuffer) {
       logBuffer.print(msg);
     }
@@ -120,13 +120,13 @@ public class Console {
     }
   }
 
-  public void close() {
+  public synchronized void close() {
     if (null != logBuffer) {
       logBuffer.close();
     }
   }
 
-  public void setEchoAsDotEnabled(boolean on) {
+  public synchronized void setEchoAsDotEnabled(boolean on) {
     echoAsDotEnabled = on;
   }
 }

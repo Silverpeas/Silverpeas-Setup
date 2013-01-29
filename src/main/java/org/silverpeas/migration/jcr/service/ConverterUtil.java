@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.util;
+package org.silverpeas.migration.jcr.service;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,13 +35,13 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.jackrabbit.util.ISO9075;
 import org.apache.jackrabbit.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.migration.jcr.attachment.AttachmentException;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 
@@ -187,8 +188,7 @@ public class ConverterUtil {
 
   public static String formatCalendarForXpath(Calendar date) {
     return "xs:dateTime('" + getXpathFormattedDate(date.getTime()) + 'T'
-        + getXpathFormattedTime(date.getTime()) + getTimeZone(date.getTime())
-        + "')";
+        + getXpathFormattedTime(date.getTime()) + getTimeZone(date.getTime()) + "')";
   }
 
   protected static String getTimeZone(Date date) {
@@ -320,6 +320,14 @@ public class ConverterUtil {
     } finally {
       DbUtils.closeQuietly(rs);
       DbUtils.closeQuietly(prepStmt);
+    }
+  }
+  
+  public static void deleteFile(File file) {
+    File parent = file.getParentFile();
+    FileUtils.deleteQuietly(file);
+    if(parent.isDirectory() && parent.list().length == 0) {
+      FileUtils.deleteQuietly(parent);
     }
   }
 

@@ -21,7 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.attachment;
+package org.silverpeas.migration.jcr.service;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -37,14 +37,13 @@ import javax.jcr.Session;
 
 import org.apache.commons.io.IOUtils;
 
-import org.silverpeas.migration.jcr.attachment.model.DocumentType;
-import org.silverpeas.migration.jcr.attachment.model.ForeignPK;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
-import org.silverpeas.migration.jcr.attachment.model.UnlockContext;
-import org.silverpeas.migration.jcr.attachment.model.WAPrimaryKey;
-import org.silverpeas.migration.jcr.attachment.repository.DocumentRepository;
-import org.silverpeas.migration.jcr.util.RepositoryManager;
+import org.silverpeas.migration.jcr.service.model.DocumentType;
+import org.silverpeas.migration.jcr.service.model.ForeignPK;
+import org.silverpeas.migration.jcr.service.model.SimpleDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.service.model.UnlockContext;
+import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
+import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
 import org.silverpeas.util.StringUtil;
 
 public class SimpleDocumentService implements AttachmentService {

@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.migration.jcr.attachment.model;
+package org.silverpeas.migration.jcr.service.model;
 
 import java.io.Serializable;
 

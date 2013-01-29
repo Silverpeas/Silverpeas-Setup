@@ -21,12 +21,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.attachment.model;
+package org.silverpeas.migration.jcr.service.model;
 
 import java.io.Serializable;
 import java.util.Date;
 
-import org.silverpeas.migration.jcr.util.ConverterUtil;
+import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
