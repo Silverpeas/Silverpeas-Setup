@@ -23,9 +23,6 @@
  */
 package org.silverpeas.migration.classified;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,12 +31,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.silverpeas.migration.jcr.attachment.model.DocumentType;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.migration.jcr.attachment.AttachmentException;
-import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.service.AttachmentException;
+import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.StringUtil;
 
 
@@ -330,25 +325,6 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
     }
   }
-
- /* public boolean verifFormatImage(String filename) {
-    int indexPoint = filename.lastIndexOf(".");
-    if (indexPoint != -1) {
-      // le fichier contient une extension. On recupere l'extension
-      String extension = filename.substring(indexPoint + 1);
-      extension = extension.toLowerCase();
-      if ("jpg".equals(extension) ||
-          "gif".equals(extension) ||
-          "bmp".equals(extension) ||
-          "tiff".equals(extension) ||
-          "tif".equals(extension) ||
-          "jpeg".equals(extension) ||
-          "png".equals(extension)) {
-        return true;
-      }
-    }
-    return false;
-  }*/
 
   public void deletePhotoValue(int recordId, String fieldPhotoName) throws SQLException {
     PreparedStatement pstmt = null;
