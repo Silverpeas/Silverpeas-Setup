@@ -36,6 +36,7 @@ import java.util.Collection;
 
 import org.silverpeas.migration.jcr.attachment.model.DocumentType;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.migration.jcr.attachment.AttachmentException;
 import org.silverpeas.migration.jcr.attachment.SimpleDocumentService;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
@@ -66,10 +67,10 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
         int instanceIntId = Integer.parseInt(instanceId);
         getConsole().printMessage("Migrate Classified instance id = " + instanceId);
         String xmlFormName = getXMLFormName(instanceIntId);
-        getConsole().printMessage("Migrate Classified XML Form = "+xmlFormName);
+        getConsole().printTrace("Migrate Classified XML Form = "+xmlFormName);
         Collection<Integer> listTemplateId = getListTemplate(xmlFormName, instanceId);
         for (Integer templateId : listTemplateId) {
-          getConsole().printMessage("TemplateId = " + templateId);
+          getConsole().printTrace("TemplateId = " + templateId);
           Collection<RecordTemplate> listRecord = getListRecord(templateId.intValue());
           for (RecordTemplate record : listRecord) {
             int recordId = record.getRecordId();
@@ -79,13 +80,13 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                 classifiedId + "]");
             Collection<FieldTemplate> listValue = getListValue(recordId);
             for (FieldTemplate fieldTemplate : listValue) {
-              getConsole().printMessage("Field Name = "+fieldTemplate.getFieldName());//category | type | description | photo 
+              getConsole().printTrace("Field Name = "+fieldTemplate.getFieldName());//category | type | description | photo 
               if (fieldTemplate.getFieldName().startsWith("photo")) {
                 if (fieldTemplate.getFieldValue() != null &&
                     !"".equals(fieldTemplate.getFieldValue())) {
-                  getConsole().printMessage("Photo field value = " + fieldTemplate.getFieldValue());
+                  getConsole().printTrace("Photo field value = " + fieldTemplate.getFieldValue());
                   
-                  getConsole().printMessage("Delete field template recordId = " + recordId +
+                  getConsole().printTrace("Delete field template recordId = " + recordId +
                       ", fieldName = '" + fieldTemplate.getFieldName() +
                       "', fieldValue = " + fieldTemplate.getFieldValue());
                   try {
@@ -102,31 +103,18 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                   if(StringUtil.isLong(fieldTemplate.getFieldValue())) {
                     SimpleDocumentPK simpleDocumentPk = new SimpleDocumentPK(null, "classifieds"+instanceId);
                     simpleDocumentPk.setOldSilverpeasId(Long.valueOf(fieldTemplate.getFieldValue()));
-                    SimpleDocument simpleDocument = this.service.searchDocumentById(simpleDocumentPk, null);
-                    if(simpleDocument != null) {
-                      boolean verifFormatImage =
-                          verifFormatImage(simpleDocument.getFilename());
-                      if (verifFormatImage) {
-                        getConsole().printMessage("Delete attachment with attachmentId = " +
-                            simpleDocument.getId() + ", oldSilverpeasId = "+fieldTemplate.getFieldValue());
-                        String attachmentPath = simpleDocument.getAttachmentPath();
-                        File content = new File(attachmentPath);
-                        BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(content));
-                        this.service.deleteAttachment(simpleDocument);
-                        getConsole().printMessage("Create attachment oldSilverpeasId = "+fieldTemplate.getFieldValue()+", context = 'attachment'");
-                        simpleDocument.setDocumentType(DocumentType.attachment);
-                        this.service.createAttachment(simpleDocument, inputStream);
-                      } else {// format Image not correct
-                        getConsole().printMessage("Format Image not correct, delete attachment attachmentId = " + simpleDocument.getId() + ", oldSilverpeasId = "+fieldTemplate.getFieldValue());
-                        this.service.deleteAttachment(simpleDocument);
-                      }
-                    } else {
-                      getConsole().printError("ERROR Simple Document with oldSilverpeasId "+fieldTemplate.getFieldValue()+" not found");
+                    try {
+                      this.service.moveImageContext(simpleDocumentPk, getConsole());
+                    } catch (AttachmentException e) {
+                      getConsole()
+                      .printError("ERROR when Moving attachment image id = " +fieldTemplate.getFieldValue()+
+                                  ", "+
+                                  e.getMessage());
                     }
                   } 
                 } else {
-                  getConsole().printMessage("Photo field value = null");
-                  getConsole().printMessage("Delete field template recordId = " + recordId +
+                  getConsole().printTrace("Photo field value = null");
+                  getConsole().printTrace("Delete field template recordId = " + recordId +
                       ", fieldName = '" + fieldTemplate.getFieldName() + "', fieldValue = null");
                   try {
                     deletePhotoValue(recordId, fieldTemplate.getFieldName());
@@ -139,8 +127,8 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                 }
               } else if ("description".equals(fieldTemplate.getFieldName())) {
                 getConsole()
-                    .printMessage("Description field value = " + fieldTemplate.getFieldValue());
-                getConsole().printMessage("Update classified instanceId = " + instanceId +
+                    .printTrace("Description field value = " + fieldTemplate.getFieldValue());
+                getConsole().printTrace("Update classified instanceId = " + instanceId +
                     ", classifiedId = " + classifiedId + ", description = " +
                     fieldTemplate.getFieldValue());
                 boolean updated = false;
@@ -153,7 +141,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                       fieldTemplate.getFieldValue() + ", error = " + e.getMessage(), e);
                 }
                 if (updated) {
-                  getConsole().printMessage("Delete field template recordId = " + recordId +
+                  getConsole().printTrace("Delete field template recordId = " + recordId +
                       ", fieldName = 'description'");
                   try {
                     deleteDescriptionValue(recordId);
@@ -164,9 +152,9 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                 }
               }
             }
-            getConsole().printMessage("");
+            getConsole().printTrace("");
           }
-          getConsole().printMessage("---------------------");
+          getConsole().printTrace("---------------------");
         }
 
         getConsole()
@@ -343,7 +331,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
     }
   }
 
-  public boolean verifFormatImage(String filename) {
+ /* public boolean verifFormatImage(String filename) {
     int indexPoint = filename.lastIndexOf(".");
     if (indexPoint != -1) {
       // le fichier contient une extension. On recupere l'extension
@@ -360,7 +348,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
     }
     return false;
-  }
+  }*/
 
   public void deletePhotoValue(int recordId, String fieldPhotoName) throws SQLException {
     PreparedStatement pstmt = null;

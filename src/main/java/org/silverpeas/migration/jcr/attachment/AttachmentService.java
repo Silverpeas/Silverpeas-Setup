@@ -33,6 +33,7 @@ import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
 import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.attachment.model.UnlockContext;
 import org.silverpeas.migration.jcr.attachment.model.WAPrimaryKey;
+import org.silverpeas.util.Console;
 
 /**
  * @author ehugonnet
@@ -168,4 +169,12 @@ public interface AttachmentService {
    * Shutdowns the repository.
    */
   public void shutdown();
+  
+  /**
+   * Find document image, and move to Attachment context
+   *
+   * @param primaryKey the primary key of the document.
+   * @param console to print message.
+   */
+  public void moveImageContext(SimpleDocumentPK primaryKey, Console console);
 }
