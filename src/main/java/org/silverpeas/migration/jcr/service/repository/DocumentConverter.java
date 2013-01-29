@@ -21,7 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.attachment.repository;
+package org.silverpeas.migration.jcr.service.repository;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,16 +37,16 @@ import javax.jcr.version.VersionManager;
 
 import org.apache.jackrabbit.core.state.NoSuchItemStateException;
 
-import org.silverpeas.migration.jcr.attachment.model.DocumentType;
-import org.silverpeas.migration.jcr.attachment.model.HistorisedDocument;
-import org.silverpeas.migration.jcr.attachment.model.SimpleAttachment;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
-import org.silverpeas.migration.jcr.util.AbstractJcrConverter;
-import org.silverpeas.migration.jcr.util.ConverterUtil;
+import org.silverpeas.migration.jcr.service.model.DocumentType;
+import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
+import org.silverpeas.migration.jcr.service.model.SimpleDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.service.AbstractJcrConverter;
+import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.util.StringUtil;
 
-import static org.silverpeas.migration.jcr.util.JcrConstants.*;
+import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
 
 /**

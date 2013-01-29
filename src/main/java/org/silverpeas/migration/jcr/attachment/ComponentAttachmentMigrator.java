@@ -35,15 +35,18 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.jcr.ItemExistsException;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.FileUtils;
 
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.migration.jcr.attachment.model.DocumentType;
-import org.silverpeas.migration.jcr.attachment.model.SimpleAttachment;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocument;
-import org.silverpeas.migration.jcr.attachment.model.SimpleDocumentPK;
-import org.silverpeas.migration.jcr.util.ConverterUtil;
+import org.silverpeas.migration.jcr.service.AttachmentException;
+import org.silverpeas.migration.jcr.service.AttachmentService;
+import org.silverpeas.migration.jcr.service.ConverterUtil;
+import org.silverpeas.migration.jcr.service.model.DocumentType;
+import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
+import org.silverpeas.migration.jcr.service.model.SimpleDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.SilverpeasHomeResolver;
@@ -67,10 +70,10 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       + "attachmentphysicalname, attachmentlogicalname, attachmenttype, attachmentsize, "
       + "instanceid, attachmentcreationdate, attachmentauthor, attachmenttitle, attachmentinfo, "
       + "xmlform FROM sb_attachment_attachmenti18n WHERE attachmentid = ? ORDER BY lang";
-  public static final String DELETE_ATTACHMENT_TRANSLATIONS = "DELETE sb_attachment_attachmenti18n "
+  public static final String DELETE_ATTACHMENT_TRANSLATIONS = "DELETE FROM sb_attachment_attachmenti18n "
       + "WHERE attachmentid = ?";
   public static final String DELETE_ATTACHMENT =
-      "DELETE sb_attachment_attachment WHERE attachmentid = ?";
+      "DELETE FROM sb_attachment_attachment WHERE attachmentid = ?";
   private final String componentId;
   private final AttachmentService service;
   private final Console console;
@@ -130,8 +133,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
   }
 
   protected Set<File> createTranslations(SimpleDocument document, String context) throws
-      SQLException,
-      ParseException, IOException {
+      SQLException,ParseException, IOException {
     Set<File> files = new HashSet<File>(5);
     PreparedStatement pstmt = null;
     ResultSet rs = null;
@@ -177,15 +179,14 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
   }
 
   protected void createDocument(SimpleDocument document, String context, File file) throws
-      SQLException,
-      ParseException, IOException {
+      SQLException, ParseException, IOException {
     console.printMessage("Creating document " + document.getFilename() + " for " + file.
         getAbsolutePath());
     try {
       SimpleDocument result = service.createAttachment(document, file);
       Set<File> files = createTranslations(result, context);
       files.add(file);
-      //cleanAll(result.getOldSilverpeasId(), files);
+      cleanAll(result.getOldSilverpeasId(), files);
     } catch (AttachmentException ex) {
       if (ex.getCause() instanceof ItemExistsException) {
         console.printWarning("Document " + document.getFilename() + " for " + file.
@@ -227,6 +228,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
     PreparedStatement deleteTranslations = null;
     PreparedStatement deleteAttachment = null;
     try {
+      connection.setAutoCommit(false);
       deleteTranslations = connection.prepareStatement(DELETE_ATTACHMENT_TRANSLATIONS);
       deleteTranslations.setLong(1, oldSilverpeasId);
       deleteTranslations.executeUpdate();
@@ -234,8 +236,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       deleteAttachment = connection.prepareStatement(DELETE_ATTACHMENT);
       deleteAttachment.setLong(1, oldSilverpeasId);
       deleteAttachment.executeUpdate();
-      for (File file : files) {
-        FileUtils.deleteQuietly(file);
+      for (File file : files) {        
+        ConverterUtil.deleteFile(file);
       }
       connection.commit();
     } catch (SQLException ex) {

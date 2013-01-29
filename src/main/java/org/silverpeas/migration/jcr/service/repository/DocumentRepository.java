@@ -21,10 +21,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.attachment.repository;
+package org.silverpeas.migration.jcr.service.repository;
 
 import org.apache.commons.io.FileUtils;
-import org.silverpeas.migration.jcr.attachment.model.*;
 
 import javax.jcr.*;
 import javax.jcr.query.QueryManager;
@@ -45,15 +44,21 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.silverpeas.migration.jcr.attachment.model.WAPrimaryKey;
-import org.silverpeas.migration.jcr.util.ConverterUtil;
-import org.silverpeas.migration.jcr.util.NodeIterable;
-import org.silverpeas.migration.jcr.util.PropertyIterable;
-import org.silverpeas.migration.jcr.util.RepositoryManager;
+
+import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
+import org.silverpeas.migration.jcr.service.ConverterUtil;
+import org.silverpeas.migration.jcr.service.NodeIterable;
+import org.silverpeas.migration.jcr.service.PropertyIterable;
+import org.silverpeas.migration.jcr.service.RepositoryManager;
+import org.silverpeas.migration.jcr.service.model.DocumentType;
+import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
+import org.silverpeas.migration.jcr.service.model.SimpleDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
-import static org.silverpeas.migration.jcr.util.JcrConstants.*;
+import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
 
 /**

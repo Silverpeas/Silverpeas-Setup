@@ -21,7 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.util;
+package org.silverpeas.migration.jcr.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -58,8 +58,8 @@ import org.apache.jackrabbit.JcrConstants;
 
 import org.silverpeas.util.file.FileUtil;
 import static javax.jcr.Property.*;
-import static org.silverpeas.migration.jcr.util.JcrConstants.NT_FOLDER;
-import static org.silverpeas.migration.jcr.util.JcrConstants.SLV_PROPERTY_NAME;
+import static org.silverpeas.migration.jcr.service.JcrConstants.NT_FOLDER;
+import static org.silverpeas.migration.jcr.service.JcrConstants.SLV_PROPERTY_NAME;
 
 /**
  * @author ehugonnet

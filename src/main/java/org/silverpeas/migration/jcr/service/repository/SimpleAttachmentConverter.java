@@ -21,15 +21,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.migration.jcr.attachment.repository;
+package org.silverpeas.migration.jcr.service.repository;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import org.silverpeas.migration.jcr.attachment.model.SimpleAttachment;
-import org.silverpeas.migration.jcr.util.AbstractJcrConverter;
+import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
+import org.silverpeas.migration.jcr.service.AbstractJcrConverter;
 
-import static org.silverpeas.migration.jcr.util.JcrConstants.*;
+import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
 /**
  * @author ehugonnet
