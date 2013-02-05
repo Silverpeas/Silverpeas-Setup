@@ -1,65 +1,70 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.applicationbuilder;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ResourceBundle;
 
 import org.silverpeas.applicationbuilder.maven.MavenContribution;
 import org.silverpeas.applicationbuilder.maven.MavenRepository;
-import java.io.File;
-
-import org.silverpeas.installedtree.DirectoryLocator;
+import org.silverpeas.util.Console;
+import org.silverpeas.util.file.DirectoryLocator;
 
 /**
  * The main class of the ApplicationBuilder tool. Controls the overall sequence of the process.
  * Holds the general information about the installed application structure.
+ *
  * @author Silverpeas
  * @version 1.0/B
  * @since 1.0/B
  */
 public class ApplicationBuilder {
 
-  private static final String APP_BUILDER_VERSION = "Application Builder V5.0";
+  private static final String APP_BUILDER_VERSION = "Application Builder "
+      + ResourceBundle.getBundle("messages").getString("silverpeas.version");
   private static final String APPLICATION_NAME = "Silverpeas";
   private static final String APPLICATION_DESCRIPTION = "Collaborative portal organizer";
-  private static final String APPLICATION_ROOT = "silverpeas";
+  private static final String APPLICATION_ROOT = ResourceBundle.getBundle("messages").getString(
+      "application.root.context");
   private EAR theEAR = null;
   private MavenRepository theRepository = null;
   private MavenRepository theExternalRepository = null;
+  private final Console console;
 
-  public ApplicationBuilder() throws AppBuilderException {
+  public ApplicationBuilder() throws AppBuilderException, IOException {
+    console = new Console(ApplicationBuilder.class);
     boolean errorFound = false;
+
     // instantiates source and target objects
     try {
-      theRepository = new MavenRepository();
+      theRepository = new MavenRepository(console);
     } catch (AppBuilderException abe) {
-      Log.add(abe);
+      console.printError("", abe);
       errorFound = true;
     }
     try {
-      theEAR = new EAR(new File(DirectoryLocator.getLibraryHome()));
+      theEAR = new EAR(new File(DirectoryLocator.getLibraryHome()), console);
     } catch (AppBuilderException abe) {
-      Log.add(abe);
+      console.printError("", abe);
       errorFound = true;
     }
     if (errorFound) {
@@ -69,6 +74,7 @@ public class ApplicationBuilder {
 
   /**
    * Gets the Repository object
+   *
    * @return the repository object
    * @since 1.0/B
    * @roseuid 3AAF75C6001A
@@ -79,6 +85,7 @@ public class ApplicationBuilder {
 
   /**
    * Gets the External Repository object
+   *
    * @return the repository object
    * @since 1.0/B
    * @roseuid 3AAF75C6001A
@@ -93,20 +100,12 @@ public class ApplicationBuilder {
    * @roseuid 3AAF989A0256
    */
   public EAR getEAR() {
-
     return theEAR;
   }
 
   /**
-   * @return the Client object
-   * @since 1.0/B
-   * @roseuid 3AAFA81703A2
-   */
-  /*
-   * public Client getClient() { return theClient; }
-   */
-  /**
    * The unique method that provides the application name
+   *
    * @roseuid 3AAF9A5300BF
    */
   public static String getApplicationName() {
@@ -127,121 +126,99 @@ public class ApplicationBuilder {
     return APPLICATION_ROOT;
   }
 
-  private static void makeArchivesToDeploy() throws AppBuilderException {
-    Log.echo("CHECKING REPOSITORY");
-    ApplicationBuilder appBuilder = new ApplicationBuilder();
-    Log.add("Repository OK");
+  private void makeArchivesToDeploy() throws AppBuilderException, IOException {
+    console.printMessage("CHECKING REPOSITORY");
+    console.printMessage("Repository OK");
 
-    Log.echo("GENERATING APPLICATION FOR JBOSS");
-    Log.setEchoAsDotEnabled(true);
+    console.printMessage("GENERATING APPLICATION FOR JBOSS");
+    console.setEchoAsDotEnabled(true);
     // get the contributions
-    MavenContribution[] lesContributions = appBuilder.getRepository().getContributions();
-
-    // loop the contributions
-    for (MavenContribution maContrib : lesContributions) {
-      // identify the contribution
-      Log.add("");
-      Log.add("ADDING \"" + maContrib.getPackageName() + "\" of type \"" +
-          maContrib.getPackageType() + "\"");
-      // libraries
-      if (maContrib.getLibraries() != null) {
-        Log.add("merging libraries");
-        appBuilder.getEAR().addLibraries(maContrib.getLibraries());
+    MavenContribution[] contributions = getRepository().getContributions();
+    for (MavenContribution contribution : contributions) {
+      console.printMessage("ADDING \"" + contribution.getPackageName() + "\" of type \""
+          + contribution.
+          getPackageType() + '"');
+      if (null != contribution.getLibraries()) {
+        console.printTrace("merging libraries");
+        getEAR().addLibraries(contribution.getLibraries());
       }
-      // client
-      if (maContrib.getClientPart() != null) {
-        Log.add("merging client part");
-        appBuilder.getEAR().addLibrary(maContrib.getClientPart());
+      if (null != contribution.getClientPart()) {
+        console.printTrace("merging client part");
+        getEAR().addLibrary(contribution.getClientPart());
       }
-
-      // WAR
-      if (maContrib.getWARPart() != null) {
-        Log.add("merging WAR part");
-        appBuilder.getEAR().getWAR().mergeWARPart(maContrib.getWARPart());
+      if (null != contribution.getWARPart()) {
+        console.printTrace("merging WAR part");
+        getEAR().getWAR().mergeWARPart(contribution.getWARPart());
       }
-      // EJBs
-      if (maContrib.getEJBs() != null) {
-        Log.add("adding EJBs");
-        appBuilder.getEAR().addEJBs(maContrib.getEJBs());
+      if (null != contribution.getEJBs()) {
+        console.printTrace("adding EJBs");
+        getEAR().addEJBs(contribution.getEJBs());
       }
-
-      if (maContrib.getExternals() != null) {
-        Log.add("adding External Wars");
-        appBuilder.getEAR().addExternalWars(maContrib.getExternals());
+      if (null != contribution.getExternals()) {
+        console.printTrace("adding External Wars");
+        getEAR().addExternalWars(contribution.getExternals());
       }
 
     }
 
-    if (appBuilder.getExternalRepository() != null) {
-      // loop the external contributions
-      MavenContribution[] lesContributionsExternes =
-          appBuilder.getExternalRepository().getContributions();
+    if (null != getExternalRepository()) {
+      MavenContribution[] lesContributionsExternes = getExternalRepository().getContributions();
       for (MavenContribution maContrib : lesContributionsExternes) {
-        // identify the contribution
-        Log.add("");
-        Log.add("ADDING \"" + maContrib.getPackageName() + "\" of type \"" +
-            maContrib.getPackageType() + "\"");
-        // client
-        if (maContrib.getClientPart() != null) {
-          Log.add("merging client part");
+        console.printMessage("ADDING \"" + maContrib.getPackageName() + "\" of type \"" + maContrib.
+            getPackageType() + '"');
+        if (null != maContrib.getClientPart()) {
+          console.printTrace("merging client part");
         }
-        // libraries
-        if (maContrib.getLibraries() != null) {
-          Log.add("merging libraries");
+        if (null != maContrib.getLibraries()) {
+          console.printTrace("merging libraries");
         }
-        // WAR
-        if (maContrib.getWARPart() != null) {
-          Log.add("merging WAR part");
-          appBuilder.getEAR().getWAR().mergeWARPart(maContrib.getWARPart());
+        if (null != maContrib.getWARPart()) {
+          console.printTrace("merging WAR part");
+          getEAR().getWAR().mergeWARPart(maContrib.getWARPart());
         }
-        // EJBs
-        if (maContrib.getEJBs() != null) {
-          Log.add("adding EJBs");
-          appBuilder.getEAR().addEJBs(maContrib.getEJBs());
+        if (null != maContrib.getEJBs()) {
+          console.printTrace("adding EJBs");
+          getEAR().addEJBs(maContrib.getEJBs());
         }
-        // External WARs
-        if (maContrib.getExternals() != null) {
-          Log.add("adding External Wars");
-          appBuilder.getEAR().addExternalWars(maContrib.getExternals());
+        if (null != maContrib.getExternals()) {
+          console.printTrace("adding External Wars");
+          getEAR().addExternalWars(maContrib.getExternals());
         }
 
       }
     }
-
-    appBuilder.getEAR().close();
-    Log.add("");
-    Log.setEchoAsDotEnabled(false);
-    Log.echo("OK : \"" + appBuilder.getEAR().getName() + "\" successfully builded");
-    Log.echo("Please find them in \"" + DirectoryLocator.getLibraryHome() + "\"");
-    System.out.println(
-        "Full log is available in \"" + DirectoryLocator.getLogHome() + File.separator +
-        Log.getName() + "\"");
+    getEAR().close();
+    console.setEchoAsDotEnabled(false);
+    console.printMessage("OK : \"" + getEAR().getName() + "\" successfully builded");
+    console.printMessage("Please find them in \"" + DirectoryLocator.getLibraryHome() + '"');
+    System.out.println("\r\nFull log is available in \"" + DirectoryLocator.getLogHome()
+        + File.separatorChar + "application_build.log \"");
   }
 
-  private static void endLoggingWithErrors() {
-    Log.setEchoAsDotEnabled(false);
-    Log.add("");
-    Log.echo("ERRORS encountered : build aborted", System.err);
-    System.err.println("see \"" + DirectoryLocator.getLogHome()
-        + File.separator + Log.getName() + "\" for details");
+  private void endLoggingWithErrors() {
+    console.setEchoAsDotEnabled(false);
+    console.printError("ERRORS encountered : build aborted");
+    System.err.println("see \"" + DirectoryLocator.getLogHome() + File.separatorChar
+        + "application_build.log \" for details");
+    console.close();
   }
 
-  /**
-   * @roseuid 3AB1EC140270
-   */
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException, AppBuilderException {
+    ApplicationBuilder appBuilder = new ApplicationBuilder();
     try {
-      Log.echo("___ " + APP_BUILDER_VERSION + " ___");
-      Log.add("");
-      makeArchivesToDeploy();
+      appBuilder.console.printMessage("___ " + APP_BUILDER_VERSION + " ___");
+      System.out.println("___ " + APP_BUILDER_VERSION + " ___");
+      appBuilder.makeArchivesToDeploy();
     } catch (AppBuilderException abe) {
-      Log.echo(abe);
-      endLoggingWithErrors();
-    } catch (Throwable t) {
-      Log.echo(t);
-      endLoggingWithErrors();
+      appBuilder.console.printError(abe.getMessage(), abe);
+      appBuilder.endLoggingWithErrors();
+      System.exit(1);
+    } catch (Exception t) {
+      appBuilder.console.printError(t.getMessage(), t);
+      appBuilder.endLoggingWithErrors();
+      System.exit(1);
     } finally {
-      Log.close();
+      appBuilder.console.close();
     }
   }
 }

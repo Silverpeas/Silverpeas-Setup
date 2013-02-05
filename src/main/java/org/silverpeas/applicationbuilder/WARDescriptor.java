@@ -1,35 +1,32 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.applicationbuilder;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.jdom.Content;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * this descriptor is created in memory. It is filled with the descriptor parts from the WARParts.
@@ -49,19 +46,17 @@ public class WARDescriptor extends XmlDocument {
    */
   private static final String LOCATION = "WEB-INF";
   private static final String ROOT_ELT = "web-app";
-  private static final String SERVLET_VERSION = "2.4";
-  private static final String ROOT_NAMESPACE = "http://java.sun.com/xml/ns/j2ee";
+  private static final String SERVLET_VERSION = "3.0";
+  private static final String ROOT_NAMESPACE = "http://java.sun.com/xml/ns/javaee";
   private static final String[][] ROOT_ADDITIONAL_NAMESPACE = { { "xsi",
       "http://www.w3.org/2001/XMLSchema-instance" } };
   private static final String NAME_ELT = "display-name";
   private static final String SERVLET_ELT = "servlet";
   private static final String DESC_ELT = "description";
-  private static final String[] TAGS_TO_MERGE =
-      { "context-param", "filter", "filter-mapping",
+  private static final String[] TAGS_TO_MERGE = { "context-param", "filter", "filter-mapping",
       "listener", SERVLET_ELT, "servlet-mapping", "session-config", "jsp-config",
       "error-page", "security-constraint" };
-  private static final String[] TAGS_TO_SORT =
-      { NAME_ELT, DESC_ELT, "context-param", "filter",
+  private static final String[] TAGS_TO_SORT = { NAME_ELT, DESC_ELT, "context-param", "filter",
       "filter-mapping", "listener", SERVLET_ELT, "servlet-mapping", "session-config",
       "jsp-config", "error-page", "security-constraint" };
   private static final String[] SERVLET_TAGS = { "display-name", "servlet-name", "servlet-class",
@@ -75,8 +70,7 @@ public class WARDescriptor extends XmlDocument {
   /**
    * @roseuid 3AAE4499010D
    */
-  public void mergeWARPartDescriptor(XmlDocument descriptor)
-      throws AppBuilderException {
+  public void mergeWARPartDescriptor(XmlDocument descriptor) throws AppBuilderException {
     mergeWith(TAGS_TO_MERGE, descriptor);
   }
 
@@ -95,8 +89,6 @@ public class WARDescriptor extends XmlDocument {
     Element tempRoot = (Element) root.clone();
     tempRoot.detach();
     tempRoot.removeContent();
-
-    /** Makes groups of elements by tag */
     List eltLstLst = new ArrayList(TAGS_TO_SORT.length);
     for (int iTag = 0; iTag < TAGS_TO_SORT.length; iTag++) {
       List children = root.getChildren(TAGS_TO_SORT[iTag], root.getNamespace());
@@ -117,7 +109,6 @@ public class WARDescriptor extends XmlDocument {
       }
       eltLstLst.add(iTag, eltLst);
     }
-    /** Orders the content of the resulting document */
     for (int iTag = 0; iTag < TAGS_TO_SORT.length; iTag++) {
 
       if (!((List) eltLstLst.get(iTag)).isEmpty()) {
@@ -125,7 +116,9 @@ public class WARDescriptor extends XmlDocument {
       }
     }
 
-    /** the result */
+    /**
+     * the result
+     */
     setDocument(new Document(tempRoot));
   }
 
@@ -139,9 +132,8 @@ public class WARDescriptor extends XmlDocument {
     }
     Namespace xsiNamespace = Namespace.getNamespace("xsi",
         "http://www.w3.org/2001/XMLSchema-instance");
-    root.setAttribute("schemaLocation",
-        "http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
-        xsiNamespace);
+    root.setAttribute("schemaLocation", "http://java.sun.com/xml/ns/javaee "
+        + "http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd", xsiNamespace);
     Element name = new Element(NAME_ELT, nameSpace);
     name.setText(ApplicationBuilder.getApplicationName());
     root.addContent(name);
@@ -149,7 +141,6 @@ public class WARDescriptor extends XmlDocument {
     desc.setText(ApplicationBuilder.getApplicationDescription());
     root.addContent(desc);
     Document doc = new Document(root);
-
     super.setDocument(doc);
 
   }

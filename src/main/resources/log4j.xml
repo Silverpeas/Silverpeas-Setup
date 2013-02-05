@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2000 - 2013 Silverpeas
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+As a special exception to the terms and conditions of version 3.0 of
+the GPL, you may redistribute this Program in connection withWriter Free/Libre
+Open Source Software ("FLOSS") applications as described in Silverpeas's
+FLOSS exception.  You should have recieved a copy of the text describing
+the FLOSS exception, and it is also available here:
+"http://www.silverpeas.org/legal/licensing"
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE log4j:configuration SYSTEM "http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/doc-files/log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  
+  <appender name="console" class="org.apache.log4j.ConsoleAppender"> 
+    <param name="Target" value="System.out"/> 
+    <param name="Threshold" value="ERROR"/>
+    <layout class="org.apache.log4j.EnhancedPatternLayout"> 
+      <param name="ConversionPattern" value="%n%p - %m%throwable{0}"/> 
+    </layout> 
+  </appender> 
+  
+  <appender name="appbuilder" class="org.apache.log4j.FileAppender">
+    <param name="Threshold" value="INFO"/>
+    <param name="File" value="../log/appBuilder.log" />
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%n%p - %m"/> 
+    </layout> 
+  </appender>
+  
+  <appender name="settings" class="org.apache.log4j.FileAppender">
+    <param name="Threshold" value="INFO"/>
+    <param name="File" value="../log/settings.log" />
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%n%p - %m"/> 
+    </layout> 
+  </appender>  
+  
+  <appender name="dbbuilder" class="org.apache.log4j.FileAppender">
+    <param name="Threshold" value="INFO"/>
+    <param name="File" value="../log/dbBuilder.log" />
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%n%p - %m"/> 
+    </layout> 
+  </appender> 
+  
+  <logger name="org.silverpeas.dbbuilder.DBBuilder">
+    <level value="info"/> 
+    <appender-ref ref="dbbuilder" /> 
+  </logger>
+  
+   <logger name="org.silverpeas.applicationbuilder.ApplicationBuilder">
+    <level value="info"/> 
+    <appender-ref ref="appbuilder" /> 
+  </logger>
+  
+   <logger name="org.silverpeas.settings.SilverpeasSettings">
+    <level value="info"/> 
+    <appender-ref ref="settings" /> 
+  </logger>  
+  
+  <logger name="org.springframework">
+    <level value="error"/> 
+  </logger>
+
+  <root> 
+    <priority value ="debug" /> 
+    <appender-ref ref="console" /> 
+  </root>
+  
+</log4j:configuration>
