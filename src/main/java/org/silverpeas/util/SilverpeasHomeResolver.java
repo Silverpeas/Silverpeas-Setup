@@ -37,6 +37,26 @@ public class SilverpeasHomeResolver {
   private static boolean abortOnError = true;
   private static final Console console = new Console(SilverpeasHomeResolver.class);
 
+  static {
+    try {
+      configuration = loadConfiguration();
+    } catch (IOException ex) {
+      console.printWarning("Error loading configuration", ex);
+    }
+  }
+
+  /**
+   * For test purpose only.
+   */
+  protected static synchronized void reloadConfiguration() {
+    try {
+      defineHome();
+      configuration = loadConfiguration();
+    } catch (IOException ex) {
+      console.printWarning("Error loading configuration", ex);
+    }
+  }
+
   /**
    * If set to TRUE, program is exited if Silverpeas install location cannot be found. Else, a
    * message is issued and execution goes on
@@ -61,40 +81,35 @@ public class SilverpeasHomeResolver {
    */
   public static String getHome() {
     if (silverpeasHome == null) {
-      if (!System.getProperties().containsKey(HOME_KEY) && !System.getenv().containsKey(ENV_KEY)) {
-        console.printError("### CANNOT FIND SILVERPEAS INSTALL LOCATION ###");
-        console.printError("please use \"-D" + HOME_KEY
-            + "=<install location>\" on the command line");
-        console.printError("or define the SILVERPEAS_HOME environment variable.");
-        if (getAbortOnError()) {
-          console.printError("### ABORTED ###");
-          System.exit(1);
-        }
-      }
-      silverpeasHome = System.getProperty(HOME_KEY);
-      if (silverpeasHome == null) {
-        silverpeasHome = System.getenv(ENV_KEY);
-      }
+      defineHome();
     }
     return silverpeasHome;
   }
 
-  public static String getDataHome() throws IOException {
-    if (configuration == null) {
-      try {
-        configuration = loadConfiguration();
-      } catch (IOException ex) {
-        console.printWarning("Error loading configuration", ex);
-        throw ex;
+  private static void defineHome() {
+    if (!StringUtil.isDefined(System.getProperty(HOME_KEY)) && !StringUtil.isDefined(System.getenv(
+        ENV_KEY))) {
+      console.printError("### CANNOT FIND SILVERPEAS INSTALL LOCATION ###");
+      console.printError("please use \"-D" + HOME_KEY + "=install_location\" on the command line");
+      console.printError("or define the SILVERPEAS_HOME environment variable.");
+      if (getAbortOnError()) {
+        console.printError("### ABORTED ###");
+        System.exit(1);
       }
     }
+    silverpeasHome = System.getProperty(HOME_KEY);
+    if (!StringUtil.isDefined(silverpeasHome)) {
+      silverpeasHome = System.getenv(ENV_KEY);
+    }
+  }
+
+  public static String getDataHome() throws IOException {
     return configuration.resolveAndEvalString("${SILVERPEAS_DATA_HOME}");
   }
 
   private static GestionVariables loadConfiguration() throws IOException {
     Properties defaultConfig = new Properties();
-    InputStream in = SilverpeasHomeResolver.class.getClassLoader().getResourceAsStream(
-        "default_config.properties");
+    InputStream in = SilverpeasHomeResolver.class.getResourceAsStream("/default_config.properties");
     try {
       defaultConfig.load(in);
     } finally {

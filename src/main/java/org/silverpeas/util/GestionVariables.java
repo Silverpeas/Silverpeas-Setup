@@ -40,11 +40,11 @@ public class GestionVariables {
    */
   private GestionVariables() {
     listeVariables = new Properties();
-    for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
-      listeVariables.put(entry.getKey().toString(), entry.getValue().toString());
+    for (String key : System.getProperties().stringPropertyNames()) {
+      listeVariables.put(key, System.getProperties().getProperty(key));
     }
     for (Entry<String, String> entry : System.getenv().entrySet()) {
-      addVariable(entry.getKey(), entry.getValue());
+      listeVariables.put(entry.getKey(), entry.getValue());
     }
   }
 
@@ -56,9 +56,10 @@ public class GestionVariables {
    */
   public GestionVariables(Properties defaultConfig) throws IOException {
     this();
-    for (Entry<Object, Object> entry : defaultConfig.entrySet()) {
-      listeVariables.put(entry.getKey().toString(),
-          resolveAndEvalString(entry.getValue().toString()));
+    for (String key : defaultConfig.stringPropertyNames()) {
+      if(!listeVariables.containsKey(key)) {
+        listeVariables.put(key, resolveAndEvalString(defaultConfig.getProperty(key)));
+      }
     }
   }
 
@@ -70,9 +71,8 @@ public class GestionVariables {
    */
   public GestionVariables(Properties config, Properties defaultConfig) throws IOException {
     this(defaultConfig);
-    for (Entry<Object, Object> entry : config.entrySet()) {
-      listeVariables.put(entry.getKey().toString(),
-          resolveAndEvalString(entry.getValue().toString()));
+     for (String key : config.stringPropertyNames()) {
+      listeVariables.put(key, resolveAndEvalString(config.getProperty(key)));
     }
   }
 
@@ -116,7 +116,7 @@ public class GestionVariables {
    * @return
    * @throws IOException
    */
-  public String resolveString(String unresolvedString) throws IOException {
+  public final String resolveString(String unresolvedString) throws IOException {
     StringBuilder newString = new StringBuilder("");
     int index = unresolvedString.indexOf("${");
     if (-1 != index) {
@@ -143,7 +143,7 @@ public class GestionVariables {
    * @return
    * @throws IOException
    */
-  public String resolveAndEvalString(String unresolvedString) throws IOException {
+  public final String resolveAndEvalString(String unresolvedString) throws IOException {
     int index = unresolvedString.indexOf("$eval{{");
     if (-1 == index) {
       return resolveString(unresolvedString);
