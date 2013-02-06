@@ -42,7 +42,6 @@ import org.silverpeas.dbbuilder.util.Configuration;
 /**
  * DB migration to change the type size (a varchar) of the password field upto 123 characters in the
  * for the table of users in the customer's domains.
- *
  * @author mmoquillon
  */
 public class PasswordSizeIncrease extends DbBuilderDynamicPart {
@@ -70,13 +69,13 @@ public class PasswordSizeIncrease extends DbBuilderDynamicPart {
   static final String MSSQL_DATABASE = "net.sourceforge.jtds.jdbc.Driver";
   // the Oracle database defined by its proprietary JDBC driver
   static final String ORACLE_DATABASE = "oracle.jdbc.driver.OracleDriver";
-  // the H2 SQL instruction to change the type  of the password field in the user table
+  // the H2 SQL instruction to change the type of the password field in the user table
   static final String H2_SQL = "ALTER TABLE {0} ALTER COLUMN {1} varchar(123)";
-  // the PostgreSQL SQL instruction to change the type  of the password field in the user table
+  // the PostgreSQL SQL instruction to change the type of the password field in the user table
   static final String POSTGRESQL_SQL = "ALTER TABLE {0} ALTER COLUMN {1} TYPE varchar(123)";
-  // the MS-SQLServer SQL instruction to change the type  of the password field in the user table
+  // the MS-SQLServer SQL instruction to change the type of the password field in the user table
   static final String MSSQL_SQL = "ALTER TABLE {0} ALTER COLUMN {1} varchar(123)";
-  // the Oracle SQL instruction to change the type  of the password field in the user table
+  // the Oracle SQL instruction to change the type of the password field in the user table
   static final String ORACLE_SQL = "ALTER TABLE {0} MODIFY ({1} varchar(123))";
   private Connection sharedConnection;
   private Console console;
@@ -90,7 +89,8 @@ public class PasswordSizeIncrease extends DbBuilderDynamicPart {
       if (resource.isEmpty()) {
         // the resource isn't located at com/stratelia/silverpeas/domains but at the new
         // properties location org/silverpeas/domains
-        name = name.replaceFirst("com/stratelia/", "org/");
+        name = name.replace("com" + File.separatorChar + "stratelia" + File.separatorChar,
+            "org" + File.separatorChar);
         resource = Configuration.loadResource(name);
       }
       if (!resource.isEmpty()) {
@@ -208,7 +208,6 @@ public class PasswordSizeIncrease extends DbBuilderDynamicPart {
   /**
    * Sets a connection to be shared by all of the domains to be updated. This is for SQL domains
    * defined within the same data source.
-   *
    * @param connection a shared connection to SQL data source.
    */
   protected void setSharedConnection(Connection connection) {

@@ -25,18 +25,13 @@ package org.silverpeas.migration.sqldomain;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import org.apache.commons.io.IOUtils;
 import org.dbunit.DataSourceDatabaseTester;
 import org.dbunit.IDatabaseTester;
-import org.dbunit.dataset.Column;
 import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.ITableMetaData;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.junit.After;
 import org.junit.Before;

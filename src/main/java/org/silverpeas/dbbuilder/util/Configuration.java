@@ -62,12 +62,8 @@ public class Configuration {
     InputStream in = Configuration.class.getClassLoader().getResourceAsStream(propertyName);
     try {
       if (in == null) {
-        String path = propertyName.replace('/', File.separatorChar);
-        path = path.replace('\\', File.separatorChar);
-        if (!path.startsWith(File.separator)) {
-          path = File.separatorChar + path;
-        }
-        File configurationFile = new File(getHome() + File.separatorChar + "properties" + path);
+        String path = getPropertyPath(propertyName);
+        File configurationFile = new File(path);
         if (configurationFile.exists()) {
           in = new FileInputStream(configurationFile);
         }
@@ -114,11 +110,8 @@ public class Configuration {
    */
   public static File[] listResources(final String directoryPath, final FileFilter filter) throws
       IOException {
-    String path = directoryPath;
-    if (!directoryPath.startsWith("/")) {
-      path = File.separatorChar + directoryPath;
-    }
-    File dir = new File(getHome() + File.separatorChar + "properties" + path);
+    String path = getPropertyPath(directoryPath);
+    File dir = new File(path);
     if (!dir.exists() || !dir.isDirectory()) {
       throw new IOException("The path '" + path + "' doesn't refer a directory!");
     }
@@ -132,12 +125,12 @@ public class Configuration {
   }
 
   public static boolean isExist(final String resourcePath) {
-    String path = resourcePath;
-    if (!resourcePath.startsWith("/")) {
-      path = File.separatorChar + resourcePath;
+    String path = Configuration.class.getClassLoader().getResource(resourcePath).getPath();
+    if (!new File(path).exists()) {
+      path = getPropertyPath(resourcePath);
+      return new File(path).exists();
     }
-    File resource = new File(getHome() + File.separator + "properties" + path);
-    return resource.exists();
+    return true;
   }
 
   // Récupère le répertoire racine d'installation
@@ -182,6 +175,15 @@ public class Configuration {
 
   public static String getLogDir() {
     return getHome() + File.separator + LOG_FILES_SUBDIR;
+  }
+
+  private static String getPropertyPath(String propertyPath) {
+    String path = propertyPath.replace('/', File.separatorChar);
+    path = path.replace('\\', File.separatorChar);
+    if (!path.startsWith(File.separator)) {
+      path = File.separatorChar + path;
+    }
+    return getHome() + File.separatorChar + "properties" + path;
   }
 
   private Configuration() {
