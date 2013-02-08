@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.SilverpeasSettings;
+package org.silverpeas.settings;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,7 +45,7 @@ import org.silverpeas.test.SystemInitializationForTests;
 
 import static java.io.File.separatorChar;
 
-import static org.silverpeas.SilverpeasSettings.SilverpeasSettings.*;
+import static org.silverpeas.settings.SilverpeasSettings.*;
 
 /**
  *

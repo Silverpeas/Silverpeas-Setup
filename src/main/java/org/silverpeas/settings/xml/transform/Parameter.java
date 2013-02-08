@@ -22,17 +22,65 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.SilverpeasSettings.xml;
+package org.silverpeas.settings.xml.transform;
 
-import org.silverpeas.file.GestionVariables;
-import org.jdom.Element;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Interface for transforming an XML file using a JDom configuration element.
  * @author ehugonnet
  */
-public interface XmlTransformer {
+public class Parameter {
 
-  @SuppressWarnings("unchecked")
-  public void xmlfile(String dir, Element eltConfigFile, GestionVariables gv) throws Exception;
+  private String key;
+  private char mode;
+  private List<Value> values;
+
+  public Parameter(String key, char mode) {
+    this.key = key;
+    this.mode = mode;
+    this.values = new ArrayList<Value>();
+  }
+
+  /**
+   * Get the value of values
+   * @return the value of values
+   */
+  public List<Value> getValues() {
+    return Collections.unmodifiableList(values);
+  }
+
+  /**
+   * Add a list of Value
+   * @param values new values to be added.
+   */
+  public void addValues(List<Value> values) {
+    this.values.addAll(values);
+  }
+
+  /**
+   * Add a new Value
+   * @param value new value to be added.
+   */
+  public void addValue(Value value) {
+    this.values.add(value);
+  }
+
+  /**
+   * Get the value of mode
+   * @return the value of mode
+   */
+  public char getMode() {
+    return mode;
+  }
+
+  /**
+   * Get the value of key
+   * @return the value of key
+   */
+  public String getKey() {
+    return key;
+  }
+
 }

@@ -22,20 +22,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.SilverpeasSettings.xml.origin;
+package org.silverpeas.settings.xml.origin;
 
 import java.io.File;
 import java.util.List;
-
 import org.jdom.Element;
-
-import org.silverpeas.SilverpeasSettings.xml.XmlTransformer;
 import org.silverpeas.applicationbuilder.XmlDocument;
 import org.silverpeas.file.BackupFile;
 import org.silverpeas.file.GestionVariables;
+import org.silverpeas.settings.xml.XmlTransformer;
 import org.silverpeas.xml.XmlTreeHandler;
 
-import static org.silverpeas.SilverpeasSettings.SilverpeasSettings.*;
+import static org.silverpeas.settings.SilverpeasSettings.*;
 
 /**
  * This is the original transformer used by SilverpeasSettings before the 5.3 release of Silverpeas.

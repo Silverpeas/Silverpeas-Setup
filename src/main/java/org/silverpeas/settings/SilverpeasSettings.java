@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.SilverpeasSettings;
+package org.silverpeas.settings;
 
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
@@ -45,8 +45,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.silverpeas.SilverpeasSettings.xml.XmlTransformer;
-import org.silverpeas.SilverpeasSettings.xml.transform.XPathTransformer;
 import org.silverpeas.applicationbuilder.AppBuilderException;
 import org.silverpeas.applicationbuilder.XmlDocument;
 import org.silverpeas.file.BackupFile;
@@ -59,6 +57,8 @@ import org.silverpeas.file.ModifTextSilverpeas;
 import org.silverpeas.file.ModifXMLSilverpeas;
 import org.silverpeas.file.RegexpElementMotif;
 import org.silverpeas.installedtree.DirectoryLocator;
+import org.silverpeas.settings.xml.XmlTransformer;
+import org.silverpeas.settings.xml.transform.XPathTransformer;
 import org.silverpeas.xml.XmlTreeHandler;
 import org.silverpeas.xml.xpath.XPath;
 

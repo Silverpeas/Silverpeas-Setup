@@ -18,9 +18,8 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.SilverpeasSettings.xml.transform;
+package org.silverpeas.settings.xml.transform;
 
-import org.silverpeas.file.StringUtil;
 import java.util.StringTokenizer;
 
 /**

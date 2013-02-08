@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.silverpeas.SilverpeasSettings.xml.transform;
+package org.silverpeas.settings.xml.transform;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -46,20 +45,18 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
 import org.apache.commons.io.IOUtils;
+import org.silverpeas.file.GestionVariables;
+import org.silverpeas.settings.xml.XmlTransformer;
+import org.silverpeas.xml.ClasspathEntityResolver;
+import org.silverpeas.xml.XmlTreeHandler;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import org.silverpeas.SilverpeasSettings.xml.XmlTransformer;
-import org.silverpeas.file.GestionVariables;
-import org.silverpeas.xml.ClasspathEntityResolver;
-import org.silverpeas.xml.XmlTreeHandler;
-
-import static org.silverpeas.SilverpeasSettings.SilverpeasSettings.displayMessageln;
+import static org.silverpeas.settings.SilverpeasSettings.displayMessageln;
 
 /**
  * This is the original transformer used by SilverpeasSettings since the 5.3 release of Silverpeas.
