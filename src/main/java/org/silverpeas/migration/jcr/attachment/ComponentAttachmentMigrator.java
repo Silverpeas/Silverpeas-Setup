@@ -36,9 +36,6 @@ import java.util.concurrent.Callable;
 
 import javax.jcr.ItemExistsException;
 
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.io.FileUtils;
-
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.AttachmentService;
@@ -52,6 +49,8 @@ import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.SilverpeasHomeResolver;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
+
+import org.apache.commons.dbutils.DbUtils;
 
 import static java.io.File.separatorChar;
 

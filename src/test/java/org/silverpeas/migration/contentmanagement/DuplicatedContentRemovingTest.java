@@ -24,29 +24,29 @@
 package org.silverpeas.migration.contentmanagement;
 
 import java.io.InputStream;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.database.DatabaseConnection;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import java.sql.Connection;
-import org.dbunit.dataset.ITable;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-
 import org.apache.commons.io.IOUtils;
-import org.dbunit.dataset.IDataSet;
 import org.dbunit.DataSourceDatabaseTester;
 import org.dbunit.IDatabaseTester;
-import org.dbunit.dataset.xml.FlatXmlDataSet;
+import org.dbunit.database.DatabaseConnection;
+import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
-import static org.dbunit.Assertion.*;
+
+import static org.dbunit.Assertion.assertEquals;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests on the migration of the sb_contentmanager_content table.

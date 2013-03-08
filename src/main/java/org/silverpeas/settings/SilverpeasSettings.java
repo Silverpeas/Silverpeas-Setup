@@ -62,6 +62,7 @@ import org.silverpeas.util.xml.XmlTreeHandler;
 import org.silverpeas.util.xml.transform.XPathTransformer;
 import org.silverpeas.util.xml.xpath.XPath;
 
+
 public class SilverpeasSettings {
 
   public SilverpeasSettings() {

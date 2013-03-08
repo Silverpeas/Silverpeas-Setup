@@ -24,32 +24,50 @@
 package org.silverpeas.settings.file;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class ModifPropertiesTest {
 
+  static final String PROPERTIES_PATH = "org/silverpeas/converter/openoffice.properties";
+  static final String EXPECTED_PROPERTIES_PATH =
+      "org/silverpeas/converter/expected_openoffice.properties";
+  static final String OPENOFFICE_HOST_KEY = "openoffice.host";
+  static final String OPENOFFICE_PORT_KEY = "openoffice.port";
+  static final String ADDED_ENTRY_KEY = "added.entry";
+
   public ModifPropertiesTest() {
   }
 
   /**
-   * Test of executeModification method, of class ModifProperties.
-   * Test for adding a new property, keeping the propertyies order and the comments.
+   * Test of executeModification method, of class ModifProperties. Test for adding a new property,
+   * keeping the properties order and the comments.
    */
   @Test
   public void testExecuteModification() throws Exception {
-    String path = this.getClass().getClassLoader().getResource(
-        "org/silverpeas/converter/openoffice.properties").getPath();
+    String path = this.getClass().getClassLoader().getResource(PROPERTIES_PATH).getPath();
     ModifProperties instance = new ModifProperties(path);
-    instance.addModification(new ElementModif("openoffice.host", "localhost"));
-    instance.addModification(new ElementModif("added.entry", "new entry"));
+    instance.addModification(new ElementModif(OPENOFFICE_HOST_KEY, "localhost"));
+    instance.addModification(new ElementModif(ADDED_ENTRY_KEY, "new entry"));
     instance.executeModification();
-    String result = FileUtils.readFileToString(new File(path));
-    String expectedResult = FileUtils.readFileToString(new File(this.getClass().getClassLoader().
-        getResource("org/silverpeas/converter/expected_openoffice.properties").getPath()));
+
+    String expectedPath = this.getClass().getClassLoader().getResource(EXPECTED_PROPERTIES_PATH).
+        getPath();
+    List<String> result = FileUtils.readLines(new File(path), "UTF-8");
+    List<String> expectedResult = FileUtils.readLines(new File(expectedPath), "UTF-8");
     assertThat(result, is(expectedResult));
 
+  }
+
+  private Properties loadProperties(String path) throws IOException {
+    Properties props = new Properties();
+    props.load(getClass().getClassLoader().getResourceAsStream(path));
+    return props;
   }
 }

@@ -20,6 +20,7 @@
  */
 package org.silverpeas.dbbuilder.util;
 
+
 import org.silverpeas.util.SilverpeasHomeResolver;
 
 import java.io.File;
@@ -42,6 +43,8 @@ public class Configuration {
   // Répertoire temp
   private static final String DIR_TEMP = SilverpeasHomeResolver.getHome()
       + File.separatorChar + TEMP_FILES_SUBDIR;
+
+ 
 
   public static String getContributionFilesDir() {
     return DIR_CONTRIBUTIONFILESROOT;
@@ -71,6 +74,15 @@ public class Configuration {
 
   public static String getLogDir() {
     return SilverpeasHomeResolver.getHome() + File.separatorChar + LOG_FILES_SUBDIR;
+  }
+
+  private static String getPropertyPath(String propertyPath) {
+    String path = propertyPath.replace('/', File.separatorChar);
+    path = path.replace('\\', File.separatorChar);
+    if (!path.startsWith(File.separator)) {
+      path = File.separatorChar + path;
+    }
+    return SilverpeasHomeResolver.getHome() + File.separatorChar + "properties" + path;
   }
 
   private Configuration() {

@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.dbbuilder_ep;
+package org.silverpeas.passwordencryption;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
@@ -29,27 +29,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 
-public class DbBuilder_ep extends DbBuilderDynamicPart {
+/**
+ * Loops over the users in the Silverpeas domain and for each encrypts their password with the last
+ * cryptographic algorithm in use in Silverpeas to encrypt the passwords of users in SQL domains.
+ * @author mmoquillon
+ */
+public class UserPasswordEncryption extends DbBuilderDynamicPart {
 
-  private static boolean needEncryption = false;
-  private static String m_PasswordEncryption = "";
+  private static final String PASSWORD_UPDATE =
+      "UPDATE DomainSP_User SET password = ? WHERE id = ?";
+  private final CryptographicFunction crypt = new Sha512Crypt();
 
-  static {
-    try {
-      Properties propFile = FileUtil.loadResource("/org/silverpeas/domains/domainSP.properties");
-      m_PasswordEncryption = propFile.getProperty("database.SQLPasswordEncryption", "");
-      needEncryption = ("CryptUnix").equalsIgnoreCase(m_PasswordEncryption);
-    } catch (Exception e) {
-      e.printStackTrace();
-      m_PasswordEncryption = "";
-    }
-  }
-
-  public DbBuilder_ep() {
-    // recherche de la propriété spécifiant l'encryptage
-    // -> si pb de lecture, on considère qu'on n'a pas à encrypter
+  public UserPasswordEncryption() {
   }
 
   public void run() throws Exception {
@@ -57,25 +50,26 @@ public class DbBuilder_ep extends DbBuilderDynamicPart {
     ResultSet rs = null;
     Statement stmt = null;
     PreparedStatement stmtUpdate = null;
+    String sClearPass;
+
     try {
-      if (needEncryption) {
-        stmt = connection.createStatement();
-        rs = stmt.executeQuery("SELECT id, password FROM DomainSP_User");
-        while (rs.next()) {
-          String clearPassword = rs.getString("password");
-          if (clearPassword == null) {
-            clearPassword = "";
-          }
-          stmtUpdate =
-              connection.prepareStatement("UPDATE DomainSP_User SET password = ? WHERE id= ?");
-          stmtUpdate.setString(1, jcrypt.crypt("SP", clearPassword));
-          stmtUpdate.setInt(2, rs.getInt("id"));
-          stmtUpdate.executeUpdate();
-          stmtUpdate.close();
+      stmt = connection.createStatement();
+      rs = stmt.executeQuery("SELECT * FROM DomainSP_User");
+      while (rs.next()) {
+        sClearPass = rs.getString("password");
+        if (sClearPass == null) {
+          sClearPass = "";
         }
-      }
+        stmtUpdate = connection.prepareStatement(PASSWORD_UPDATE);
+        stmtUpdate.setString(1, crypt.encrypt(sClearPass));
+        stmtUpdate.setInt(2, rs.getInt("id"));
+        stmtUpdate.executeUpdate();
+        stmtUpdate.close();
+        stmtUpdate = null;
+      } // while
     } catch (SQLException ex) {
-      throw new Exception("Error during password Crypting : " + ex.getMessage(), ex);
+      throw new Exception("Error during password encryption: " + ex.getMessage());
+
     } finally {
       DbUtils.closeQuietly(rs);
       DbUtils.closeQuietly(stmt);

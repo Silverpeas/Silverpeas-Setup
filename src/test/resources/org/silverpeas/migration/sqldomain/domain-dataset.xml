@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+
+  <ST_Domain id="-1" name="internal" description="Do not remove - Used by Silverpeas engine"
+             propFileName="-" className="-" authenticationServer="-" theTimestamp="0"
+             silverpeasServerUrl=""/>
+  
+  <ST_Domain id="0" name="domainSilverpeas" description="default domain for Silverpeas"
+             propFileName="com.stratelia.silverpeas.domains.domainSP"
+             className="com.silverpeas.domains.silverpeasdriver.SilverpeasDomainDriver"
+             authenticationServer="autDomainSP" theTimestamp="0"
+             silverpeasServerUrl="http://localhost:8000"/>
+  
+  <ST_Domain id="1" name="Toto" description=""
+             propFileName="com.stratelia.silverpeas.domains.domainToto"
+             className="com.stratelia.silverpeas.domains.sqldriver.SQLDriver"
+             authenticationServer="autDomainToto" theTimestamp="0"
+             silverpeasServerUrl="http://localhost:8000"/>
+  
+  <ST_Domain id="2" name="Titi" description=""
+             propFileName="com.stratelia.silverpeas.domains.domainTiti"
+             className="com.stratelia.silverpeas.domains.sqldriver.SQLDriver"
+             authenticationServer="autDomainTiti" theTimestamp="0"
+             silverpeasServerUrl="http://localhost:8000"/>
+
+  <DomainToto_User id="1" firstName="Paul" lastName="BARRE" phone="" homephone="" cellphone=""
+                   fax="" address="" title="" company="Toto" position="Marketing" boss=""
+                   login="P.BARRE" password="$1$BFRy4.$S0mNkh88wpRaRtVdmi5Np1" passwordValid="Y"
+                   loginMail="" email="p.barre@toto.com" />
+
+  <DomainToto_User id="2" firstName="Jordan" lastName="BOISSIERE" phone="" homephone="" cellphone=""
+                   fax="" address="" title="" company="Toto" position="Commerce" boss=""
+                   login="J.BOISSIERE" password="$1$N6tLfM$cGp5JnJfHjKgwok6IlOrU1" passwordValid="Y"
+                   loginMail="" email="j.boissiere@toto.com" />
+
+  <DomainTiti_User id="1" firstName="Gilles" lastName="BARBARA" phone="" homephone="" cellphone=""
+                   fax="" address="" title="" company="Toto" position="Direction" boss=""
+                   login="GBARBARA" password="$1$bSBbdN$sI/7MUdin2RDpQXMqZV8Q1" passwordValid="Y"
+                   loginMail="" email="gilles.barbara@titi.com" />
+  
+</dataset>

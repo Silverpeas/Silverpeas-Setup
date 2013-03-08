@@ -101,10 +101,10 @@
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
     </dependency>
-    <dependency>
+<!--    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -200,7 +200,26 @@
     <resources>
       <resource>
         <directory>src/main/resources</directory>
+        <includes>
+          <include>*</include>
+        </includes>
+        <excludes>
+          <exclude>messages.properties</exclude>
+        </excludes>
         <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>messages.properties</include>
+        </includes>
+        <excludes>
+          <exclude>*.xml</exclude>
+          <exclude>META-INF/*</exclude>
+          <exclude>*.txt</exclude>
+          <exclude>default_config.properties</exclude>
+        </excludes>
+        <filtering>true</filtering>
       </resource>
     </resources>    
     <testResources>

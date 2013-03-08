@@ -20,8 +20,9 @@
  */
 package org.silverpeas.dbbuilder.dbbuilder_dl;
 
-import org.silverpeas.util.Console;
+
 import java.sql.Connection;
+import org.silverpeas.util.Console;
 
 /**
  * Titre : Description : Copyright : Copyright (c) 2002 Société :
