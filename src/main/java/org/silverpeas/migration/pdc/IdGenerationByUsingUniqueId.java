@@ -28,8 +28,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
-import org.silverpeas.dbbuilder.Console;
+
+import org.apache.commons.dbutils.DbUtils;
+
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.util.Console;
 
 /**
  * A migration dedicated to some SQL tables for the PdC component. This migration tool inserts an
@@ -44,8 +47,7 @@ public class IdGenerationByUsingUniqueId extends DbBuilderDynamicPart {
   private static final String NEW_ENTRY_IN_UNIQUEID =
       "insert into UniqueId(maxId, tableName) values(?, ?)";
   private static final String GREATER_ID_FETCHING = "select max(id) from {0}";
-  private static final String[] TABLES_TO_MIGRATE = { "PdcPosition", "PdcClassification" };
-
+  private static final String[] TABLES_TO_MIGRATE = {"PdcPosition", "PdcClassification"};
   private boolean defaultAutocommitStatus = true;
 
   public void migrate() throws Exception {
@@ -64,7 +66,7 @@ public class IdGenerationByUsingUniqueId extends DbBuilderDynamicPart {
             console.printError("The entry creation in the UniqueId for table " + aTable
                 + " has failed.");
           } else {
-            console.printMessageln("The entry creation in UniqueId for table " + aTable
+            console.printMessage("The entry creation in UniqueId for table " + aTable
                 + " has succeeded");
           }
         } else {
@@ -104,17 +106,17 @@ public class IdGenerationByUsingUniqueId extends DbBuilderDynamicPart {
   private long getGreaterIdentifier(String inTable) throws SQLException {
     long maxId = -1;
     Statement statement = null;
+    ResultSet results = null;
     try {
       statement = getConnection().createStatement();
       String sqlQuery = MessageFormat.format(GREATER_ID_FETCHING, inTable);
-      ResultSet results = statement.executeQuery(sqlQuery);
+      results = statement.executeQuery(sqlQuery);
       if (results.next()) {
         maxId = results.getLong(1);
       }
     } finally {
-      if (statement != null) {
-        statement.close();
-      }
+      DbUtils.closeQuietly(results);
+      DbUtils.closeQuietly(statement);
     }
     return maxId;
   }

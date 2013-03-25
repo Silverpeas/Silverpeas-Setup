@@ -24,41 +24,21 @@
 
 package org.silverpeas.applicationbuilder.maven;
 
-import org.silverpeas.applicationbuilder.maven.FileComparator;
-import java.util.Collections;
-import java.util.List;
+import org.junit.Test;
+
 import java.io.File;
 import java.util.ArrayList;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
- * @author ehugonnet
  */
 public class FileComparatorTest {
 
   public FileComparatorTest() {
-  }
-
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-  }
-
-  @Before
-  public void setUp() {
-  }
-
-  @After
-  public void tearDown() {
   }
 
   /**
@@ -102,6 +82,6 @@ public class FileComparatorTest {
     assertEquals("Xavier.txt", files.get(1).getName());
     assertEquals("antoine.txt", files.get(2).getName());
     assertEquals("benoit.txt", files.get(3).getName());
-    
+
   }
 }

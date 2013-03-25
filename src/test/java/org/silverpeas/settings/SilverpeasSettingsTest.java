@@ -20,6 +20,18 @@
  */
 package org.silverpeas.settings;
 
+import org.apache.commons.io.FileUtils;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.silverpeas.applicationbuilder.XmlDocument;
+import org.silverpeas.util.GestionVariables;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -27,24 +39,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-import org.apache.commons.io.FileUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.silverpeas.applicationbuilder.XmlDocument;
-import org.silverpeas.file.GestionVariables;
+
 import org.silverpeas.test.SystemInitializationForTests;
 
+import org.apache.commons.lang3.CharEncoding;
 import static java.io.File.separatorChar;
-
 import static org.silverpeas.settings.SilverpeasSettings.*;
 
 /**
@@ -66,20 +65,8 @@ public class SilverpeasSettingsTest {
     resourcesDir = System.getProperty(SILVERPEAS_HOME);
   }
 
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-  }
-
-  @Before
-  public void setUp() {
-  }
-
-  @After
-  public void tearDown() {
-  }
-
   /**
-   * Test of loadGlobalVariables method, of class SilverpeasSettings.
+   * Test of loadGlobalVariables method, of class settings.
    *
    * @throws Exception
    */
@@ -90,7 +77,7 @@ public class SilverpeasSettingsTest {
         resourcesDir + File.separatorChar + "expected" + separatorChar + "MergedSettings.xml"));
     // Get the root element
     Element root = doc.getRootElement();
-    GestionVariables gv = SilverpeasSettings.loadGlobalVariables(new File(
+    GestionVariables gv = new SilverpeasSettings().loadGlobalVariables(new File(
         resourcesDir + File.separatorChar + "expected"), root);
     Assert.assertEquals("test@silverpeas.com", gv.getValue("ADMIN_EMAIL"));
     Assert.assertEquals("http://www.silverpeas.com", gv.getValue("URL_SERVER"));
@@ -101,7 +88,7 @@ public class SilverpeasSettingsTest {
   @Test
   public void testLoadConfiguration() throws Exception {
     File dir = new File(resourcesDir + File.separatorChar + "xml");
-    GestionVariables properties = SilverpeasSettings.loadConfiguration(dir);
+    GestionVariables properties = new SilverpeasSettings().loadConfiguration(dir);
     Assert.assertEquals("c:/toto", properties.getValue("SILVERPEAS_HOME"));
     Assert.assertEquals("http://localhost:8000", properties.getValue("URL_SERVER"));
     Assert.assertEquals("80", properties.getValue("JBOSS_LISTEN_PORT"));
@@ -109,7 +96,7 @@ public class SilverpeasSettingsTest {
   }
 
   /**
-   * Test of mergeConfigurationFiles method, of class SilverpeasSettings.
+   * Test of mergeConfigurationFiles method, of class settings.
    *
    * @throws Exception
    */
@@ -118,8 +105,8 @@ public class SilverpeasSettingsTest {
     File dirXml = new File(resourcesDir + File.separatorChar + "xml");
     XmlDocument fileXml = new XmlDocument(dirXml, SilverpeasSettings.SILVERPEAS_SETTINGS);
     fileXml.load();
-    SilverpeasSettings.mergeConfigurationFiles(fileXml, dirXml);
-    fileXml.setOutputEncoding("UTF-8");
+    new SilverpeasSettings().mergeConfigurationFiles(fileXml, dirXml);
+    fileXml.setOutputEncoding(CharEncoding.UTF_8);
     XMLOutputter output = new XMLOutputter(Format.getPrettyFormat());
 
     File tempDir = new File(System.getProperty("basedir") + separatorChar + "target" + separatorChar
@@ -130,10 +117,9 @@ public class SilverpeasSettingsTest {
     output.output(fileXml.getDocument(), out);
     out.close();
     @SuppressWarnings("unchecked")
-    List<String> resultLines = FileUtils.readLines(mergedFile, "UTF-8");
-    @SuppressWarnings("unchecked")
+    List<String> resultLines = FileUtils.readLines(mergedFile, CharEncoding.UTF_8);
     List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + File.separatorChar
-        + "expected" + separatorChar + "MergedSettings.xml"), "UTF-8");
+        + "expected" + separatorChar + "MergedSettings.xml"), CharEncoding.UTF_8);
     Assert.assertNotNull(resultLines);
     Assert.assertEquals(expectedtLines.size(), resultLines.size());
     for (int i = 0; i < resultLines.size(); i++) {
@@ -151,7 +137,7 @@ public class SilverpeasSettingsTest {
     Element element = new Element(XML_FILE_TAG);
     element.setAttribute(FILE_NAME_ATTRIB, "jbossweb-tomcat55.sar/server.xml");
     Collection<Element> values = new ArrayList<Element>(2);
-    values.add(getValueElement("@URIEncoding", "UTF-8"));
+    values.add(getValueElement("@URIEncoding", CharEncoding.UTF_8));
     values.add(getValueElement("@port", "${JBOSS_LISTEN_PORT}"));
     element.addContent(getParameterElement(
         "//Service[@name='jboss.web']/Connector[@maxThreads='250']",
@@ -159,8 +145,8 @@ public class SilverpeasSettingsTest {
     values = new ArrayList<Element>(2);
     values.add(getValueElement("@docBase", "${SILVERPEAS_DATA_HOME_DEPENDANT}/data/weblib"));
     values.add(getValueElement("@path", "/weblib"));
-    element.
-        addContent(getParameterElement("/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/"
+    element.addContent(getParameterElement(
+        "/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/"
         + "Host[@name='localhost']/Context[@path='/weblib']", "update", values));
     values = new ArrayList<Element>(2);
     values.add(getValueElement("@docBase", "${SILVERPEAS_DATA_HOME_DEPENDANT}/data/website"));
@@ -170,17 +156,17 @@ public class SilverpeasSettingsTest {
     values = new ArrayList<Element>(2);
     values.add(getValueElement("@docBase", "${SILVERPEAS_HOME_DEPENDANT}/help/fr"));
     values.add(getValueElement("@path", "/help_fr"));
-    element.
-        addContent(getParameterElement("/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/"
+    element.addContent(getParameterElement(
+        "/Server/Service[@name='jboss.web']/Engine[@name='jboss.web']/"
         + "Host[@name='localhost']/Context[@path='/help_fr']", "update", values));
-    xmlfile(dir, element, gestion);
+    new SilverpeasSettings().xmlfile(dir, element, gestion);
     @SuppressWarnings("unchecked")
-    List<String> resultLines = FileUtils.readLines(new File(resourcesDir + File.separatorChar
+    List<String> resultLines = FileUtils.readLines(new File(resourcesDir + separatorChar
         + "transform" + separatorChar + "jbossweb-tomcat55.sar" + separatorChar + "server.xml"),
-        "UTF-8");
+        CharEncoding.UTF_8);
     @SuppressWarnings("unchecked")
-    List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + File.separatorChar
-        + "expected_transform" + separatorChar + "server.xml"), "UTF-8");
+    List<String> expectedtLines = FileUtils.readLines(new File(resourcesDir + separatorChar
+        + "expected_transform" + separatorChar + "server.xml"), CharEncoding.UTF_8);
     Assert.assertNotNull(resultLines);
     Assert.assertEquals(expectedtLines.size(), resultLines.size());
     for (int i = 0; i < resultLines.size(); i++) {

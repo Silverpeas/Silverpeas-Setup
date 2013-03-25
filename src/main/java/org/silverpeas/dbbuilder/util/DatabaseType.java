@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.silverpeas.dbbuilder.util;
 
 import java.io.File;
@@ -11,8 +10,8 @@ import java.io.File;
  * @author ehugonnet
  */
 public enum DatabaseType {
-  POSTGRES("postgres"), MSSQL("mssql"), ORACLE("oracle"), H2("postgres");
 
+  POSTGRES("postgres"), MSSQL("mssql"), ORACLE("oracle"), H2("postgres");
   private String contributionDir;
 
   public String getDBContributionDir() {

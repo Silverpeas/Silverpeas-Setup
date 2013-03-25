@@ -24,7 +24,6 @@
 package org.silverpeas.migration.sqldomain;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -32,12 +31,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import org.silverpeas.dbbuilder.Console;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.dbbuilder.util.Configuration;
+import org.silverpeas.util.Console;
+import org.silverpeas.util.file.FileUtil;
 
 /**
  * DB migration to change the type size (a varchar) of the password field upto 123 characters in the
@@ -81,17 +80,17 @@ public class PasswordSizeIncrease extends DbBuilderDynamicPart {
   private Console console;
 
   public void migrate() throws Exception {
-    getConsole().printMessageln("Migration of the user password length to 123 characters");
+    getConsole().printMessage("Migration of the user password length to 123 characters");
     List<String> sqlDomains = getAllSQLCustomerDomains();
     for (String resourcePath : sqlDomains) {
       String name = resourcePath.replace('.', File.separatorChar) + ".properties";
-      Properties resource = Configuration.loadResource(name);
+      Properties resource = FileUtil.loadResource(name);
       if (resource.isEmpty()) {
         // the resource isn't located at com/stratelia/silverpeas/domains but at the new
         // properties location org/silverpeas/domains
         name = name.replace("com" + File.separatorChar + "stratelia" + File.separatorChar,
             "org" + File.separatorChar);
-        resource = Configuration.loadResource(name);
+        resource = FileUtil.loadResource(name);
       }
       if (!resource.isEmpty()) {
         updatePasswordTypeInDBs(name, resource);

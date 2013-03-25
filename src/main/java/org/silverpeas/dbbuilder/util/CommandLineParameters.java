@@ -1,51 +1,51 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.dbbuilder.util;
 
-import org.silverpeas.dbbuilder.DBBuilder;
 import java.util.Locale;
-import static org.silverpeas.dbbuilder.util.Action.*;
+
+import org.silverpeas.util.Console;
+import org.silverpeas.dbbuilder.DBBuilder;
+
+import static org.silverpeas.dbbuilder.util.Action.ACTION_ENFORCE_UNINSTALL;
+import static org.silverpeas.dbbuilder.util.Action.ACTION_NONE;
 
 /**
  * Parse the command line paramters for launching the DBBuilder.
  * @author ehugonnet
  */
 public class CommandLineParameters {
-
+  private Console console;
   private static final String USAGE =
       "DBBuilder usage: DBBuilder <action> -T <Targeted DB Server type> [-v(erbose)] [-s(imulate)]\n"
           + "where <action> == -C(onnection only) | -I(nstall only) | -U(ninstall only) | -O(ptimize only) | -A(ll) | -S(tatus) | -FU(Force Uninstall) <module> \n "
           + "      <Targeted DB Server type> == MSSQL | ORACLE | POSTGRES | H2\n";
-
   private Action action = null;
   private DatabaseType dbType = null;
   private boolean verbose = false;
   private boolean simulate = false;
   private String moduleName = null;
 
-  public CommandLineParameters(String[] commandLineArgs) throws Exception {
+  public CommandLineParameters(Console console, String[] commandLineArgs) throws Exception {
+    this.console = console;
     testParams(commandLineArgs);
   }
 
@@ -93,21 +93,21 @@ public class CommandLineParameters {
       String curArg = args[i];
       if ("-T".equals(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
-        if (dbType != null) {
-          DBBuilder.printError(USAGE);
+        if (null != dbType) {
+          console.printError(USAGE);
           throw new Exception();
         }
         getDBType = true;
       } else if (ACTION_NONE != Action.getAction(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
-        if (action != null) {
-          DBBuilder.printError(USAGE);
+        if (null != action) {
+          console.printError(USAGE);
           throw new Exception();
         }
         action = Action.getAction(curArg);
@@ -116,19 +116,19 @@ public class CommandLineParameters {
         }
       } else if ("-v".equals(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         verbose = true;
       } else if ("-s".equals(curArg)) {
         if (getDBType || getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         simulate = true;
       } else {
         if (!getDBType && !getModuleName) {
-          DBBuilder.printError(USAGE);
+          console.printError(USAGE);
           throw new Exception();
         }
         if (getDBType) {
@@ -140,13 +140,13 @@ public class CommandLineParameters {
         getModuleName = false;
       }
     }
-    if (dbType == null || action == null) {
-      DBBuilder.printError(USAGE);
+    if (null == dbType || null == action) {
+      console.printError(USAGE);
       throw new Exception();
     }
 
-    if (moduleName == null && getModuleName) {
-      DBBuilder.printError(USAGE);
+    if (null == moduleName && getModuleName) {
+      console.printError(USAGE);
       throw new Exception();
     }
 

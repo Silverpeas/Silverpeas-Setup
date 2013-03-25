@@ -20,6 +20,15 @@
  */
 package org.silverpeas.applicationbuilder;
 
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
+import org.silverpeas.util.xml.ClasspathEntityResolver;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -30,16 +39,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-
-import org.silverpeas.xml.ClasspathEntityResolver;
 
 /**
  * Represents an XML Document and provides convenient methods. The methods are used basically to
@@ -87,7 +86,7 @@ public class XmlDocument extends ApplicationBuilderItem {
       saveTo(new FileOutputStream(getPath()));
     } catch (FileNotFoundException fnfe) {
       throw new AppBuilderException("Could not save \""
-          + getPath().getAbsolutePath() + "\"", fnfe);
+          + getPath().getAbsolutePath() + '"', fnfe);
     }
   }
 
@@ -110,17 +109,17 @@ public class XmlDocument extends ApplicationBuilderItem {
    */
   public void load() throws AppBuilderException {
     if (!getPath().exists()) {
-      throw new AppBuilderException("\"" + getPath().getAbsolutePath()
+      throw new AppBuilderException('"' + getPath().getAbsolutePath()
           + "\" does not exist");
     }
     try {
       loadFrom(getPath().toURI().toURL().openStream());
     } catch (java.net.MalformedURLException mue) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", mue);
+          + getPath().getAbsolutePath() + '"', mue);
     } catch (java.io.IOException ioe) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", ioe);
+          + getPath().getAbsolutePath() + '"', ioe);
     }
   }
 
@@ -335,7 +334,7 @@ public class XmlDocument extends ApplicationBuilderItem {
       if (!eltLst.isEmpty()) {
         if (!root.removeChildren(tagsToFind[iTag])) {
           throw new AppBuilderException("Could not remove \""
-              + tagsToFind[iTag] + "\" elements from \"" + getName() + "\"");
+              + tagsToFind[iTag] + "\" elements from \"" + getName() + '"');
         }
 
       }

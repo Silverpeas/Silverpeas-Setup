@@ -1,35 +1,33 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.applicationbuilder.maven;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.silverpeas.applicationbuilder.AppBuilderException;
 import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
 import org.silverpeas.applicationbuilder.ReadOnlyArchive;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import org.silverpeas.util.Console;
 
 /**
  * @author Administrateur
@@ -43,16 +41,18 @@ public class MavenContribution {
   public static final int TYPE_EXTERNAL = 4;
   private int type;
   private transient final StringBuffer packageName = new StringBuffer();
-  /** attributes */
   private ReadOnlyArchive client = null;
   private transient final List<ApplicationBuilderItem> ejbs =
       new ArrayList<ApplicationBuilderItem>();
   private ReadOnlyArchive warPart = null;
   private transient final List<ReadOnlyArchive> librairies = new ArrayList<ReadOnlyArchive>();
   private transient final List<ReadOnlyArchive> externals = new ArrayList<ReadOnlyArchive>();
+  private final Console console;
 
-  public MavenContribution(final File contribution, final int type) throws AppBuilderException {
+  public MavenContribution(final File contribution, final int type, final Console console) throws
+      AppBuilderException {
     this.type = type;
+    this.console = console;
     addContribution(contribution, type);
   }
 
@@ -61,33 +61,39 @@ public class MavenContribution {
     packageName.append(File.pathSeparatorChar).append(' ');
     switch (type) {
       case TYPE_WAR:
-        warPart = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName());
+        warPart = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(), console);
         break;
       case TYPE_EJB:
         ejbs.add(new ApplicationBuilderItem(contribution.getParentFile(), contribution.getName()));
         break;
       case TYPE_CLIENT:
-        client = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName());
+        client = new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(), console);
         break;
       case TYPE_LIB:
-        librairies.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName()));
+        librairies.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(),
+            console));
         break;
       case TYPE_EXTERNAL:
-        externals.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName()));
+        externals.add(new ReadOnlyArchive(contribution.getParentFile(), contribution.getName(),
+            console));
         break;
       default:
         break;
     }
   }
 
-  public MavenContribution(final File[] contributions, final int type) throws AppBuilderException {
+  public MavenContribution(final File[] contributions, final int type, final Console console) throws
+      AppBuilderException {
+    this.console = console;
     for (File contribution : contributions) {
       addContribution(contribution, type);
     }
   }
 
   /**
-   * If no client part is contributed, returns <code>null</code>
+   * If no client part is contributed, returns
+   * <code>null</code>
+   *
    * @return the client archive
    * @roseuid 3AAE586D01D4
    */

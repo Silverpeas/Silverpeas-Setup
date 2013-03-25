@@ -20,6 +20,10 @@
  */
 package org.silverpeas.passwordencryption;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.util.file.FileUtil;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,27 +40,27 @@ public class UserPasswordEncryption extends DbBuilderDynamicPart {
 
   private static final String PASSWORD_UPDATE =
       "UPDATE DomainSP_User SET password = ? WHERE id = ?";
-  private CryptographicFunction crypt = new Sha512Crypt();
+  private final CryptographicFunction crypt = new Sha512Crypt();
 
   public UserPasswordEncryption() {
   }
 
   public void run() throws Exception {
-    Connection m_Connection = this.getConnection();
+    Connection connection = this.getConnection();
     ResultSet rs = null;
     Statement stmt = null;
     PreparedStatement stmtUpdate = null;
     String sClearPass;
 
     try {
-      stmt = m_Connection.createStatement();
+      stmt = connection.createStatement();
       rs = stmt.executeQuery("SELECT * FROM DomainSP_User");
       while (rs.next()) {
         sClearPass = rs.getString("password");
         if (sClearPass == null) {
           sClearPass = "";
         }
-        stmtUpdate = m_Connection.prepareStatement(PASSWORD_UPDATE);
+        stmtUpdate = connection.prepareStatement(PASSWORD_UPDATE);
         stmtUpdate.setString(1, crypt.encrypt(sClearPass));
         stmtUpdate.setInt(2, rs.getInt("id"));
         stmtUpdate.executeUpdate();
@@ -67,18 +71,9 @@ public class UserPasswordEncryption extends DbBuilderDynamicPart {
       throw new Exception("Error during password encryption: " + ex.getMessage());
 
     } finally {
-      try {
-        if (rs != null) {
-          rs.close();
-        } // if
-        if (stmt != null) {
-          stmt.close();
-        } // if
-        if (stmtUpdate != null) {
-          stmtUpdate.close();
-        } // if
-      } catch (SQLException ex) {
-      }
-    } // try
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+      DbUtils.closeQuietly(stmtUpdate);
+    }
   }
 }

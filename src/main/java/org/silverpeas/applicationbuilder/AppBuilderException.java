@@ -1,27 +1,23 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.applicationbuilder;
 
 import java.io.PrintStream;
@@ -52,7 +48,7 @@ public class AppBuilderException extends Exception {
   }
 
   public void printStackTrace() {
-    if (nestedException != null) {
+    if (null != nestedException) {
       System.err.println(getMessage());
       nestedException.printStackTrace();
     } else {
@@ -61,7 +57,7 @@ public class AppBuilderException extends Exception {
   }
 
   public void printStackTrace(PrintStream s) {
-    if (nestedException != null) {
+    if (null != nestedException) {
       s.println(getMessage());
       nestedException.printStackTrace(s);
     } else {
@@ -70,7 +66,7 @@ public class AppBuilderException extends Exception {
   }
 
   public void printStackTrace(PrintWriter s) {
-    if (nestedException != null) {
+    if (null != nestedException) {
       s.println(getMessage());
       nestedException.printStackTrace(s);
     } else {
@@ -79,28 +75,28 @@ public class AppBuilderException extends Exception {
   }
 
   public void printLogMessage() {
-    if (getMessage() != null && !getMessage().trim().equals("")) {
+    if (null != getMessage() && !getMessage().trim().isEmpty()) {
       System.err.println(getMessage());
     }
-    if (nestedException != null) {
+    if (null != nestedException) {
       nestedException.printStackTrace();
     }
   }
 
   public void printLogMessage(PrintStream s) {
-    if (getMessage() != null && !getMessage().trim().equals("")) {
+    if (null != getMessage() && !getMessage().trim().isEmpty()) {
       s.println(getMessage());
     }
-    if (nestedException != null) {
+    if (null != nestedException) {
       nestedException.printStackTrace(s);
     }
   }
 
   public void printLogMessage(PrintWriter s) {
-    if (getMessage() != null && !getMessage().trim().equals("")) {
+    if (null != getMessage() && !getMessage().trim().isEmpty()) {
       s.println(getMessage());
     }
-    if (nestedException != null) {
+    if (null != nestedException) {
       nestedException.printStackTrace(s);
     }
   }

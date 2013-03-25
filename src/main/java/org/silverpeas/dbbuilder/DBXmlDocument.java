@@ -1,31 +1,36 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package org.silverpeas.dbbuilder;
 
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.Format.TextMode;
+import org.jdom.output.XMLOutputter;
 import org.silverpeas.applicationbuilder.AppBuilderException;
 import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,17 +41,9 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Iterator;
 import java.util.List;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.Format.TextMode;
-import org.jdom.output.XMLOutputter;
+import java.util.Set;
 
 /**
  * Represents an XML Document and provides convenient methods. The methods are used basically to
@@ -96,7 +93,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
       saveTo(new FileOutputStream(getPath()));
     } catch (FileNotFoundException fnfe) {
       throw new AppBuilderException("Could not save \""
-          + getPath().getAbsolutePath() + "\"", fnfe);
+          + getPath().getAbsolutePath() + '"', fnfe);
     }
   }
 
@@ -126,14 +123,14 @@ public class DBXmlDocument extends ApplicationBuilderItem {
         loadFrom(new FileInputStream(getPath()));
       } else {
         throw new AppBuilderException("Could not find \""
-            + getPath().getAbsolutePath() + "\"");
+            + getPath().getAbsolutePath() + '"');
       }
     } catch (MalformedURLException mue) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", mue);
+          + getPath().getAbsolutePath() + '"', mue);
     } catch (IOException ioe) {
       throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + "\"", ioe);
+          + getPath().getAbsolutePath() + '"', ioe);
     }
 
   }
@@ -180,11 +177,17 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     Element root = getDocument().getRootElement();
     root.detach();
 
-    /** merges the elements in the resulting document */
-    /** gets the root element of the documents to merge (excluding master) */
+    /**
+     * merges the elements in the resulting document
+     */
+    /**
+     * gets the root element of the documents to merge (excluding master)
+     */
     Document documentToBeMerged = (Document) XmlFile.getDocument().clone();
     Element tempRoot = documentToBeMerged.getRootElement();
-    /** gets all the elements which will be included in the resulting document */
+    /**
+     * gets all the elements which will be included in the resulting document
+     */
     for (int iTag = 0; iTag < tagsToMerge.length; iTag++) {
       for (Object child : tempRoot.getChildren(tagsToMerge[iTag])) {
         if (child instanceof Content) {
@@ -194,7 +197,9 @@ public class DBXmlDocument extends ApplicationBuilderItem {
         }
       }
     }
-    /** the result */
+    /**
+     * the result
+     */
     setDocument(new Document(root));
   } // mergeWith
 
@@ -214,30 +219,36 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     Document resultDoc = (Document) getDocument().clone();
     Element root = resultDoc.getRootElement();
 
-    /** Makes groups of elements by tag */
+    /**
+     * Makes groups of elements by tag
+     */
     List eltLstLst = new ArrayList(tagsToSort.length);
     for (int iTag = 0; iTag < tagsToSort.length; iTag++) {
       List eltLst = root.getChildren(tagsToSort[iTag]);
       if (!eltLst.isEmpty()) {
         if (!root.removeChildren(tagsToSort[iTag])) {
           throw new AppBuilderException("Could not remove \""
-              + tagsToSort[iTag] + "\" elements from \"" + getName() + "\"");
+              + tagsToSort[iTag] + "\" elements from \"" + getName() + '"');
         }
       }
       eltLstLst.add(iTag, eltLst);
     }
 
-    /** Orders the content of the resulting document */
+    /**
+     * Orders the content of the resulting document
+     */
     List allEltLst = root.getContent();
     for (int iTag = 0; iTag < tagsToSort.length; iTag++) {
       if (!((List) eltLstLst.get(iTag)).isEmpty()) {
         if (!allEltLst.addAll(allEltLst.size(), (List) eltLstLst.get(iTag))) {
           throw new AppBuilderException("Could not add \"" + tagsToSort[iTag]
-              + "\" elements to \"" + getName() + "\"");
+              + "\" elements to \"" + getName() + '"');
         }
       }
     }
-    /** the result */
+    /**
+     * the result
+     */
     underlyingDocument = resultDoc;
   }
 
@@ -312,14 +323,16 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     Document resultDoc = (Document) getDocument().clone();
     Element root = resultDoc.getRootElement();
 
-    /** Makes groups of elements by tag */
+    /**
+     * Makes groups of elements by tag
+     */
     List eltLstLst = new ArrayList(tagsToFind.length);
     for (int iTag = 0; iTag < tagsToFind.length; iTag++) {
       List eltLst = root.getChildren(tagsToFind[iTag]);
       if (!eltLst.isEmpty()) {
         if (!root.removeChildren(tagsToFind[iTag])) {
           throw new AppBuilderException("Could not remove \""
-              + tagsToFind[iTag] + "\" elements from \"" + getName() + "\"");
+              + tagsToFind[iTag] + "\" elements from \"" + getName() + '"');
         }
       }
       eltLstLst.add(iTag, eltLst);
@@ -381,9 +394,8 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     }
     @SuppressWarnings("unchecked")
     Iterator<Element> iChildren = getDocument().getRootElement().getChildren().iterator();
-    Element currentElement = null;
     while (iChildren.hasNext()) {
-      currentElement = iChildren.next();
+      Element currentElement = iChildren.next();
       if (currentElement.getAttribute(attributeToFind) != null) {
         result.add(currentElement.getAttributeValue(attributeToFind));
       }
@@ -419,7 +431,9 @@ public class DBXmlDocument extends ApplicationBuilderItem {
    */
   public void mergeWith(DBBuilderItem dbbuilderItem, String[] tagsToMerge,
       VersionTag[] blocks_to_merge) throws Exception {
-    /** merges the elements in the resulting document */
+    /**
+     * merges the elements in the resulting document
+     */
     Element root = getDocument().getRootElement();
     root.detach();
     if (blocks_to_merge == null) {
@@ -436,13 +450,14 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     } else {
       Element moduleElement = new Element(ELT_MODULE);
       moduleElement.setAttribute(ATT_MODULE_ID, dbbuilderItem.getModule());
-      /** gets all the elements which will be included in the resulting document */
-      for (int iBlock = 0; iBlock < blocks_to_merge.length; iBlock++) {
-        Element myElement =
-            dbbuilderItem.getUniqueBlock(blocks_to_merge[iBlock].getCurrent_or_previous(),
-            blocks_to_merge[iBlock].getVersion());
-        for (int iTag = 0; iTag < tagsToMerge.length; iTag++) {
-          for (Object child : myElement.getChildren(tagsToMerge[iTag])) {
+      /**
+       * gets all the elements which will be included in the resulting document
+       */
+      for (final VersionTag aBlocks_to_merge : blocks_to_merge) {
+        Element myElement = dbbuilderItem.getUniqueBlock(aBlocks_to_merge.getCurrent_or_previous(),
+            aBlocks_to_merge.getVersion());
+        for (final String aTagsToMerge : tagsToMerge) {
+          for (Object child : myElement.getChildren(aTagsToMerge)) {
             if (child instanceof Content) {
               Content newElement = (Content) ((Content) child).clone();
               newElement.detach();
@@ -454,7 +469,9 @@ public class DBXmlDocument extends ApplicationBuilderItem {
         root.addContent(moduleElement);
       }
     }
-    /** the result */
+    /**
+     * the result
+     */
     setDocument(new Document(root));
   } // mergeWith
 }

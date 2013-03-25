@@ -1,29 +1,24 @@
 /**
  * Copyright (C) 2000 - 2012 Silverpeas
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU Affero General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
  *
- * As a special exception to the terms and conditions of version 3.0 of
- * the GPL, you may redistribute this Program in connection with Free/Libre
- * Open Source Software ("FLOSS") applications as described in Silverpeas's
- * FLOSS exception.  You should have received a copy of the text describing
- * the FLOSS exception, and it is also available here:
+ * As a special exception to the terms and conditions of version 3.0 of the GPL, you may
+ * redistribute this Program in connection with Free/Libre Open Source Software ("FLOSS")
+ * applications as described in Silverpeas's FLOSS exception. You should have received a copy of the
+ * text describing the FLOSS exception, and it is also available here:
  * "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
-
 //Source file: R:\\StraProduct\\Pkg1.0\\Dev\\SrcJava\\Java\\ApplicationBuilder\\JBuilderEnv\\src\\com\\silverpeas\\applicationbuilder\\ApplicationBuilderItem.java
-
 package org.silverpeas.applicationbuilder;
 
 import java.io.File;
@@ -40,34 +35,29 @@ public class ApplicationBuilderItem {
    * @since 1.0
    */
   private String name = null;
-
   /**
    * The location of the item in an archive. examples : "library" for JAR libraries, "WEB-INF" for a
    * descriptor.
    * @since 1.0
    */
   private String location = null;
-
   /**
    * Used for a file item. The absolute path of a directory in the file system hosting the file.
    * @since 1.0
    */
   private File home = null;
-
   /**
    * A convenience attribute built as needed from attributes "home" and "name". The absolute path to
    * the file item in the file system.
    * @since 1.0
    */
   private File path = null;
-
   /**
    * A convenience attribute built as needed from attributes "location" and "name". The path to the
    * item in an archive
    * @since 1.0
    */
   private String archivePath = null;
-
   private long size = -1;
 
   public ApplicationBuilderItem() {
@@ -118,7 +108,7 @@ public class ApplicationBuilderItem {
    * @roseuid 3AB219E00319
    */
   public void setName(String itemName) {
-    if (itemName.trim().equals("")) {
+    if (itemName.trim().isEmpty()) {
       name = null;
     } else {
       name = itemName;
@@ -144,9 +134,9 @@ public class ApplicationBuilderItem {
    * @roseuid 3AB21C4500C1
    */
   public void setLocation(String directory) {
-    if (directory == null) {
+    if (null == directory) {
       location = null;
-    } else if (directory.trim().equals("")) {
+    } else if (directory.trim().isEmpty()) {
       location = null;
     } else {
       location = directory;
@@ -187,7 +177,7 @@ public class ApplicationBuilderItem {
    * @return the size of the item, <code>-1</code> if unknown.
    */
   public long getSize() {
-    if (getPath() == null) {
+    if (null == getPath()) {
       return size;
     }
     if (getPath().exists() && !getPath().isDirectory()) {
@@ -206,7 +196,7 @@ public class ApplicationBuilderItem {
    * @see com.silverpeas.applicationbuilder.ApplicationBuilderItem#setHome
    */
   private void updatePath() {
-    if (getHome() != null && getName() != null) {
+    if (null != getHome() && null != getName()) {
       path = new File(getHome(), getName());
     }
   }
@@ -217,13 +207,12 @@ public class ApplicationBuilderItem {
    * @see com.silverpeas.applicationbuilder.ApplicationBuilderItem#setLocation
    */
   private void updateArchivePath() {
-    if (getName() != null) {
+    if (null != getName()) {
       archivePath = "";
-      if (getLocation() != null) {
+      if (null != getLocation()) {
         archivePath += getLocation() + File.separator;
       }
       archivePath += getName();
     }
   }
-
 }
