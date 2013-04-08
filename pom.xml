@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.silverpeas</groupId>
@@ -10,15 +12,16 @@
   <artifactId>configuration</artifactId>
   <packaging>jar</packaging>
   <version>5.12-SNAPSHOT</version>
-  <name>Silverpeas Configuration Tools</name>
+  <name>Silverpeas Configuration Tools - ${project.version}</name>
 
   <scm>
     <connection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</connection>
-    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git
+    </developerConnection>
     <url>https://github.com/Silverpeas/Silverpeas-setup</url>
     <tag>HEAD</tag>
   </scm>
-  
+
   <repositories>
     <repository>
       <id>Silverpeas</id>
@@ -63,7 +66,7 @@
     </dependency>
     <dependency>
       <groupId>junit</groupId>
-      <artifactId>junit-dep</artifactId>
+      <artifactId>junit</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -98,14 +101,22 @@
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
     </dependency>
-    <dependency>
+<!--    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>    
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
@@ -129,11 +140,88 @@
     <dependency>
       <groupId>commons-configuration</groupId>
       <artifactId>commons-configuration</artifactId>
-      <version>1.8</version>
+      <version>1.9</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-dbutils</groupId>
+      <artifactId>commons-dbutils</artifactId>
+      <version>1.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.jcr</groupId>
+      <artifactId>jcr</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-jcr-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-jcr-server</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.jackrabbit</groupId>
+          <artifactId>jackrabbit-webdav</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-fileupload</groupId>
+          <artifactId>commons-fileupload</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jackrabbit</groupId>
+      <artifactId>jackrabbit-spi-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency> 
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-analyzers</artifactId>
     </dependency>
   </dependencies>
-  
+
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>*</include>
+        </includes>
+        <excludes>
+          <exclude>messages.properties</exclude>
+        </excludes>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>messages.properties</include>
+        </includes>
+        <excludes>
+          <exclude>*.xml</exclude>
+          <exclude>META-INF/*</exclude>
+          <exclude>*.txt</exclude>
+          <exclude>default_config.properties</exclude>
+        </excludes>
+        <filtering>true</filtering>
+      </resource>
+    </resources>    
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>
@@ -154,7 +242,7 @@
               <addClasspath>true</addClasspath>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <mainClass>org.silverpeas.SilverpeasSettings.SilverpeasSettings</mainClass>
+              <mainClass>org.silverpeas.settings.SilverpeasSettings</mainClass>
               <classpathLayoutType>custom</classpathLayoutType>
               <customClasspathLayout>lib/$${artifact.artifactId}.$${artifact.extension}</customClasspathLayout>
             </manifest>
@@ -165,20 +253,16 @@
           </archive>
         </configuration>
       </plugin>
+      <!--
       <plugin>
         <groupId>org.silverpeas.services</groupId>
         <artifactId>code-formatter-plugin</artifactId>
-      </plugin>
+      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <environmentVariables>
-            <SILVERPEAS_HOME>${project.basedir}/target/temp/silverpeas</SILVERPEAS_HOME>
-            <JBOSS_HOME>${project.basedir}/target/temp/jboss</JBOSS_HOME>
-          </environmentVariables>
-        </configuration>
       </plugin>
     </plugins>
   </build>
+
 </project>
