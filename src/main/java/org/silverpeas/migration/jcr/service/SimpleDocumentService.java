@@ -332,4 +332,24 @@ public class SimpleDocumentService implements AttachmentService {
   public void shutdown() {
     this.repositoryManager.shutdown();
   }
+  
+  /**
+   * Delete a given attachment.
+   *
+   * @param document the attachmentDetail object to deleted.
+   */
+   @Override
+   public void deleteAttachment(SimpleDocument document) {
+     Session session = null;
+     try {
+       session = repositoryManager.getSession();
+       repository.fillNodeName(session, document);
+       repository.deleteDocument(session, document.getPk());
+       session.save();
+     } catch (RepositoryException ex) {
+       throw new AttachmentException(ex);
+     } finally {
+       repositoryManager.logout(session);
+     }
+   } 
 }

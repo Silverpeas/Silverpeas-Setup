@@ -161,4 +161,11 @@ public interface AttachmentService {
    * Shutdowns the repository.
    */
   public void shutdown();
+  
+  /**
+  * Delete a given attachment.
+  *
+  * @param document the document to deleted.
+  */
+  public void deleteAttachment(SimpleDocument document);
 }
