@@ -93,7 +93,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       pstmt.setString(1, componentId);
       rs = pstmt.executeQuery();
       while (rs.next()) {
-        SimpleDocumentPK pk = new SimpleDocumentPK(null, rs.getString("instanceid"));
+        String instanceId = rs.getString("instanceid");
+        SimpleDocumentPK pk = new SimpleDocumentPK(null, instanceId);
         pk.setOldSilverpeasId(rs.getLong("attachmentid"));
         String contentType = rs.getString("attachmenttype");
         if (!StringUtil.isDefined(contentType)) {
@@ -112,7 +113,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             DateUtil.parse(rs.getString("reservationdate")),
             DateUtil.parse(rs.getString("alertdate")), DateUtil.parse(rs.getString("expirydate")),
             rs.getString("attachmentdescription"), attachment);
-        document.setDocumentType(DocumentType.fromOldContext(rs.getString("attachmentcontext")));
+        document.setDocumentType(DocumentType.fromOldContext(instanceId, rs.getString("attachmentcontext")));
         File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
             rs.getString("attachmentphysicalname"));
         if (file != null) {
@@ -141,7 +142,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       pstmt.setLong(1, document.getOldSilverpeasId());
       rs = pstmt.executeQuery();
       while (rs.next()) {
-        SimpleDocumentPK pk = new SimpleDocumentPK(null, rs.getString("instanceid"));
+        String instanceId = rs.getString("instanceid");
+        SimpleDocumentPK pk = new SimpleDocumentPK(null, instanceId);
         pk.setOldSilverpeasId(rs.getLong("attachmentid"));
         String contentType = rs.getString("attachmenttype");
         if (!StringUtil.isDefined(contentType)) {

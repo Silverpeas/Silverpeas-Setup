@@ -66,9 +66,12 @@ public enum DocumentType {
     return attachment;
   }
 
-  public static DocumentType fromOldContext(String oldContext) {
+  public static DocumentType fromOldContext(String instanceId, String oldContext) {
     if (StringUtil.isDefined(oldContext)) {
       if ("Images".equalsIgnoreCase(oldContext)) {
+        if(instanceId.startsWith("classifieds")) {
+          return form;
+        }
         return attachment;
       }
       if ("wysiwyg".equalsIgnoreCase(oldContext)) {
