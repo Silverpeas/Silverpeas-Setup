@@ -80,6 +80,9 @@ public enum DocumentType {
       if ("XMLFormImages".equalsIgnoreCase(oldContext)) {
         return form;
       }
+      if ("XMLFormVideo".equalsIgnoreCase(oldContext)) {
+        return form;
+      }
       if (wysiwygImagePattern.matcher(oldContext).matches()) {
         return image;
       }

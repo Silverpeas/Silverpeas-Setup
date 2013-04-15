@@ -34,6 +34,7 @@ import java.util.Collection;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.StringUtil;
 
@@ -77,8 +78,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
             for (FieldTemplate fieldTemplate : listValue) {
               getConsole().printTrace("Field Name = "+fieldTemplate.getFieldName());//category | type | description | photo 
               if (fieldTemplate.getFieldName().startsWith("photo")) {
-                if (fieldTemplate.getFieldValue() != null &&
-                    !"".equals(fieldTemplate.getFieldValue())) {
+                if (StringUtil.isDefined(fieldTemplate.getFieldValue())) {
                   getConsole().printTrace("Photo field value = " + fieldTemplate.getFieldValue());
                   
                   getConsole().printTrace("Delete field template recordId = " + recordId +
@@ -91,8 +91,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
                         .printError("ERROR when Deleting field template recordId = " +
                         recordId + ", fieldName = '" + fieldTemplate.getFieldName() +
                         "', fieldValue = " + fieldTemplate.getFieldValue() +
-                        ", error = " +
-                        e.getMessage(), e);
+                        ", error = " + e.getMessage(), e);
                   }
 
                   if(StringUtil.isLong(fieldTemplate.getFieldValue())) {

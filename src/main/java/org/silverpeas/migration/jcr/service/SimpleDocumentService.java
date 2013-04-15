@@ -388,35 +388,23 @@ public class SimpleDocumentService implements AttachmentService {
         if (verifFormatImage) {
           console.printTrace("Delete attachment with attachmentId = " +
               simpleDocument.getId() + ", oldSilverpeasId = "+simpleDocument.getOldSilverpeasId());
-          String attachmentPath = simpleDocument.getAttachmentPath();
-          File content = new File(attachmentPath);
-          BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(content));
-          repository.fillNodeName(session, simpleDocument);
-          repository.deleteDocument(session, simpleDocument.getPk());
-          //session.save();
-          
-          console.printTrace("Create attachment oldSilverpeasId = "+simpleDocument.getOldSilverpeasId()+", context = 'attachment'");
+          String sourcePath = simpleDocument.getFullJcrPath();
           simpleDocument.setDocumentType(DocumentType.attachment);
-          SimpleDocumentPK docPk = repository.createDocument(session, simpleDocument);
-          session.save();
-          SimpleDocument createdDocument = repository.findDocumentById(session, docPk, simpleDocument.
-              getLanguage());
-          createdDocument.setPublicDocument(simpleDocument.isPublic());
-          SimpleDocument finalDocument = repository.unlock(session, createdDocument, false);
-          repository.storeContent(finalDocument, inputStream);
-          
+          String destinationPath = simpleDocument.getFullJcrPath();
+          console.printTrace("Moving " +sourcePath + " to "+destinationPath);
+          if(!session.nodeExists(destinationPath)) {
+            repository.prepareComponentAttachments(primaryKey.getInstanceId(), DocumentType.attachment.getFolderName());
+          }
+          session.move(sourcePath, destinationPath);
         } else {// format Image not correct
           console.printTrace("Format Image not correct, delete attachment attachmentId = " + simpleDocument.getId() + ", oldSilverpeasId = "+simpleDocument.getOldSilverpeasId());
-          repository.fillNodeName(session, simpleDocument);
           repository.deleteDocument(session, simpleDocument.getPk());
-          session.save();
         }
+        session.save();
       } else {
         throw new AttachmentException("ERROR Simple Document with oldSilverpeasId "+primaryKey.getOldSilverpeasId()+" not found");
       } 
     } catch (RepositoryException ex) {
-      throw new AttachmentException(ex);
-    } catch (IOException ex) {
       throw new AttachmentException(ex);
     } finally {
       repositoryManager.logout(session);

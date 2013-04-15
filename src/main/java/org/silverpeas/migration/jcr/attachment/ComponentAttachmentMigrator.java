@@ -114,6 +114,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             DateUtil.parse(rs.getString("alertdate")), DateUtil.parse(rs.getString("expirydate")),
             rs.getString("attachmentdescription"), attachment);
         document.setDocumentType(DocumentType.fromOldContext(instanceId, rs.getString("attachmentcontext")));
+        document.setUpdated(document.getCreated());
+        document.setUpdatedBy(author);
         File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
             rs.getString("attachmentphysicalname"));
         if (file != null) {
@@ -158,6 +160,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             rs.getString("attachmentinfo"), rs.getLong("attachmentsize"), contentType, author,
             DateUtil.parse(rs.getString("attachmentcreationdate")), rs.getString("xmlform"));
         document.setFile(attachment);
+        document.setUpdated(attachment.getCreated());        
+        document.setUpdatedBy(author);
         File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
             "attachmentphysicalname"));
         if (file != null) {
