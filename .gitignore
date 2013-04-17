@@ -6,3 +6,6 @@ nb-configuration.xml
 *.iml
 .sonar-ide.properties
 .idea
+.settings
+.classpath
+.project

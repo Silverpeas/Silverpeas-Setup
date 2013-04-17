@@ -66,15 +66,21 @@ public enum DocumentType {
     return attachment;
   }
 
-  public static DocumentType fromOldContext(String oldContext) {
+  public static DocumentType fromOldContext(String instanceId, String oldContext) {
     if (StringUtil.isDefined(oldContext)) {
       if ("Images".equalsIgnoreCase(oldContext)) {
+        if(instanceId.startsWith("classifieds")) {
+          return form;
+        }
         return attachment;
       }
       if ("wysiwyg".equalsIgnoreCase(oldContext)) {
         return wysiwyg;
       }
       if ("XMLFormImages".equalsIgnoreCase(oldContext)) {
+        return form;
+      }
+      if ("XMLFormVideo".equalsIgnoreCase(oldContext)) {
         return form;
       }
       if (wysiwygImagePattern.matcher(oldContext).matches()) {

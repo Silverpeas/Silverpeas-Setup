@@ -44,6 +44,8 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.model.UnlockContext;
 import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
 import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
+import org.silverpeas.migration.jcr.service.RepositoryManager;
+import org.silverpeas.util.Console;
 import org.silverpeas.util.StringUtil;
 
 public class SimpleDocumentService implements AttachmentService {
@@ -331,5 +333,81 @@ public class SimpleDocumentService implements AttachmentService {
   @Override
   public void shutdown() {
     this.repositoryManager.shutdown();
+  }
+  
+  /**
+   * Delete a given attachment.
+   *
+   * @param document the attachmentDetail object to deleted.
+   */
+   @Override
+   public void deleteAttachment(SimpleDocument document) {
+     Session session = null;
+     try {
+       session = repositoryManager.getSession();
+       repository.fillNodeName(session, document);
+       repository.deleteDocument(session, document.getPk());
+       session.save();
+     } catch (RepositoryException ex) {
+       throw new AttachmentException(ex);
+     } finally {
+       repositoryManager.logout(session);
+     }
+   } 
+   
+  private boolean verifFormatImage(String filename) {
+    int indexPoint = filename.lastIndexOf(".");
+    if (indexPoint != -1) {
+      // le fichier contient une extension. On recupere l'extension
+      String extension = filename.substring(indexPoint + 1);
+      extension = extension.toLowerCase();
+      if ("jpg".equals(extension) ||
+          "gif".equals(extension) ||
+          "bmp".equals(extension) ||
+          "tiff".equals(extension) ||
+          "tif".equals(extension) ||
+          "jpeg".equals(extension) ||
+          "png".equals(extension)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  @Override
+  public void moveImageContext(SimpleDocumentPK primaryKey, Console console) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      SimpleDocument simpleDocument = repository
+          .findDocumentByOldSilverpeasId(session, primaryKey.getComponentName(),
+          primaryKey.getOldSilverpeasId(), false, null);
+      if(simpleDocument != null) {
+        boolean verifFormatImage =
+            verifFormatImage(simpleDocument.getFilename());
+        if (verifFormatImage) {
+          console.printTrace("Delete attachment with attachmentId = " +
+              simpleDocument.getId() + ", oldSilverpeasId = "+simpleDocument.getOldSilverpeasId());
+          String sourcePath = simpleDocument.getFullJcrPath();
+          simpleDocument.setDocumentType(DocumentType.attachment);
+          String destinationPath = simpleDocument.getFullJcrPath();
+          console.printTrace("Moving " +sourcePath + " to "+destinationPath);
+          if(!session.nodeExists(destinationPath)) {
+            repository.prepareComponentAttachments(primaryKey.getInstanceId(), DocumentType.attachment.getFolderName());
+          }
+          session.move(sourcePath, destinationPath);
+        } else {// format Image not correct
+          console.printTrace("Format Image not correct, delete attachment attachmentId = " + simpleDocument.getId() + ", oldSilverpeasId = "+simpleDocument.getOldSilverpeasId());
+          repository.deleteDocument(session, simpleDocument.getPk());
+        }
+        session.save();
+      } else {
+        throw new AttachmentException("ERROR Simple Document with oldSilverpeasId "+primaryKey.getOldSilverpeasId()+" not found");
+      } 
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
   }
 }
