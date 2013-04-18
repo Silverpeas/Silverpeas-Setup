@@ -38,8 +38,10 @@ import static java.io.File.separatorChar;
  * @author ehugonnet
  */
 public class Version {
+
   private static Console console = new Console(DBBuilder.class);
 
+  private int id;
   private int minor;
   private int major;
   private Date creation;
@@ -52,9 +54,10 @@ public class Version {
   private String comment;
   private String instanceId;
 
-  public Version(int minor, int major, Date creation, String createdBy, String fileName,
+  public Version(int id, int minor, int major, Date creation, String createdBy, String fileName,
       String physicalFilename, String contentType, long size, String xmlFormId, String comment,
       String instanceId) {
+    this.id = id;
     this.minor = minor;
     this.major = major;
     this.creation = creation;
@@ -107,9 +110,13 @@ public class Version {
   public String getComment() {
     return comment;
   }
-  
+
   public boolean isPublic() {
     return minor == 0;
+  }
+
+  public int getId() {
+    return this.id;
   }
 
   public File getAttachment() throws IOException {
@@ -121,5 +128,14 @@ public class Version {
       file = null;
     }
     return file;
+  }
+  
+  
+  @Override
+  public String toString() {
+    return "Version{" + "id=" + id + ", minor=" + minor + ", major=" + major + ", creation=" +
+        creation + ", createdBy=" + createdBy + ", fileName=" + fileName + ", physicalFilename=" +
+        physicalFilename + ", contentType=" + contentType + ", size=" + size + ", xmlFormId=" +
+        xmlFormId + ", comment=" + comment + ", instanceId=" + instanceId + '}';
   }
 }

@@ -40,11 +40,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.io.Charsets;
-import org.jdom.Element;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import org.silverpeas.applicationbuilder.AppBuilderException;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.dbbuilder.sql.FileInformation;
@@ -60,6 +55,12 @@ import org.silverpeas.dbbuilder.util.Configuration;
 import org.silverpeas.dbbuilder.util.DatabaseType;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.file.FileUtil;
+
+import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.IOUtils;
+import org.jdom.Element;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import static java.io.File.separatorChar;
 import static org.silverpeas.dbbuilder.DBBuilderItem.*;
@@ -290,19 +291,13 @@ public class DBBuilder {
         // retour sans les retraiter
         if (ACTION_INSTALL == params.getAction()) {
           processDB(destXml, processesToCacheIntoDB, sqlMetaInstructions, TAGS_TO_MERGE_4_INSTALL);
-        } else if (ACTION_UNINSTALL == params.getAction()
-            || ACTION_ENFORCE_UNINSTALL == params.getAction()) {
+        } else if (ACTION_UNINSTALL == params.getAction() || ACTION_ENFORCE_UNINSTALL == params.
+            getAction()) {
           processDB(destXml, processesToCacheIntoDB, sqlMetaInstructions, TAGS_TO_MERGE_4_UNINSTALL);
         } else if (ACTION_OPTIMIZE == params.getAction()) {
           processDB(destXml, processesToCacheIntoDB, sqlMetaInstructions, TAGS_TO_MERGE_4_OPTIMIZE);
         } else if (ACTION_ALL == params.getAction()) {
           processDB(destXml, processesToCacheIntoDB, sqlMetaInstructions, TAGS_TO_MERGE_4_ALL);
-        } else if (ACTION_STATUS == params.getAction()) {
-          // nothing to do
-        } else if (ACTION_CONSTRAINTS_INSTALL == params.getAction()) {
-          // nothing to do
-        } else if (ACTION_CONSTRAINTS_UNINSTALL == params.getAction()) {
-          // nothing to do
         }
         // Modules en place sur la BD en final
         console.printMessage("Finally DB Status :");
@@ -485,10 +480,6 @@ public class DBBuilder {
 
   private static void processDB(DBXmlDocument xmlFile, UninstallInformations processesToCacheIntoDB,
       MetaInstructions sqlMetaInstructions, String[] tagsToProcess) throws Exception {
-    // ------------------------------------------
-    // ETAPE 1 : TRAITEMENT DES ACTIONS D'UPGRADE
-    // ------------------------------------------
-    // Get the root element
     Element root = xmlFile.getDocument().getRootElement();
     @SuppressWarnings("unchecked")
     List<Element> modules = root.getChildren(DBXmlDocument.ELT_MODULE);
@@ -719,14 +710,17 @@ public class DBBuilder {
       destXml.getPath().createNewFile();
       BufferedWriter destXmlOut = new BufferedWriter(new OutputStreamWriter(
           new FileOutputStream(destXml.getPath(), false), Charsets.UTF_8));
-      destXmlOut.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-      destXmlOut.newLine();
-      destXmlOut.write("<allcontributions>");
-      destXmlOut.newLine();
-      destXmlOut.write("</allcontributions>");
-      destXmlOut.newLine();
-      destXmlOut.flush();
-      destXmlOut.close();
+      try {
+        destXmlOut.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        destXmlOut.newLine();
+        destXmlOut.write("<allcontributions>");
+        destXmlOut.newLine();
+        destXmlOut.write("</allcontributions>");
+        destXmlOut.newLine();
+        destXmlOut.flush();
+      } finally {
+        IOUtils.closeQuietly(destXmlOut);
+      }
     }
     destXml.load();
     return destXml;

@@ -34,14 +34,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.commons.dbutils.DbUtils;
-
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.service.AttachmentService;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
+import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.model.UnlockContext;
 import org.silverpeas.migration.jcr.service.model.UnlockOption;
@@ -50,6 +49,8 @@ import org.silverpeas.migration.jcr.version.model.Version;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
+
+import org.apache.commons.dbutils.DbUtils;
 
 class ComponentDocumentMigrator implements Callable<Long> {
 
@@ -116,7 +117,11 @@ class ComponentDocumentMigrator implements Callable<Long> {
       document.setPublicDocument(version.isPublic());
       document.setUpdated(version.getCreation());
       document.setUpdatedBy(version.getCreatedBy());
-      if (file != null) {
+      if (!StringUtil.isDefined(version.getCreatedBy())) {
+        console.printWarning("We have a null id for the author of document " + document + " and version "
+            + metadata);
+      }
+      if (file != null && file.exists() && file.isFile() && file.length() > 0L) {
         if (!StringUtil.isDefined(document.getId())) {
           document = (HistorisedDocument) service.createAttachment(document, file);
         } else {
@@ -133,10 +138,28 @@ class ComponentDocumentMigrator implements Callable<Long> {
         nbMigratedDocuments++;
       }
     }
+    if (StringUtil.isDefined(document.getId())) {
+      createDocumentPermalink(document, metadata);
+      for(Version version : metadata.getHistory()) {        
+        createVersionPermalink(getDocumentVersionUUID(document, version), version.getId());
+      }
+    } else {
+      console.
+          printWarning("We have a null id for document " + document + " and version " + metadata);
+    }
     console.printMessage("We have migrated  " + nbMigratedDocuments + " for " + metadata.getTitle()
         + " with " + metadata.getHistory().size() + " versions");
     cleanAll(metadata);
     return nbMigratedDocuments;
+  }
+
+  private String getDocumentVersionUUID(HistorisedDocument document, Version version) {
+    for (SimpleDocument doc : document.getHistory()) {
+      if (doc.getMajorVersion() == version.getMajor() && doc.getMinorVersion() == version.getMinor()) {
+        return doc.getId();
+      }
+    }
+    return document.getId();
   }
 
   protected void cleanAll(OldDocumentMetadata metadata) throws SQLException {
@@ -216,11 +239,12 @@ class ComponentDocumentMigrator implements Callable<Long> {
       pstmt.setLong(1, document.getOldSilverpeasId());
       rs = pstmt.executeQuery();
       while (rs.next()) {
-        Version version = new Version(rs.getInt("versionminornumber"), rs.getInt(
-            "versionmajornumber"), DateUtil.parse(rs.getString("versioncreationdate")), rs
-            .getString("versionauthorid"), rs.getString("versionlogicalname"), rs.getString(
-            "versionphysicalname"), rs.getString("versionmimetype"), rs.getLong("versionsize"), rs
-            .getString("xmlform"), rs.getString("versioncomments"), document.getInstanceId());
+        Version version = new Version(rs.getInt("versionid"), rs.getInt("versionminornumber"),
+            rs.getInt("versionmajornumber"), DateUtil.parse(rs.getString("versioncreationdate")),
+            rs.getString("versionauthorid"), rs.getString("versionlogicalname"),
+            rs.getString("versionphysicalname"), rs.getString("versionmimetype"),
+            rs.getLong("versionsize"), rs.getString("xmlform"), rs.getString("versioncomments"),
+            document.getInstanceId());
         document.addVersion(version);
       }
     } catch (SQLException sqlex) {
@@ -231,5 +255,42 @@ class ComponentDocumentMigrator implements Callable<Long> {
       DbUtils.closeQuietly(connection);
     }
     return document;
+  }
+
+  private void createDocumentPermalink(HistorisedDocument document, OldDocumentMetadata metadata)
+      throws SQLException {
+    Connection connection = getConnection();
+    PreparedStatement pstmt = null;
+    try {
+      pstmt = connection.prepareStatement(
+          "INSERT INTO permalinks_document (documentId, documentUuid) VALUES( ?, ?)");
+      pstmt.setLong(1, metadata.getOldSilverpeasId());
+      pstmt.setString(2, document.getId());
+      pstmt.executeUpdate();
+      connection.commit();
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(pstmt);
+      DbUtils.closeQuietly(connection);
+    }
+  }
+
+  private void createVersionPermalink(String uuid, int versionId) throws SQLException {
+    Connection connection = getConnection();
+    PreparedStatement pstmt = null;
+    try {
+      pstmt = connection.prepareStatement(
+          "INSERT INTO permalinks_version (versionId, versionUuid) VALUES( ?, ?)");
+      pstmt.setLong(1, versionId);
+      pstmt.setString(2, uuid);
+      pstmt.executeUpdate();
+      connection.commit();
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(pstmt);
+      DbUtils.closeQuietly(connection);
+    }
   }
 }
