@@ -20,28 +20,42 @@
  */
 package org.silverpeas.dbbuilder;
 
-/**
- * Titre : dbBuilder Description : Builder des BDs Silverpeas Copyright : Copyright (c) 2001 Société
- * : Stratélia Silverpeas
- * @author ATH
- * @version 1.0
- */
 public class VersionTag {
 
-  private String current_or_previous = "";
-  private String version = "";
+  private final String action;
+  private final String version;
 
   public VersionTag(String cp, String v) {
-
-    current_or_previous = cp;
+    action = cp;
     version = v;
   }
 
   public String getCurrent_or_previous() {
-    return current_or_previous;
+    return action;
   }
 
   public String getVersion() {
     return version;
+  }
+  
+  public boolean isUpgrade() {
+    return DBBuilderDBItem.PREVIOUS_TAG.equals(action);
+  }
+  
+  public boolean isInstall() {
+    return DBBuilderDBItem.CURRENT_TAG.equals(action);
+  }
+  
+  /**
+   * Return the version of the module after applying the action.
+   * @return 
+   */
+  public String getResultingVersion() {
+    int nexVersion = Integer.parseInt(version);
+    if(isUpgrade()) {
+     nexVersion = nexVersion + 1;
+    }
+    String sversionFile = "000" + nexVersion;
+    return sversionFile.substring(sversionFile.length() - 3);
   }
 }

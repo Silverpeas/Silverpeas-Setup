@@ -32,6 +32,7 @@ import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,11 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
-
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.io.Charsets;
-import org.jdom.Element;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import org.silverpeas.applicationbuilder.AppBuilderException;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
@@ -61,17 +57,15 @@ import org.silverpeas.dbbuilder.util.DatabaseType;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.file.FileUtil;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.Charsets;
+import org.jdom.Element;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 import static java.io.File.separatorChar;
 import static org.silverpeas.dbbuilder.DBBuilderItem.*;
 import static org.silverpeas.dbbuilder.util.Action.*;
 
-/**
- * @Description :
- * @Copyright : Copyright (c) 2001
- * @Société : Silverpeas
- * @author STR
- * @version 1.0
- */
 public class DBBuilder {
 
   public static final ResourceBundle messages = java.util.ResourceBundle.getBundle("messages");
@@ -87,28 +81,14 @@ public class DBBuilder {
   static public final String DROP_INDEX_TAG = "drop_index";
   static public final String DROP_CONSTRAINT_TAG = "drop_constraint";
   static public final String DROP_DATA_TAG = "clean";
-  private static final String[] TAGS_TO_MERGE_4_INSTALL = {
-    DBBuilderFileItem.CREATE_TABLE_TAG,
-    DBBuilderFileItem.CREATE_INDEX_TAG,
-    DBBuilderFileItem.CREATE_CONSTRAINT_TAG,
-    DBBuilderFileItem.CREATE_DATA_TAG};
-  private static final String[] TAGS_TO_MERGE_4_UNINSTALL = {
-    DBBuilderFileItem.DROP_CONSTRAINT_TAG,
-    DBBuilderFileItem.DROP_INDEX_TAG,
-    DBBuilderFileItem.DROP_DATA_TAG,
-    DBBuilderFileItem.DROP_TABLE_TAG};
-  private static final String[] TAGS_TO_MERGE_4_ALL = {
-    DBBuilderFileItem.DROP_CONSTRAINT_TAG,
-    DBBuilderFileItem.DROP_INDEX_TAG,
-    DBBuilderFileItem.DROP_DATA_TAG,
-    DBBuilderFileItem.DROP_TABLE_TAG,
-    DBBuilderFileItem.CREATE_TABLE_TAG,
-    DBBuilderFileItem.CREATE_INDEX_TAG,
-    DBBuilderFileItem.CREATE_CONSTRAINT_TAG,
-    DBBuilderFileItem.CREATE_DATA_TAG};
-  private static final String[] TAGS_TO_MERGE_4_OPTIMIZE = {
-    DBBuilderFileItem.DROP_INDEX_TAG,
-    DBBuilderFileItem.CREATE_INDEX_TAG};
+  public static final String[] TAGS_TO_MERGE_4_INSTALL = {CREATE_TABLE_TAG, CREATE_INDEX_TAG,
+    CREATE_CONSTRAINT_TAG, CREATE_DATA_TAG};
+  public static final String[] TAGS_TO_MERGE_4_UNINSTALL = {DROP_CONSTRAINT_TAG, DROP_INDEX_TAG,
+    DROP_DATA_TAG, DROP_TABLE_TAG};
+  public static final String[] TAGS_TO_MERGE_4_ALL = {DROP_CONSTRAINT_TAG, DROP_INDEX_TAG,
+    DROP_DATA_TAG, DROP_TABLE_TAG, CREATE_TABLE_TAG, CREATE_INDEX_TAG, CREATE_CONSTRAINT_TAG,
+    CREATE_DATA_TAG};
+  public static final String[] TAGS_TO_MERGE_4_OPTIMIZE = {DROP_INDEX_TAG, CREATE_INDEX_TAG};
   protected static final String FIRST_DBCONTRIBUTION_FILE = "dbbuilder-contribution.xml";
   protected static final String MASTER_DBCONTRIBUTION_FILE = "master-contribution.xml";
   protected static final String REQUIREMENT_TAG = "requirement"; // pré requis à vérifier pour
@@ -184,11 +164,9 @@ public class DBBuilder {
               && !(MASTER_DBCONTRIBUTION_FILE.equalsIgnoreCase(xmlFile.getName()))) {
             DBXmlDocument fXml = new DBXmlDocument(dirXml, xmlFile.getName());
             fXml.load();
-            // vérification des dépendances
-            // & prise en compte uniquement si dependences OK
+            // vérification des dépendances et prise en compte uniquement si dependences OK
             if (hasUnresolvedRequirements(listeFileXml, fXml)) {
-              console.printMessage('\t' + xmlFile.getName()
-                  + " (because of unresolved requirements).");
+              console.printMessage('\t' + xmlFile.getName() + " (because of unresolved requirements).");
               ignoredFiles++;
             } else if (ACTION_ENFORCE_UNINSTALL == params.getAction()) {
               console.printMessage('\t' + xmlFile.getName() + " (because of "
@@ -356,7 +334,7 @@ public class DBBuilder {
     return dbBuilderResources;
   }
 
-  private static void mergeActionsToDo(DBBuilderItem pdbbuilderItem, DBXmlDocument xmlFile,
+  public static void mergeActionsToDo(DBBuilderItem pdbbuilderItem, DBXmlDocument xmlFile,
       UninstallInformations processesToCacheIntoDB, MetaInstructions sqlMetaInstructions) {
 
     String package_name = pdbbuilderItem.getModule();
@@ -370,7 +348,7 @@ public class DBBuilder {
       return;
     }
     String[] tags_to_merge = null;
-    VersionTag[] blocks_merge = null;
+    List<VersionTag> blocks_merge = new ArrayList<VersionTag>();
 
     if (pdbbuilderItem instanceof org.silverpeas.dbbuilder.DBBuilderFileItem) {
       DBBuilderFileItem dbbuilderItem = (DBBuilderFileItem) pdbbuilderItem;
@@ -380,33 +358,25 @@ public class DBBuilder {
       }
       int iversionFile = Integer.parseInt(versionFile);
       if (iversionDB == iversionFile) {
-        if (ACTION_INSTALL == params.getAction() || ACTION_UNINSTALL == params.getAction()
-            || ACTION_STATUS == params.getAction()
-            || ACTION_CONSTRAINTS_INSTALL == params.getAction()
-            || ACTION_CONSTRAINTS_UNINSTALL == params.getAction()) {
+        if (params.getAction().isMigration()) {
           console.printMessage('\t' + package_name + " is up to date with version " + versionFile
               + '.');
         } else {
           console.printMessage('\t' + package_name + " is up to date with version " + versionFile
               + " and will be optimized.");
           tags_to_merge = TAGS_TO_MERGE_4_OPTIMIZE;
-          blocks_merge = new VersionTag[1];
-          blocks_merge[0] = new VersionTag(CURRENT_TAG, versionFile);
+          blocks_merge = Collections.singletonList(new VersionTag(CURRENT_TAG, versionFile));
         }
       } else if (iversionDB > iversionFile) {
         console.printMessage('\t' + package_name
             + " will be ignored because this package is newer into DB than installed files.");
       } else {
-        if (ACTION_INSTALL == params.getAction() || ACTION_ALL == params.getAction()
-            || ACTION_STATUS == params.getAction()
-            || ACTION_CONSTRAINTS_INSTALL == params.getAction()
-            || ACTION_CONSTRAINTS_UNINSTALL == params.getAction()) {
+        if (params.getAction().isMigration()) {
           if (-1 == iversionDB) {
             console.printMessage('\t' + package_name + " will be installed with version "
                 + versionFile + '.');
             tags_to_merge = TAGS_TO_MERGE_4_INSTALL;
-            blocks_merge = new VersionTag[1];
-            blocks_merge[0] = new VersionTag(CURRENT_TAG, versionFile);
+            blocks_merge = Collections.singletonList( new VersionTag(CURRENT_TAG, versionFile));
             // module nouvellement installé -> il faut stocker en base sa procedure de uninstall
             processesToCacheIntoDB.addInformation(dbbuilderItem.getModule(), package_name,
                 dbbuilderItem.getFileXml());
@@ -415,33 +385,29 @@ public class DBBuilder {
                 new InstallSQLInstruction(versionFile, package_name));
           } else {
             console.printMessage('\t' + package_name + " will be upgraded from " + versionDB
-                + " to "
-                + versionFile + '.');
+                + " to " + versionFile + '.');
             tags_to_merge = TAGS_TO_MERGE_4_INSTALL;
-
-            blocks_merge = new VersionTag[iversionFile - iversionDB];
             for (int i = 0; i < iversionFile - iversionDB; i++) {
-              String sversionFile = "000" + (iversionDB + i);
+              int currentVersion = iversionDB + i;
+              String sversionFile = "000" + currentVersion;
               sversionFile = sversionFile.substring(sversionFile.length() - 3);
-              blocks_merge[i] = new VersionTag(PREVIOUS_TAG, sversionFile);
+              VersionTag version = new VersionTag(PREVIOUS_TAG, sversionFile);
+              blocks_merge.add(version);
+               sqlMetaInstructions.addInstruction(dbbuilderItem.getModule(),
+                new UninstallSQLInstruction(version.getResultingVersion(), package_name));
             }
             // module upgradé -> il faut stocker en base sa nouvelle procedure de uninstall
             processesToCacheIntoDB.addInformation(dbbuilderItem.getModule(), package_name,
                 dbbuilderItem.getFileXml());
-
-            // desinscription du module en base
-            sqlMetaInstructions.addInstruction(dbbuilderItem.getModule(),
-                new UninstallSQLInstruction(versionFile, package_name));
           }
         } else if (ACTION_OPTIMIZE == params.getAction()) {
           console.printMessage('\t' + package_name + " will be optimized.");
           tags_to_merge = TAGS_TO_MERGE_4_OPTIMIZE;
-          blocks_merge = new VersionTag[1];
-          blocks_merge[0] = new VersionTag(CURRENT_TAG, versionFile);
+          blocks_merge = Collections.singletonList(new VersionTag(CURRENT_TAG, versionFile));
         }
 
         // construction du xml global des actions d'upgrade de la base
-        if (null != blocks_merge && null != tags_to_merge) {
+        if (!blocks_merge.isEmpty() && null != tags_to_merge) {
           try {
             xmlFile.mergeWith(pdbbuilderItem, tags_to_merge, blocks_merge);
           } catch (Exception e) {
@@ -731,6 +697,8 @@ public class DBBuilder {
     destXml.load();
     return destXml;
   }
+
+  
 
   private DBBuilder() {
   }
