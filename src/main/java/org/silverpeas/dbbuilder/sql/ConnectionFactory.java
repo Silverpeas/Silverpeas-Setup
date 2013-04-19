@@ -23,15 +23,15 @@ package org.silverpeas.dbbuilder.sql;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
-import java.util.logging.Level;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.silverpeas.util.jndi.SimpleMemoryContextFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.silverpeas.util.jndi.SimpleMemoryContextFactory;
 
 /**
  * Utility class for obtaining a connection to the database.
@@ -72,7 +72,9 @@ public class ConnectionFactory {
   }
 
   public static Connection getConnection() throws SQLException {
-    return getInstance().datasource.getConnection();
+    Connection connection =  getInstance().datasource.getConnection();
+    connection.setAutoCommit(false);
+    return connection;
   }
 
   public static String getConnectionInfo() throws SQLException {

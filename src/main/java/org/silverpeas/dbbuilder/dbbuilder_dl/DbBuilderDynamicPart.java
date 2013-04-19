@@ -22,6 +22,7 @@ package org.silverpeas.dbbuilder.dbbuilder_dl;
 
 
 import java.sql.Connection;
+
 import org.silverpeas.util.Console;
 
 /**
@@ -55,11 +56,7 @@ public abstract class DbBuilderDynamicPart {
     SILVERPEAS_DATA = sh;
   }
 
-  public void setConnection(Connection con) throws Exception {
-    if (this.con != null) {
-      throw new Exception(
-          "DbBuilderDynamicPart.setConnection() fatal error : Connection is already set.");
-    }
+  public void setConnection(Connection con) {
     this.con = con;
   }
 

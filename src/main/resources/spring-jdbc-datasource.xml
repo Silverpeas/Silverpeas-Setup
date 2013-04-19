@@ -52,5 +52,6 @@
       </list>
     </property>
     <property name="searchSystemEnvironment" value="true" />
+    <property name="systemPropertiesMode" value="1" />
   </bean>
 </beans>

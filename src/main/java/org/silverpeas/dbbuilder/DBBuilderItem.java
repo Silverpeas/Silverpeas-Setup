@@ -26,10 +26,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+
 import org.apache.commons.dbutils.DbUtils;
 import org.jdom.Element;
-
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 
 public abstract class DBBuilderItem {
 

@@ -32,10 +32,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.commons.dbutils.DbUtils;
-
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+
+import org.apache.commons.dbutils.DbUtils;
 
 public class VersioningMigrator extends DbBuilderDynamicPart {
 

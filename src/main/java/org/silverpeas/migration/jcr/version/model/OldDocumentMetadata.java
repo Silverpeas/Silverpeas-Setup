@@ -108,6 +108,14 @@ public class OldDocumentMetadata {
   public String getTitle() {
     return title;
   }
+
+  @Override
+  public String toString() {
+    return "OldDocumentMetadata{" + "order=" + order + ", description=" + description + ", alert=" +
+        alert + ", expiry=" + expiry + ", editedBy=" + editedBy + ", reservation=" + reservation +
+        ", instanceId=" + instanceId + ", foreignId=" + foreignId + ", oldSilverpeasId=" +
+        oldSilverpeasId + ", title=" + title + ", versions=" + versions + '}';
+  }
   
 
 }
