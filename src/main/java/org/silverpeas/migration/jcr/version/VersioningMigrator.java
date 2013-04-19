@@ -23,7 +23,6 @@
  */
 package org.silverpeas.migration.jcr.version;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -50,10 +49,6 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
   }
 
   public void migrateDocuments() throws Exception {
-    Connection connection = getConnection();
-    if (!connection.getAutoCommit()) {
-      getConnection().commit();
-    }
     long totalNumberOfMigratedFiles = 0L;
     List<ComponentDocumentMigrator> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
