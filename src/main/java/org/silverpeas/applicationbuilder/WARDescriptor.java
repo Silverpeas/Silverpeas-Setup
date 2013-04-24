@@ -20,17 +20,17 @@
  */
 package org.silverpeas.applicationbuilder;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.jdom.Content;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * this descriptor is created in memory. It is filled with the descriptor parts from the WARParts.
  * Finally, it is integrated in the WAR by the means of a stream.
+ *
  * @author Silverpeas
  * @version 1.0/B
  * @since 1.0/B
@@ -48,19 +48,19 @@ public class WARDescriptor extends XmlDocument {
   private static final String ROOT_ELT = "web-app";
   private static final String SERVLET_VERSION = "3.0";
   private static final String ROOT_NAMESPACE = "http://java.sun.com/xml/ns/javaee";
-  private static final String[][] ROOT_ADDITIONAL_NAMESPACE = { { "xsi",
-      "http://www.w3.org/2001/XMLSchema-instance" } };
+  private static final String[][] ROOT_ADDITIONAL_NAMESPACE = {{"xsi",
+      "http://www.w3.org/2001/XMLSchema-instance"}};
   private static final String NAME_ELT = "display-name";
   private static final String SERVLET_ELT = "servlet";
   private static final String DESC_ELT = "description";
-  private static final String[] TAGS_TO_MERGE = { "context-param", "filter", "filter-mapping",
-      "listener", SERVLET_ELT, "servlet-mapping", "session-config", "jsp-config",
-      "error-page", "security-constraint" };
-  private static final String[] TAGS_TO_SORT = { NAME_ELT, DESC_ELT, "context-param", "filter",
-      "filter-mapping", "listener", SERVLET_ELT, "servlet-mapping", "session-config",
-      "jsp-config", "error-page", "security-constraint" };
-  private static final String[] SERVLET_TAGS = { "display-name", "servlet-name", "servlet-class",
-      "init-param", "load-on-startup", "param-name", "param-value" };
+  private static final String[] TAGS_TO_MERGE = {"context-param", "filter", "filter-mapping",
+    "listener", SERVLET_ELT, "servlet-mapping", "session-config", "jsp-config", "welcome-file-list",
+    "error-page", "security-constraint"};
+  private static final String[] TAGS_TO_SORT = {NAME_ELT, DESC_ELT, "context-param", "filter",
+    "filter-mapping", "listener", SERVLET_ELT, "servlet-mapping", "session-config",
+    "jsp-config", "welcome-file-list", "error-page", "security-constraint"};
+  private static final String[] SERVLET_TAGS = {"display-name", "servlet-name", "servlet-class",
+    "init-param", "load-on-startup", "param-name", "param-value"};
 
   public WARDescriptor() {
     super(LOCATION, NAME);
