@@ -23,16 +23,6 @@
  */
 package org.silverpeas.migration.jcr.service.repository;
 
-import org.apache.commons.io.FileUtils;
-
-import javax.jcr.*;
-import javax.jcr.query.QueryManager;
-import javax.jcr.query.QueryResult;
-import javax.jcr.query.qom.*;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionIterator;
-import javax.jcr.version.VersionManager;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -42,24 +32,33 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.jcr.*;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.qom.*;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
+import javax.jcr.version.VersionManager;
 
-import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
-import org.silverpeas.migration.jcr.service.NodeIterable;
-import org.silverpeas.migration.jcr.service.PropertyIterable;
 import org.silverpeas.migration.jcr.service.RepositoryManager;
 import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
-import static org.silverpeas.migration.jcr.service.JcrConstants.*;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
+import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
 /**
  * @author ehugonnet
@@ -110,6 +109,8 @@ public class DocumentRepository {
     Node docsNode = prepareComponentAttachments(session, document.getInstanceId(), document.
         getFolder());
     Node documentNode = docsNode.addNode(document.computeNodeName(), SLV_SIMPLE_DOCUMENT);
+    document.setUpdatedBy(document.getCreatedBy());
+    document.setUpdated(document.getCreated());
     converter.fillNode(document, documentNode);
     if (document.isVersioned()) {
       documentNode.addMixin(MIX_SIMPLE_VERSIONABLE);
@@ -134,6 +135,7 @@ public class DocumentRepository {
     pk.setOldSilverpeasId(document.getOldSilverpeasId());
     targetDoc.setPK(pk);
     targetDoc.setDocumentType(document.getDocumentType());
+    targetDoc.setNodeName(document.getNodeName());
     prepareComponentAttachments(session, destination.getInstanceId(), document.getFolder());
     Node originDocumentNode = session.getNodeByIdentifier(document.getPk().getId());
     if (converter.isVersioned(originDocumentNode) && !originDocumentNode.isCheckedOut()) {
@@ -241,12 +243,12 @@ public class DocumentRepository {
    */
   public void setClone(Session session, SimpleDocument original, SimpleDocument clone) throws
       RepositoryException {
-    Node documentNode = session.getNodeByIdentifier(original.getPk().getId());
+    Node documentNode = session.getNodeByIdentifier(clone.getId());
     boolean checkedin = !documentNode.isCheckedOut();
     if (checkedin) {
       session.getWorkspace().getVersionManager().checkout(documentNode.getPath());
     }
-    documentNode.setProperty(SLV_PROPERTY_CLONE, clone.getId());
+    documentNode.setProperty(SLV_PROPERTY_CLONE, original.getId());
     if (checkedin) {
       session.save();
       session.getWorkspace().getVersionManager().checkin(documentNode.getPath());
@@ -523,9 +525,8 @@ public class DocumentRepository {
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
     ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
-        getPath() + instanceId + '/' + DocumentType.attachment.getFolderName());
-    Comparison foreignIdComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+        getPath() + instanceId + '/' + type.getFolderName());
+    Comparison foreignIdComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_FOREIGN_KEY), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
         literal(session.getValueFactory().createValue(foreignId)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
@@ -549,11 +550,9 @@ public class DocumentRepository {
     QueryManager manager = session.getWorkspace().getQueryManager();
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
-    DescendantNode descendantNodeConstraint =
-        factory.descendantNode(SIMPLE_DOCUMENT_ALIAS, session.
+    DescendantNode descendantNodeConstraint = factory.descendantNode(SIMPLE_DOCUMENT_ALIAS, session.
         getRootNode().getPath() + instanceId + '/');
-    Comparison foreignIdComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+    Comparison foreignIdComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_FOREIGN_KEY), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
         literal(session.getValueFactory().createValue(foreignId)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
@@ -607,14 +606,12 @@ public class DocumentRepository {
     Calendar expiry = Calendar.getInstance();
     expiry.setTime(DateUtil.getBeginOfDay(expiryDate));
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
-    Comparison foreignIdComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+    Comparison foreignIdComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_EXPIRY_DATE), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
         literal(session.getValueFactory().createValue(expiry)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_ORDER));
-    QueryObjectModel query =
-        factory.createQuery(source, foreignIdComparison, new Ordering[] { order },
+    QueryObjectModel query = factory.createQuery(source, foreignIdComparison, new Ordering[]{order},
         null);
     QueryResult result = query.execute();
     return result.getNodes();
@@ -648,14 +645,12 @@ public class DocumentRepository {
     Calendar expiry = Calendar.getInstance();
     expiry.setTime(DateUtil.getBeginOfDay(expiryDate));
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
-    Comparison foreignIdComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+    Comparison foreignIdComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_EXPIRY_DATE), QueryObjectModelFactory.JCR_OPERATOR_LESS_THAN, factory.
         literal(session.getValueFactory().createValue(expiry)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_ORDER));
-    QueryObjectModel query =
-        factory.createQuery(source, foreignIdComparison, new Ordering[] { order },
+    QueryObjectModel query = factory.createQuery(source, foreignIdComparison, new Ordering[]{order},
         null);
     QueryResult result = query.execute();
     return result.getNodes();
@@ -674,14 +669,12 @@ public class DocumentRepository {
     Calendar alert = Calendar.getInstance();
     alert.setTime(DateUtil.getBeginOfDay(alertDate));
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
-    Comparison foreignIdComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+    Comparison foreignIdComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_ALERT_DATE), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
         literal(session.getValueFactory().createValue(alert)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_ORDER));
-    QueryObjectModel query =
-        factory.createQuery(source, foreignIdComparison, new Ordering[] { order },
+    QueryObjectModel query = factory.createQuery(source, foreignIdComparison, new Ordering[]{order},
         null);
     QueryResult result = query.execute();
     return result.getNodes();
@@ -702,10 +695,8 @@ public class DocumentRepository {
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
     ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
         getPath() + instanceId + '/' + DocumentType.attachment.getFolderName());
-    Comparison ownerComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
-        SLV_PROPERTY_OWNER), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory
-        .literal(session.
+    Comparison ownerComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+        SLV_PROPERTY_OWNER), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.literal(session.
         getValueFactory().createValue(owner)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_ORDER));
@@ -727,10 +718,8 @@ public class DocumentRepository {
     QueryManager manager = session.getWorkspace().getQueryManager();
     QueryObjectModelFactory factory = manager.getQOMFactory();
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
-    Comparison ownerComparison =
-        factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
-        SLV_PROPERTY_OWNER), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory
-        .literal(session.
+    Comparison ownerComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+        SLV_PROPERTY_OWNER), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.literal(session.
         getValueFactory().createValue(owner)));
     Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
         SLV_PROPERTY_ORDER));
@@ -777,8 +766,7 @@ public class DocumentRepository {
       language = ConverterUtil.defaultLanguage;
     }
     SimpleDocument document = converter.fillDocument(docNode, language);
-    return new BufferedInputStream(FileUtils
-        .openInputStream(new File(document.getAttachmentPath())));
+    return new BufferedInputStream(FileUtils.openInputStream(new File(document.getAttachmentPath())));
   }
 
   /**
@@ -1023,25 +1011,12 @@ public class DocumentRepository {
     if (!source.exists() || !source.isDirectory() || source.listFiles() == null) {
       return;
     }
-    FileUtils.copyDirectory(source, target);
+    if (!target.getParentFile().getName().equals(source.getParentFile().getName())) {
+      source = source.getParentFile();
+      target = target.getParentFile();
+  }
+    FileUtils.moveDirectory(source, target);
   }
 
-  public void mergeAttachment(Session session, SimpleDocument attachment, SimpleDocument clone)
-      throws ItemNotFoundException, RepositoryException {
-    Node originalNode = session.getNodeByIdentifier(attachment.getId());
-    Node cloneNode = session.getNodeByIdentifier(clone.getId());
-    for (Node child : new NodeIterable(originalNode.getNodes())) {
-      child.remove();
-    }
-    for (Node child : new NodeIterable(cloneNode.getNodes())) {
-      session.move(child.getPath(), originalNode.getPath() + '/' + child.getName());
-    }
-    for (Property property : new PropertyIterable(originalNode.getProperties())) {
-      property.remove();
-    }
-    for (Property property : new PropertyIterable(cloneNode.getProperties())) {
-      originalNode.setProperty(property.getName(), property.getValue());
-    }
-    converter.addStringProperty(originalNode, SLV_PROPERTY_CLONE, null);
-  }
+  
 }

@@ -20,17 +20,6 @@
  */
 package org.silverpeas.dbbuilder;
 
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.Format.TextMode;
-import org.jdom.output.XMLOutputter;
-import org.silverpeas.applicationbuilder.AppBuilderException;
-import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -45,12 +34,28 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.silverpeas.applicationbuilder.AppBuilderException;
+import org.silverpeas.applicationbuilder.ApplicationBuilderItem;
+import org.silverpeas.util.StringUtil;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.CharEncoding;
+import org.jdom.Content;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.Format.TextMode;
+import org.jdom.output.XMLOutputter;
+
 /**
  * Represents an XML Document and provides convenient methods. The methods are used basically to
  * load a document (parse it and obtain a tree representation), save a document (save the tree
  * representation to a well formed XML file). More sophisticated methods are used to merge the
  * document with another one and to sort the tags in the document (it is needed when used in
  * application server).
+ *
  * @author Silverpeas
  * @version 1.0
  * @since 1.0
@@ -59,7 +64,8 @@ public class DBXmlDocument extends ApplicationBuilderItem {
 
   public static final String ELT_MODULE = "module";
   public static final String ATT_MODULE_ID = "id";
-  private XMLOutputter outputter = null;
+  public static final String ATT_MODULE_VERSION = "version";
+  private XMLOutputter outputter = defineOutputter();
   /**
    * @since 1.0
    */
@@ -67,38 +73,41 @@ public class DBXmlDocument extends ApplicationBuilderItem {
   /**
    * @since 1.0
    */
-  private String outputEncoding = "UTF-8";
+  private String outputEncoding = CharEncoding.UTF_8;
 
   public DBXmlDocument() {
   }
 
   public DBXmlDocument(String directory, String name) {
     super(directory, name);
-    setOutputter();
   }
 
   public DBXmlDocument(File directory, String name) {
     super(directory, name);
-    setOutputter();
   }
 
   /**
    * Save the document tree in the file item
+   *
    * @since 1.0
    * @throws AppBuilderException
    * @roseuid 3AAF323B0003
    */
   public void save() throws AppBuilderException {
+    OutputStream out = null;
     try {
-      saveTo(new FileOutputStream(getPath()));
+      out = new FileOutputStream(getPath());
+      saveTo(out);
     } catch (FileNotFoundException fnfe) {
-      throw new AppBuilderException("Could not save \""
-          + getPath().getAbsolutePath() + '"', fnfe);
+      throw new AppBuilderException("Could not save \"" + getPath().getAbsolutePath() + '"', fnfe);
+    } finally {
+      IOUtils.closeQuietly(out);
     }
   }
 
   /**
    * Save the document tree to a stream. This is convenient for writing in an archive
+   *
    * @param outStream
    * @throws AppBuilderException
    * @roseuid 3AAF41A601C1
@@ -114,46 +123,44 @@ public class DBXmlDocument extends ApplicationBuilderItem {
 
   /**
    * Loads the document tree from the file system
+   *
    * @throws AppBuilderException
    * @roseuid 3AAF337D004C
    */
   public void load() throws AppBuilderException {
+    InputStream in = null;
     try {
       if (getPath().exists()) {
-        loadFrom(new FileInputStream(getPath()));
+        in = new FileInputStream(getPath());
+        loadFrom(in);
       } else {
-        throw new AppBuilderException("Could not find \""
-            + getPath().getAbsolutePath() + '"');
+        throw new AppBuilderException("Could not find \"" + getPath().getAbsolutePath() + '"');
       }
     } catch (MalformedURLException mue) {
-      throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + '"', mue);
+      throw new AppBuilderException("Could not load \"" + getPath().getAbsolutePath() + '"', mue);
     } catch (IOException ioe) {
-      throw new AppBuilderException("Could not load \""
-          + getPath().getAbsolutePath() + '"', ioe);
+      throw new AppBuilderException("Could not load \"" + getPath().getAbsolutePath() + '"', ioe);
+    } finally {
+      IOUtils.closeQuietly(in);
     }
-
   }
 
   /**
    * Loads the document tree from the contents of an XML file provided as a stream. This can happen
    * when loading from an archive.
+   *
    * @param xmlStream the contents of an XML file
    * @throws AppBuilderException
    * @throws IOException
    * @since 1.0
-   * @roseuid 3AAF4099035F
+   * @roseuid 3AAF4099loadFrom035F
    */
   public void loadFrom(InputStream xmlStream) throws AppBuilderException, IOException {
-    // Attention à la configuration HTTP ! (Proxy : sys. props.
-    // "http.proxy[Host|Port])
-    // pour accès au DOCTYPE
     try {
       SAXBuilder builder = new SAXBuilder(false);
       underlyingDocument = builder.build(xmlStream);
     } catch (JDOMException jde) {
-      throw new AppBuilderException("Could not load \"" + getName()
-          + "\" from input stream", jde);
+      throw new AppBuilderException("Could not load \"" + getName() + "\" from input stream", jde);
 
     }
   }
@@ -163,6 +170,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
    * concerned by the array of tags from all the documents to merge and adds them to the resulting
    * document. <strong>In the resulting document, the comments, processing instructions and entities
    * are removed.</strong>
+   *
    * @param tagsToMerge
    * @param XmlFile
    * @throws AppBuilderException
@@ -206,6 +214,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
   /**
    * Sorts the children elements of the document root according to the array order. The tags not
    * found in the array remain in the same order but at the beginning of the document
+   *
    * @param tagsToSort
    * @throws AppBuilderException
    * @roseuid 3AAF3986038D
@@ -254,13 +263,14 @@ public class DBXmlDocument extends ApplicationBuilderItem {
 
   /**
    * Changes the default encoding
+   *
    * @param encoding the standard name of the encoding
    * @since 1.0
    * @roseuid 3AAF4C6E027E
    */
   public void setOutputEncoding(String encoding) {
     outputEncoding = encoding;
-    setOutputter();
+    this.outputter = defineOutputter();
   }
 
   private String getOutputEncoding() {
@@ -287,6 +297,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
 
   /**
    * Gets the size of the resulting xml document
+   *
    * @return the size of the document in memory, given the encoding, <code>-1</code> if unknown.
    * @throws AppBuilderException
    */
@@ -308,6 +319,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
   /**
    * For each element in the tagsToFind arry, looks for the attribute and return its value - the
    * name of the element if the attribute is not found
+   *
    * @param tagsToFind
    * @param attribute
    * @return
@@ -361,6 +373,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
   /**
    * Looks for all the elements with the given tag in the root element and its children. returns
    * <code>null</code> if nothing was found The values are unique in the array returned
+   *
    * @param tagToFind
    * @return the array of all the values found
    */
@@ -383,6 +396,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
   /**
    * Looks for all the attributes with the given name in the root element and its children. returns
    * <code>null</code> if nothing was found. The values are unique in the array returned
+   *
    * @param attributeToFind
    * @return the array of all the values found
    */
@@ -407,15 +421,21 @@ public class DBXmlDocument extends ApplicationBuilderItem {
   }
 
   private XMLOutputter getOutputter() {
+    if (this.outputter == null) {
+      this.outputter = defineOutputter();
+    }
     return outputter;
   }
 
-  private void setOutputter() {
+  private XMLOutputter defineOutputter() {
+    if (!StringUtil.isDefined(this.outputEncoding)) {
+      this.outputEncoding = CharEncoding.UTF_8;
+    }
     Format format = Format.getPrettyFormat();
     format.setTextMode(TextMode.TRIM);
     format.setEncoding(outputEncoding);
     format.setIndent("    ");
-    outputter = new XMLOutputter(format);
+    return new XMLOutputter(format);
   }
 
   /**
@@ -423,6 +443,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
    * concerned by the array of tags from all the documents to merge and adds them to the resulting
    * document. <strong>In the resulting document, the comments, processing instructions and entities
    * are removed.</strong>
+   *
    * @param dbbuilderItem
    * @param tagsToMerge
    * @param blocks_to_merge
@@ -430,7 +451,7 @@ public class DBXmlDocument extends ApplicationBuilderItem {
    * @roseuid 3AAF3793006E
    */
   public void mergeWith(DBBuilderItem dbbuilderItem, String[] tagsToMerge,
-      VersionTag[] blocks_to_merge) throws Exception {
+      List<VersionTag> blocks_to_merge) throws Exception {
     /**
      * merges the elements in the resulting document
      */
@@ -438,8 +459,8 @@ public class DBXmlDocument extends ApplicationBuilderItem {
     root.detach();
     if (blocks_to_merge == null) {
       System.out.println(" tagsToMerge Length=" + tagsToMerge.length);
-      for (int iTag = 0; iTag < tagsToMerge.length; iTag++) {
-        for (Object child : dbbuilderItem.getRoot().getChildren(tagsToMerge[iTag])) {
+      for (String tag : tagsToMerge) {
+        for (Object child : dbbuilderItem.getRoot().getChildren(tag)) {
           if (child instanceof Content) {
             Content newElement = (Content) ((Content) child).clone();
             newElement.detach();
@@ -448,14 +469,15 @@ public class DBXmlDocument extends ApplicationBuilderItem {
         }
       }
     } else {
-      Element moduleElement = new Element(ELT_MODULE);
-      moduleElement.setAttribute(ATT_MODULE_ID, dbbuilderItem.getModule());
       /**
        * gets all the elements which will be included in the resulting document
        */
-      for (final VersionTag aBlocks_to_merge : blocks_to_merge) {
-        Element myElement = dbbuilderItem.getUniqueBlock(aBlocks_to_merge.getCurrent_or_previous(),
-            aBlocks_to_merge.getVersion());
+      for (final VersionTag version : blocks_to_merge) {
+        Element moduleElement = new Element(ELT_MODULE);
+        moduleElement.setAttribute(ATT_MODULE_ID, dbbuilderItem.getModule());
+        moduleElement.setAttribute(ATT_MODULE_VERSION, version.getResultingVersion());
+        Element myElement = dbbuilderItem.getUniqueBlock(version.getCurrent_or_previous(),
+            version.getVersion());
         for (final String aTagsToMerge : tagsToMerge) {
           for (Object child : myElement.getChildren(aTagsToMerge)) {
             if (child instanceof Content) {
@@ -469,9 +491,6 @@ public class DBXmlDocument extends ApplicationBuilderItem {
         root.addContent(moduleElement);
       }
     }
-    /**
-     * the result
-     */
     setDocument(new Document(root));
-  } // mergeWith
+  }
 }

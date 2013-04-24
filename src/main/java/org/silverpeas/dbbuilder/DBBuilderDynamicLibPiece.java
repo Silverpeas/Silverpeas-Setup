@@ -20,12 +20,12 @@
  */
 package org.silverpeas.dbbuilder;
 
-import org.silverpeas.util.Console;
 import java.sql.Connection;
 
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.dbbuilder.util.Configuration;
 import org.silverpeas.dbbuilder.util.DynamicLoader;
+import org.silverpeas.util.Console;
 import org.silverpeas.util.SilverpeasHomeResolver;
 
 public class DBBuilderDynamicLibPiece extends DBBuilderPiece {
@@ -96,5 +96,13 @@ public class DBBuilderDynamicLibPiece extends DBBuilderPiece {
   @Override
   public void cacheIntoDB(Connection connection, String _package, int _itemOrder) throws Exception {
     // rien à cacher pour une proc dynamique
+  }
+  
+  @Override  
+  public void setConnection(Connection connection) {
+    super.setConnection(connection);
+    if(dynamicPart != null) {
+      dynamicPart.setConnection(connection);
+    }
   }
 }

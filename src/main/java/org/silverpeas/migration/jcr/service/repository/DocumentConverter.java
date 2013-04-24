@@ -24,7 +24,6 @@
 package org.silverpeas.migration.jcr.service.repository;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -35,19 +34,22 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
-import org.apache.jackrabbit.core.state.NoSuchItemStateException;
-
+import org.silverpeas.migration.jcr.service.AbstractJcrConverter;
+import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
+import org.silverpeas.migration.jcr.service.model.HistoryDocumentSorter;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
-import org.silverpeas.migration.jcr.service.AbstractJcrConverter;
-import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.util.StringUtil;
 
-import static org.silverpeas.migration.jcr.service.JcrConstants.*;
+import org.apache.jackrabbit.core.state.NoSuchItemStateException;
+
+import static javax.jcr.Property.JCR_FROZEN_PRIMARY_TYPE;
+import static javax.jcr.Property.JCR_LAST_MODIFIED_BY;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
+import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
 /**
  *
@@ -68,13 +70,15 @@ class DocumentConverter extends AbstractJcrConverter {
       RepositoryException {
     try {
       VersionManager versionManager = node.getSession().getWorkspace().getVersionManager();
-      VersionHistory history = versionManager.getVersionHistory(node.getPath());
+
+      String path = node.getPath();
+      VersionHistory history = versionManager.getVersionHistory(path);
       Version root = history.getRootVersion();
       String rootId = "";
       if (root != null) {
         rootId = root.getIdentifier();
       }
-      Version base = versionManager.getBaseVersion(node.getPath());
+      Version base = versionManager.getBaseVersion(path);
       String baseId = "";
       if (base != null) {
         baseId = base.getIdentifier();
@@ -91,6 +95,7 @@ class DocumentConverter extends AbstractJcrConverter {
           documentHistory.add(versionDocument);
         }
       }
+      HistoryDocumentSorter.sortHistory(documentHistory);
       return documentHistory;
     } catch (RepositoryException ex) {
       if (ex.getCause() instanceof NoSuchItemStateException) {
@@ -107,17 +112,31 @@ class DocumentConverter extends AbstractJcrConverter {
       document.setHistory(history);
       return document;
     }
+    if (node.getParent() != null && node.getParent() instanceof Version) {
+      //We are accessing a version directly throught its id
+      HistorisedDocument document = new HistorisedDocument(fillDocument(node, lang));
+      Node fullNode = getCurrentNodeForVersion((Version)node.getParent());
+      document.setHistory(convertDocumentHistory(fullNode, lang));
+      return document;
+    }
     return fillDocument(node, lang);
+  }
+
+  public Node getCurrentNodeForVersion(Version version) throws RepositoryException {
+    String uuid = version.getContainingHistory().getVersionableIdentifier();
+    return version.getSession().getNodeByIdentifier(uuid);
   }
 
   /**
    * Convert a NodeIteraor into a collection of SimpleDocument.
+   *
    * @param iter th NodeIterator to convert.
    * @param language the language of the wanted document.
    * @return a collection of SimpleDocument.
    * @throws RepositoryException
    */
-  public List<SimpleDocument> convertNodeIterator(NodeIterator iter, String language) throws RepositoryException {
+  public List<SimpleDocument> convertNodeIterator(NodeIterator iter, String language) throws
+      RepositoryException {
     List<SimpleDocument> result = new ArrayList<SimpleDocument>((int) iter.getSize());
     while (iter.hasNext()) {
       result.add(convertNode(iter.nextNode(), language));

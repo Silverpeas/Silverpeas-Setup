@@ -22,17 +22,24 @@ package org.silverpeas.dbbuilder.util;
 
 /**
  * All tha available acions for the DBBuilder.
+ *
  * @author ehugonnet
  */
 public enum Action {
 
-  ACTION_CONNECT("-C"), ACTION_INSTALL("-I"), ACTION_UNINSTALL("-U"), ACTION_OPTIMIZE("-O"), ACTION_ALL(
-      "-A"), ACTION_STATUS("-S"), ACTION_CONSTRAINTS_INSTALL("-CI"), ACTION_CONSTRAINTS_UNINSTALL(
-      "-CU"), ACTION_ENFORCE_UNINSTALL("-FU"), ACTION_NONE("");
+  ACTION_CONNECT("-C"), ACTION_INSTALL("-I"), ACTION_UNINSTALL("-U"), ACTION_OPTIMIZE("-O"),
+  ACTION_ALL("-A"), ACTION_STATUS("-S"), ACTION_CONSTRAINTS_INSTALL("-CI"), 
+  ACTION_CONSTRAINTS_UNINSTALL("-CU"), ACTION_ENFORCE_UNINSTALL("-FU"), ACTION_NONE("");
+  
   private String argument;
 
   Action(String argument) {
     this.argument = argument;
+  }
+
+  public boolean isMigration() {
+    return ACTION_INSTALL == this || ACTION_UNINSTALL == this || ACTION_STATUS == this
+        || ACTION_CONSTRAINTS_INSTALL == this || ACTION_CONSTRAINTS_UNINSTALL == this;
   }
 
   public static Action getAction(String arg) {
