@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.silverpeas</groupId>
     <artifactId>parent</artifactId>
-    <version>25-SNAPSHOT</version>
+    <version>25</version>
   </parent>
   <groupId>com.silverpeas.builder</groupId>
   <artifactId>configuration</artifactId>
