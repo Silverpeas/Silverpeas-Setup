@@ -33,6 +33,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+import org.silverpeas.util.DateUtil;
+import org.silverpeas.util.StringUtil;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.FileUtils;
@@ -41,19 +47,36 @@ import org.apache.jackrabbit.util.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.util.DateUtil;
-import org.silverpeas.util.StringUtil;
-
 /**
  * Utility class for path and date conversions between JCR and Slverpeas Pojo.
+ *
  * @author Emmanuel Hugonnet
  * @version $revision$
  */
 public class ConverterUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(ConverterUtil.class);
-  public static String defaultLanguage = "fr";
+  public static final String defaultLanguage = "fr";
+  private static final Pattern WysiwygLangPattern = Pattern
+      .compile("[0-9]+wysiwyg_([a-z][a-z])\\.txt");
+  private static final Pattern WysiwygBaseNamePattern = Pattern.compile(
+      "([0-9]+wysiwyg).*\\.txt");
+
+  public static String extractLanguage(String filename) {
+    Matcher matcher = WysiwygLangPattern.matcher(filename);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return null;
+  }
+
+  public static String extractBaseName(String filename) {
+    Matcher matcher = WysiwygBaseNamePattern.matcher(filename);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return null;
+  }
 
   public static String checkLanguage(String language) {
     String lang = language;
@@ -76,6 +99,7 @@ public class ConverterUtil {
 
   /**
    * Encodes the JCR path to a Xpath compatible path.
+   *
    * @param path the JCR path to be encoded for Xpath.
    * @return the corresponding xpath.
    */
@@ -85,6 +109,7 @@ public class ConverterUtil {
 
   /**
    * Replace all whitespace to SPACE_TOKEN.
+   *
    * @param name the String o be converted.
    * @return the resulting String.
    */
@@ -109,6 +134,7 @@ public class ConverterUtil {
 
   /**
    * Replace all %39 with the char'
+   *
    * @param text
    * @return a String with all %39 replaced by quotes
    */
@@ -118,6 +144,7 @@ public class ConverterUtil {
 
   /**
    * Replace all SPACE_TOKEN to whitespace.
+   *
    * @param name the String o be converted.
    * @return the resulting String.
    */
@@ -127,6 +154,7 @@ public class ConverterUtil {
 
   /**
    * Parse a String of format yyyy/MM/dd and return the corresponding Date.
+   *
    * @param date the String to be parsed.
    * @return the corresponding date.
    * @throws ParseException
@@ -137,6 +165,7 @@ public class ConverterUtil {
 
   /**
    * Format a Date to a String of format yyyy/MM/dd.
+   *
    * @param date the date to be formatted.
    * @return the formatted String.
    */
@@ -146,6 +175,7 @@ public class ConverterUtil {
 
   /**
    * Format a Calendar to a String of format yyyy/MM/dd.
+   *
    * @param calend the date to be formatted.
    * @return the formatted String.
    */
@@ -156,6 +186,7 @@ public class ConverterUtil {
   /**
    * Parse a String of format HH:mm and set the corresponding hours and minutes to the specified
    * Calendar.
+   *
    * @param time the String to be parsed.
    * @param calend the calendar to be updated.
    */
@@ -165,6 +196,7 @@ public class ConverterUtil {
 
   /**
    * Format a Date to a String of format HH:mm.
+   *
    * @param date the date to be formatted.
    * @return the formatted String.
    */
@@ -174,6 +206,7 @@ public class ConverterUtil {
 
   /**
    * Format a Calendar to a String of format HH:mm.
+   *
    * @param calend the date to be formatted.
    * @return the formatted String.
    */
@@ -322,11 +355,11 @@ public class ConverterUtil {
       DbUtils.closeQuietly(prepStmt);
     }
   }
-  
+
   public static void deleteFile(File file) {
     File parent = file.getParentFile();
     FileUtils.deleteQuietly(file);
-    if(parent.isDirectory() && parent.list().length == 0) {
+    if (parent.isDirectory() && parent.list().length == 0) {
       FileUtils.deleteQuietly(parent);
     }
   }

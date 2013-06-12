@@ -29,13 +29,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
-import org.apache.commons.io.IOUtils;
 
 import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.ForeignPK;
@@ -44,9 +44,10 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.model.UnlockContext;
 import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
 import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
-import org.silverpeas.migration.jcr.service.RepositoryManager;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.StringUtil;
+
+import org.apache.commons.io.IOUtils;
 
 public class SimpleDocumentService implements AttachmentService {
 
@@ -151,8 +152,8 @@ public class SimpleDocumentService implements AttachmentService {
     Session session = null;
     try {
       session = repositoryManager.getSession();
-      SimpleDocument oldAttachment =
-          repository.findDocumentById(session, document.getPk(), document.getLanguage());
+      SimpleDocument oldAttachment = repository.findDocumentById(session, document.getPk(), document
+          .getLanguage());
       repository.fillNodeName(session, document);
       repository.updateDocument(session, document);
       session.save();
@@ -331,49 +332,98 @@ public class SimpleDocumentService implements AttachmentService {
   }
 
   @Override
+  public SimpleDocument mergeDocument(SimpleDocument document, SimpleDocument merge) {
+    File content = new File(merge.getAttachmentPath());
+    if (!content.exists() || !content.isFile()) {
+      merge.setLanguage(ConverterUtil.defaultLanguage);
+      content = new File(merge.getAttachmentPath());
+    }
+    if (content.exists() && content.isFile()) {
+      updateAttachment(document, content);
+      deleteAttachment(merge);
+    }
+    return searchDocumentById(document.getPk(), document.getLanguage());
+  }
+
+  @Override
+  public List<String> listBasenames(String instanceId) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      return new ArrayList<String>(repository.listWysiwygFileNames(session, instanceId));
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  @Override
+  public List<SimpleDocument> listWysiwygForBasename(String basename, String instanceId) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      return repository.listWysiwygAttachmentsByBasename(session, instanceId, basename);
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  @Override
+  public List<String> listComponentIdsWithWysiwyg() {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      return repository.listComponentsWithWysiwyg(session);
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  @Override
   public void shutdown() {
     this.repositoryManager.shutdown();
   }
-  
+
   /**
    * Delete a given attachment.
    *
    * @param document the attachmentDetail object to deleted.
    */
-   @Override
-   public void deleteAttachment(SimpleDocument document) {
-     Session session = null;
-     try {
-       session = repositoryManager.getSession();
-       repository.fillNodeName(session, document);
-       repository.deleteDocument(session, document.getPk());
-       session.save();
-     } catch (RepositoryException ex) {
-       throw new AttachmentException(ex);
-     } finally {
-       repositoryManager.logout(session);
-     }
-   } 
-   
+  @Override
+  public void deleteAttachment(SimpleDocument document) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      repository.fillNodeName(session, document);
+      repository.deleteDocument(session, document.getPk());
+      session.save();
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
   private boolean verifFormatImage(String filename) {
-    int indexPoint = filename.lastIndexOf(".");
+    int indexPoint = filename.lastIndexOf('.');
     if (indexPoint != -1) {
       // le fichier contient une extension. On recupere l'extension
       String extension = filename.substring(indexPoint + 1);
-      extension = extension.toLowerCase();
-      if ("jpg".equals(extension) ||
-          "gif".equals(extension) ||
-          "bmp".equals(extension) ||
-          "tiff".equals(extension) ||
-          "tif".equals(extension) ||
-          "jpeg".equals(extension) ||
-          "png".equals(extension)) {
+      extension = extension.toLowerCase(Locale.FRANCE);
+      if ("jpg".equals(extension) || "gif".equals(extension) || "bmp".equals(extension) || "tiff"
+          .equals(extension) || "tif".equals(extension) || "jpeg".equals(extension) || "png".equals(
+          extension)) {
         return true;
       }
     }
     return false;
   }
-  
+
   @Override
   public void moveImageContext(SimpleDocumentPK primaryKey, Console console) {
     Session session = null;
@@ -382,28 +432,31 @@ public class SimpleDocumentService implements AttachmentService {
       SimpleDocument simpleDocument = repository
           .findDocumentByOldSilverpeasId(session, primaryKey.getComponentName(),
           primaryKey.getOldSilverpeasId(), false, null);
-      if(simpleDocument != null) {
-        boolean verifFormatImage =
-            verifFormatImage(simpleDocument.getFilename());
+      if (simpleDocument != null) {
+        boolean verifFormatImage = verifFormatImage(simpleDocument.getFilename());
         if (verifFormatImage) {
-          console.printTrace("Delete attachment with attachmentId = " +
-              simpleDocument.getId() + ", oldSilverpeasId = "+simpleDocument.getOldSilverpeasId());
+          console.printTrace("Delete attachment with attachmentId = " + simpleDocument.getId()
+              + ", oldSilverpeasId = " + simpleDocument.getOldSilverpeasId());
           String sourcePath = simpleDocument.getFullJcrPath();
           simpleDocument.setDocumentType(DocumentType.attachment);
           String destinationPath = simpleDocument.getFullJcrPath();
-          console.printTrace("Moving " +sourcePath + " to "+destinationPath);
-          if(!session.nodeExists(destinationPath)) {
-            repository.prepareComponentAttachments(primaryKey.getInstanceId(), DocumentType.attachment.getFolderName());
+          console.printTrace("Moving " + sourcePath + " to " + destinationPath);
+          if (!session.nodeExists(destinationPath)) {
+            repository.prepareComponentAttachments(primaryKey.getInstanceId(),
+                DocumentType.attachment.getFolderName());
           }
           session.move(sourcePath, destinationPath);
         } else {// format Image not correct
-          console.printTrace("Format Image not correct, delete attachment attachmentId = " + simpleDocument.getId() + ", oldSilverpeasId = "+simpleDocument.getOldSilverpeasId());
+          console.printTrace("Format Image not correct, delete attachment attachmentId = "
+              + simpleDocument.getId() + ", oldSilverpeasId = " + simpleDocument
+              .getOldSilverpeasId());
           repository.deleteDocument(session, simpleDocument.getPk());
         }
         session.save();
       } else {
-        throw new AttachmentException("ERROR Simple Document with oldSilverpeasId "+primaryKey.getOldSilverpeasId()+" not found");
-      } 
+        throw new AttachmentException("ERROR Simple Document with oldSilverpeasId " + primaryKey
+            .getOldSilverpeasId() + " not found");
+      }
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     } finally {
