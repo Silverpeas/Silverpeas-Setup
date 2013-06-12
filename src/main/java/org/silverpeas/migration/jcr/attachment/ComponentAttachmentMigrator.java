@@ -64,15 +64,16 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       + "attachmentcontext, attachmentforeignkey, instanceid, attachmentcreationdate, "
       + "attachmentauthor, attachmenttitle, attachmentinfo, attachmentordernum, workerid, cloneid, "
       + "lang , reservationdate, alertdate, expirydate, xmlform FROM sb_attachment_attachment "
-      + "WHERE instanceid = ? ORDER BY attachmentforeignkey, attachmentordernum";
+      + "WHERE instanceid = ? ORDER BY attachmentforeignkey, attachmentphysicalname, attachmentordernum";
   public static final String SELECT_ATTACHMENT_TRANSLATION = "SELECT id, attachmentid, lang, "
       + "attachmentphysicalname, attachmentlogicalname, attachmenttype, attachmentsize, "
       + "instanceid, attachmentcreationdate, attachmentauthor, attachmenttitle, attachmentinfo, "
       + "xmlform FROM sb_attachment_attachmenti18n WHERE attachmentid = ? ORDER BY lang";
-  public static final String DELETE_ATTACHMENT_TRANSLATIONS = "DELETE FROM sb_attachment_attachmenti18n "
+  public static final String DELETE_ATTACHMENT_TRANSLATIONS
+      = "DELETE FROM sb_attachment_attachmenti18n "
       + "WHERE attachmentid = ?";
-  public static final String DELETE_ATTACHMENT =
-      "DELETE FROM sb_attachment_attachment WHERE attachmentid = ?";
+  public static final String DELETE_ATTACHMENT
+      = "DELETE FROM sb_attachment_attachment WHERE attachmentid = ?";
   private final String componentId;
   private final AttachmentService service;
   private final Console console;
@@ -113,7 +114,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             DateUtil.parse(rs.getString("reservationdate")),
             DateUtil.parse(rs.getString("alertdate")), DateUtil.parse(rs.getString("expirydate")),
             rs.getString("attachmentdescription"), attachment);
-        document.setDocumentType(DocumentType.fromOldContext(instanceId, rs.getString("attachmentcontext")));
+        document.setDocumentType(DocumentType.fromOldContext(instanceId, rs.getString(
+            "attachmentcontext")));
         document.setUpdated(document.getCreated());
         document.setUpdatedBy(author);
         File file = getAttachmenFile(rs.getString("instanceid"), rs.getString("attachmentcontext"),
@@ -134,7 +136,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
   }
 
   protected Set<File> createTranslations(SimpleDocument document, String context) throws
-      SQLException,ParseException, IOException {
+      SQLException, ParseException, IOException {
     Set<File> files = new HashSet<File>(5);
     PreparedStatement pstmt = null;
     ResultSet rs = null;
@@ -155,12 +157,17 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
         if (!StringUtil.isDefined(author)) {
           author = "0";
         }
+        String language = rs.getString("lang");
+        if (!StringUtil.isDefined(language)) {
+          language = ConverterUtil.extractLanguage(rs.getString("attachmentlogicalname"));
+        }
+        language = ConverterUtil.checkLanguage(language);
         SimpleAttachment attachment = new SimpleAttachment(rs.getString("attachmentlogicalname"),
-            ConverterUtil.checkLanguage(rs.getString("lang")), rs.getString("attachmenttitle"),
-            rs.getString("attachmentinfo"), rs.getLong("attachmentsize"), contentType, author,
-            DateUtil.parse(rs.getString("attachmentcreationdate")), rs.getString("xmlform"));
+            language, rs.getString("attachmenttitle"), rs.getString("attachmentinfo"),
+            rs.getLong("attachmentsize"), contentType, author, DateUtil.parse(rs.getString(
+            "attachmentcreationdate")), rs.getString("xmlform"));
         document.setFile(attachment);
-        document.setUpdated(attachment.getCreated());        
+        document.setUpdated(attachment.getCreated());
         document.setUpdatedBy(author);
         File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
             "attachmentphysicalname"));
@@ -239,7 +246,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       deleteAttachment = connection.prepareStatement(DELETE_ATTACHMENT);
       deleteAttachment.setLong(1, oldSilverpeasId);
       deleteAttachment.executeUpdate();
-      for (File file : files) {        
+      for (File file : files) {
         ConverterUtil.deleteFile(file);
       }
       connection.commit();

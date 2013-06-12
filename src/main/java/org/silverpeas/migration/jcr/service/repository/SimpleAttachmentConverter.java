@@ -26,8 +26,8 @@ package org.silverpeas.migration.jcr.service.repository;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.AbstractJcrConverter;
+import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 
 import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
