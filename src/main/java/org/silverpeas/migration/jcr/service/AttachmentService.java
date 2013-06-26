@@ -162,19 +162,51 @@ public interface AttachmentService {
    * Shutdowns the repository.
    */
   public void shutdown();
-  
+
   /**
-  * Delete a given attachment.
-  *
-  * @param document the document to deleted.
-  */
+   * Delete a given attachment.
+   *
+   * @param document the document to deleted.
+   */
   void deleteAttachment(SimpleDocument document);
 
-   /** 
-    * Find document image, and move to Attachment context
-    *
-    * @param primaryKey the primary key of the document.
-    * @param console to print message.
+  /**
+   * Find document image, and move to Attachment context
+   *
+   * @param primaryKey the primary key of the document.
+   * @param console to print message.
    */
   public void moveImageContext(SimpleDocumentPK primaryKey, Console console);
+
+  /**
+   * Find all components that contains wysiwyg.
+   *
+   * @return list all component ids with wysiwyg.
+   */
+  public List<String> listComponentIdsWithWysiwyg();
+
+  /**
+   * Find all basenames for wysiwyg content.
+   *
+   * @param instanceId the component containing the wysiwyg.
+   * @return list all the wysiwyg basenames.
+   */
+  public List<String> listBasenames(String instanceId);
+
+  /**
+   * Merge the documents into the document.
+   *
+   * @param source the document into which the document will be merged.
+   * @param toMerge the documents to merge.
+   * @return the merged document.
+   */
+  public SimpleDocument mergeDocument(SimpleDocument source, SimpleDocument toMerge);
+
+  /**
+   *
+   * @param basename
+   * @param instanceId
+   * @return
+   */
+  public List<SimpleDocument> listWysiwygForBasename(String basename, String instanceId);
 }

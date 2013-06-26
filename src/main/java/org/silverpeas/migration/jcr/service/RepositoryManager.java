@@ -37,6 +37,8 @@ import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.nodetype.InvalidNodeTypeDefinitionException;
 import javax.jcr.nodetype.NodeTypeExistsException;
 
+import org.silverpeas.util.SilverpeasHomeResolver;
+
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.jackrabbit.api.JackrabbitRepository;
@@ -46,8 +48,6 @@ import org.apache.jackrabbit.commons.cnd.ParseException;
 import org.apache.jackrabbit.core.RepositoryFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.silverpeas.util.SilverpeasHomeResolver;
 
 /**
  * @author ehugonnet
@@ -107,8 +107,7 @@ public class RepositoryManager {
   }
 
   public Session getSession() throws RepositoryException {
-    return repository.
-        login(new SimpleCredentials("admin", "admin".toCharArray())/* new SilverpeasSystemCredentials() */);
+    return repository.login(new SimpleCredentials("admin", "admin".toCharArray()));
   }
 
   public void logout(Session session) {
