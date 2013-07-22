@@ -29,16 +29,12 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.nodetype.InvalidNodeTypeDefinitionException;
 import javax.jcr.nodetype.NodeTypeExistsException;
-
-import org.silverpeas.util.SilverpeasHomeResolver;
-
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.jackrabbit.api.JackrabbitRepository;
@@ -46,6 +42,7 @@ import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.jackrabbit.commons.cnd.CndImporter;
 import org.apache.jackrabbit.commons.cnd.ParseException;
 import org.apache.jackrabbit.core.RepositoryFactoryImpl;
+import org.silverpeas.util.ConfigurationHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +56,9 @@ public class RepositoryManager {
 
   public RepositoryManager() {
     try {
-      String conf = SilverpeasHomeResolver.getHome() + File.separatorChar + "setup"
+      String conf = ConfigurationHolder.getHome() + File.separatorChar + "setup"
           + File.separatorChar + "jackrabbit" + File.separatorChar + "repository.xml";
-      String repositoryHome = SilverpeasHomeResolver.getDataHome() + File.separatorChar
+      String repositoryHome = ConfigurationHolder.getDataHome() + File.separatorChar
           + "jackrabbit";
       initRepository(repositoryHome, conf);
     } catch (RepositoryException ex) {
@@ -79,7 +76,7 @@ public class RepositoryManager {
     }
   }
 
-  private final void initRepository(String repositoryHome, String conf) throws RepositoryException {
+  private void initRepository(String repositoryHome, String conf) throws RepositoryException {
     Map<String, String> parameters = new HashMap<String, String>(2);
     parameters.put(RepositoryFactoryImpl.REPOSITORY_HOME, repositoryHome);
     parameters.put(RepositoryFactoryImpl.REPOSITORY_CONF, conf);

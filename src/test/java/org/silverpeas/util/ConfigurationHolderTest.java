@@ -36,47 +36,47 @@ import static org.junit.Assert.assertThat;
  *
  * @author ehugonnet
  */
-public class SilverpeasHomeResolverTest {
+public class ConfigurationHolderTest {
 
-  public SilverpeasHomeResolverTest() {
+  public ConfigurationHolderTest() {
     
   }
   
 
   /**
-   * Test of getHome method, of class SilverpeasHomeResolver.
+   * Test of getHome method, of class ConfigurationHolder.
    */
   @Test
   public void testGetHome() throws Exception {   
     setEnvironmentVariable("SILVERPEAS_HOME", "/opt/silverpeas");
-    SilverpeasHomeResolver.reloadConfiguration();
+    ConfigurationHolder.reloadConfiguration();
     String expResult = "/opt/silverpeas";
-    String result = SilverpeasHomeResolver.getHome();
+    String result = ConfigurationHolder.getHome();
     assertThat(result, is(expResult));
   }
 
   /**
-   * Test of getDataHome method, of class SilverpeasHomeResolver.
+   * Test of getDataHome method, of class ConfigurationHolder.
    */
   @Test
   public void testGetDataHome() throws Exception {
     setEnvironmentVariable("SILVERPEAS_HOME", "/opt/silverpeas");
-    SilverpeasHomeResolver.reloadConfiguration();
+    ConfigurationHolder.reloadConfiguration();
     String expResult = "/opt/silverpeas/data";
-    String result = SilverpeasHomeResolver.getDataHome();
+    String result = ConfigurationHolder.getDataHome();
     assertThat(result, is(expResult));
   }
 
   /**
-   * Test of getDataHome method, of class SilverpeasHomeResolver.
+   * Test of getDataHome method, of class ConfigurationHolder.
    */
   @Test
   public void testGetDataHomeForEnv() throws Exception {
     setEnvironmentVariable("SILVERPEAS_HOME", "/opt/silverpeas");    
     setEnvironmentVariable("SILVERPEAS_DATA_HOME", "/var/data/silverpeas");
-    SilverpeasHomeResolver.reloadConfiguration();
+    ConfigurationHolder.reloadConfiguration();
     String expResult = "/var/data/silverpeas";
-    String result = SilverpeasHomeResolver.getDataHome();
+    String result = ConfigurationHolder.getDataHome();
     assertThat(result, is(expResult));
   }
 

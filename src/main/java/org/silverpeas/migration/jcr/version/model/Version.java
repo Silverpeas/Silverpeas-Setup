@@ -27,9 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.silverpeas.dbbuilder.DBBuilder;
 import org.silverpeas.util.Console;
-import org.silverpeas.util.SilverpeasHomeResolver;
+import org.silverpeas.util.ConfigurationHolder;
 
 import static java.io.File.separatorChar;
 
@@ -39,8 +38,7 @@ import static java.io.File.separatorChar;
  */
 public class Version {
 
-  private static Console console = new Console(DBBuilder.class);
-
+  private static Console console = new Console(Version.class);
   private int id;
   private int minor;
   private int major;
@@ -120,7 +118,7 @@ public class Version {
   }
 
   public File getAttachment() throws IOException {
-    String baseDirectory = SilverpeasHomeResolver.getDataHome() + separatorChar + "workspaces"
+    String baseDirectory = ConfigurationHolder.getDataHome() + separatorChar + "workspaces"
         + separatorChar + instanceId + separatorChar + "Versioning";
     File file = new File(baseDirectory, physicalFilename);
     if (!file.exists() || !file.isFile()) {
@@ -129,13 +127,12 @@ public class Version {
     }
     return file;
   }
-  
-  
+
   @Override
   public String toString() {
-    return "Version{" + "id=" + id + ", minor=" + minor + ", major=" + major + ", creation=" +
-        creation + ", createdBy=" + createdBy + ", fileName=" + fileName + ", physicalFilename=" +
-        physicalFilename + ", contentType=" + contentType + ", size=" + size + ", xmlFormId=" +
-        xmlFormId + ", comment=" + comment + ", instanceId=" + instanceId + '}';
+    return "Version{" + "id=" + id + ", minor=" + minor + ", major=" + major + ", creation="
+        + creation + ", createdBy=" + createdBy + ", fileName=" + fileName + ", physicalFilename="
+        + physicalFilename + ", contentType=" + contentType + ", size=" + size + ", xmlFormId="
+        + xmlFormId + ", comment=" + comment + ", instanceId=" + instanceId + '}';
   }
 }

@@ -33,7 +33,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-
+import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.service.AttachmentService;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
@@ -49,8 +49,6 @@ import org.silverpeas.migration.jcr.version.model.Version;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
-
-import org.apache.commons.dbutils.DbUtils;
 
 class ComponentDocumentMigrator implements Callable<Long> {
 
@@ -84,20 +82,24 @@ class ComponentDocumentMigrator implements Callable<Long> {
 
   protected long migrateComponent() throws SQLException, ParseException, IOException {
     console.printMessage("Migrating component " + componentId);
+    long processStart = System.currentTimeMillis();
     List<OldDocumentMetadata> documents = listAllDocuments();
     long nbMigratedDocuments = 0L;
     for (OldDocumentMetadata document : documents) {
       nbMigratedDocuments += createVersions(document);
     }
+    long processEnd = System.currentTimeMillis();
     console.printMessage("Migrating the component " + componentId + " required the migration of "
-        + nbMigratedDocuments + " documents");
+        + nbMigratedDocuments + " documents in " + (processEnd - processStart) + "ms");
+    console.printMessage("");
     return nbMigratedDocuments;
   }
 
   protected long createVersions(OldDocumentMetadata metadata) throws SQLException, ParseException,
       IOException {
-    console.printMessage("Creating document for " + metadata.getTitle() + " with " + metadata
+    console.printMessage("=> Creating document for " + metadata.getTitle() + " with " + metadata
         .getHistory().size() + " versions");
+    long processStart = System.currentTimeMillis();
     long nbMigratedDocuments = 0L;
     HistorisedDocument document = new HistorisedDocument();
     document.setPK(new SimpleDocumentPK(null, metadata.getInstanceId()));
@@ -118,7 +120,8 @@ class ComponentDocumentMigrator implements Callable<Long> {
       document.setUpdated(version.getCreation());
       document.setUpdatedBy(version.getCreatedBy());
       if (!StringUtil.isDefined(version.getCreatedBy())) {
-        console.printWarning("We have a null id for the author of document " + document + " and version "
+        console.printWarning("We have a null id for the author of document " + document
+            + " and version "
             + metadata);
       }
       if (file != null && file.exists() && file.isFile() && file.length() > 0L) {
@@ -140,15 +143,17 @@ class ComponentDocumentMigrator implements Callable<Long> {
     }
     if (StringUtil.isDefined(document.getId())) {
       createDocumentPermalink(document, metadata);
-      for(Version version : metadata.getHistory()) {        
+      for (Version version : metadata.getHistory()) {
         createVersionPermalink(getDocumentVersionUUID(document, version), version.getId());
       }
     } else {
       console.
           printWarning("We have a null id for document " + document + " and version " + metadata);
     }
-    console.printMessage("We have migrated  " + nbMigratedDocuments + " for " + metadata.getTitle()
-        + " with " + metadata.getHistory().size() + " versions");
+    long processEnd = System.currentTimeMillis();
+    console.printMessage("   we have created  " + nbMigratedDocuments + " for " + metadata.
+        getTitle() + " with " + metadata.getHistory().size() + " versions in " + (processEnd
+        - processStart) + "ms");
     cleanAll(metadata);
     return nbMigratedDocuments;
   }

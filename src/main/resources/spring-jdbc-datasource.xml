@@ -26,13 +26,13 @@
 -->
 
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="
+       xsi:schemaLocation="
        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-   <bean id="connectionFactory" name="connectionFactory" class="org.silverpeas.dbbuilder.sql.ConnectionFactory"
-      factory-method="getInstance">
-        <property name="datasource" ref="datasource" />
-    </bean>
+  <bean id="connectionFactory" name="connectionFactory" class="org.silverpeas.dbbuilder.sql.ConnectionFactory"
+        factory-method="getInstance">
+    <property name="datasource" ref="datasource" />
+  </bean>
 
   <bean id="datasource" name="datasource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
     <property name="driverClassName" value="${AdminDBDriver}" />
@@ -44,7 +44,7 @@
     <property name="maxWait" value="5000" />
   </bean>
 
-   <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+  <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
     <property name="locations">
       <list>
         <value>file:///${SILVERPEAS_HOME}/properties/org/silverpeas/beans/admin/admin.properties</value>

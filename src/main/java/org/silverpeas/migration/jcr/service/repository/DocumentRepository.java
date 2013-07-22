@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -54,7 +53,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
-
+import org.apache.commons.io.FileUtils;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.RepositoryManager;
 import org.silverpeas.migration.jcr.service.model.DocumentType;
@@ -63,16 +62,13 @@ import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
+import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
 
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static javax.jcr.Property.JCR_LANGUAGE;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
+
 import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
 /**
@@ -80,7 +76,7 @@ import static org.silverpeas.migration.jcr.service.JcrConstants.*;
  */
 public class DocumentRepository {
 
-  private static final Logger logger = LoggerFactory.getLogger(DocumentRepository.class);
+  private static final Console console = new Console(DocumentConverter.class);
   private final RepositoryManager repositoryManager;
   private static final Pattern COMPONENTNAME_PATTERN = Pattern.compile("[a-zA-Z]+\\d+");
 
@@ -88,7 +84,6 @@ public class DocumentRepository {
     this.repositoryManager = repositoryManager;
   }
   private static final String SIMPLE_ATTACHMENT_ALIAS = "SimpleAttachments";
-
   private static final String SIMPLE_DOCUMENT_ALIAS = "SimpleDocuments";
   final DocumentConverter converter = new DocumentConverter();
 
@@ -110,8 +105,8 @@ public class DocumentRepository {
   }
 
   /**
-   * /** Create file attached to an object who is identified by "PK" SimpleDocument object contains
-   * an attribute who identifie the link by a foreign key.
+   * Create file attached to an object who is identified by "PK" SimpleDocument object contains an
+   * attribute who identifie the link by a foreign key.
    *
    * @param session
    * @param document
@@ -315,7 +310,7 @@ public class DocumentRepository {
       deleteContent(documentNode, documentPk.getInstanceId());
       deleteDocumentNode(documentNode);
     } catch (ItemNotFoundException infex) {
-      logger.info("DocumentRepository.deleteDocument()", infex);
+      console.printError("DocumentRepository.deleteDocument()", infex);
     }
   }
 
@@ -355,7 +350,7 @@ public class DocumentRepository {
         versionManager.checkin(documentNode.getPath());
       }
     } catch (ItemNotFoundException infex) {
-      logger.info("DocumentRepository.deleteDocument()", infex);
+      console.printError("DocumentRepository.deleteDocument()", infex);
     }
   }
 
@@ -381,7 +376,7 @@ public class DocumentRepository {
       Node documentNode = session.getNodeByIdentifier(documentPk.getId());
       return converter.convertNode(documentNode, lang);
     } catch (ItemNotFoundException infex) {
-      logger.info("DocumentRepository.findDocumentById()", infex);
+      console.printError("DocumentRepository.findDocumentById()", infex);
     }
     return null;
   }
@@ -989,7 +984,7 @@ public class DocumentRepository {
   public long storeContent(SimpleDocument document, InputStream in) throws
       RepositoryException, IOException {
     File file = new File(document.getAttachmentPath());
-    logger.debug("Storing file for document in " + document.getAttachmentPath());
+    console.printTrace("Storing file for document in " + document.getAttachmentPath());
     FileUtils.copyInputStreamToFile(in, file);
     return file.length();
   }

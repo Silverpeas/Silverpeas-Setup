@@ -31,7 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tika.Tika;
 
 import org.silverpeas.dbbuilder.util.Configuration;
-import org.silverpeas.util.SilverpeasHomeResolver;
+import org.silverpeas.util.ConfigurationHolder;
 import static java.io.File.separatorChar;
 
 /**
@@ -157,7 +157,7 @@ public final class FileUtil {
         if (!path.startsWith(File.separator)) {
           path = separatorChar + path;
         }
-        File configurationFile = new File(SilverpeasHomeResolver.getHome() + separatorChar
+        File configurationFile = new File(ConfigurationHolder.getHome() + separatorChar
             + "properties" + path);
         if (configurationFile.exists()) {
           in = new FileInputStream(configurationFile);
@@ -178,10 +178,10 @@ public final class FileUtil {
       return props.getProperty("uploadsPath") + separatorChar + componentId + separatorChar;
     } catch (IOException ex) {
       try {
-        return SilverpeasHomeResolver.getDataHome() + separatorChar + "workspaces" + separatorChar
+        return ConfigurationHolder.getDataHome() + separatorChar + "workspaces" + separatorChar
             + componentId + separatorChar;
       } catch (IOException ioex) {
-        return SilverpeasHomeResolver.getHome() + separatorChar + "data" + separatorChar
+        return ConfigurationHolder.getHome() + separatorChar + "data" + separatorChar
             + "workspaces" + separatorChar + componentId + separatorChar;
       }
     }

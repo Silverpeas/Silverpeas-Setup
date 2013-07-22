@@ -22,7 +22,7 @@ package org.silverpeas.util.file;
 
 import java.io.File;
 
-import org.silverpeas.util.SilverpeasHomeResolver;
+import org.silverpeas.util.ConfigurationHolder;
 
 public class DirectoryLocator {
   // Sublevel 1
@@ -68,7 +68,7 @@ public class DirectoryLocator {
    */
   public static String getSilverpeasHome() {
     if (silverpeasHome == null) {
-      silverpeasHome = SilverpeasHomeResolver.getHome();
+      silverpeasHome = ConfigurationHolder.getHome();
     }
     return silverpeasHome;
   }
