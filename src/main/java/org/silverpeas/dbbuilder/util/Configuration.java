@@ -21,7 +21,7 @@
 package org.silverpeas.dbbuilder.util;
 
 
-import org.silverpeas.util.SilverpeasHomeResolver;
+import org.silverpeas.util.ConfigurationHolder;
 
 import java.io.File;
 
@@ -35,13 +35,13 @@ public class Configuration {
   private static final String CONTRIB_FILES_SUBDIR = "data";
   private static final String LOG_FILES_SUBDIR = "log";
   private static final String TEMP_FILES_SUBDIR = "temp";
-  private static final String DIR_CONTRIBUTIONFILESROOT = SilverpeasHomeResolver.getHome()
+  private static final String DIR_CONTRIBUTIONFILESROOT = ConfigurationHolder.getHome()
       + File.separatorChar + DBREPOSITORY_SUBDIR + File.separatorChar + CONTRIB_FILES_SUBDIR;
   // Répertoire racine des DB Pieces Contribution File
-  private static final String DIR_DBPIECESFILESROOT = SilverpeasHomeResolver.getHome()
+  private static final String DIR_DBPIECESFILESROOT = ConfigurationHolder.getHome()
       + File.separatorChar + DBREPOSITORY_SUBDIR;
   // Répertoire temp
-  private static final String DIR_TEMP = SilverpeasHomeResolver.getHome()
+  private static final String DIR_TEMP = ConfigurationHolder.getHome()
       + File.separatorChar + TEMP_FILES_SUBDIR;
 
  
@@ -73,7 +73,7 @@ public class Configuration {
   }
 
   public static String getLogDir() {
-    return SilverpeasHomeResolver.getHome() + File.separatorChar + LOG_FILES_SUBDIR;
+    return ConfigurationHolder.getHome() + File.separatorChar + LOG_FILES_SUBDIR;
   }
 
   private static String getPropertyPath(String propertyPath) {
@@ -82,7 +82,7 @@ public class Configuration {
     if (!path.startsWith(File.separator)) {
       path = File.separatorChar + path;
     }
-    return SilverpeasHomeResolver.getHome() + File.separatorChar + "properties" + path;
+    return ConfigurationHolder.getHome() + File.separatorChar + "properties" + path;
   }
 
   private Configuration() {

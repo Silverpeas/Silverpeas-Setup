@@ -31,15 +31,20 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
+import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
-
-import org.apache.commons.dbutils.DbUtils;
+import org.silverpeas.util.ConfigurationHolder;
 
 public class VersioningMigrator extends DbBuilderDynamicPart {
 
-  private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+  private static final ExecutorService executor;
+  private static final int threadCount;
+
+  static {
+    threadCount = ConfigurationHolder.getMaxThreadsCount();
+    executor = Executors.newFixedThreadPool(threadCount);
+  }
   private final SimpleDocumentService service;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
       + "sb_version_document ORDER BY instanceid";
@@ -49,6 +54,8 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
   }
 
   public void migrateDocuments() throws Exception {
+    getConsole().printMessage("Migration of the versioned documents in JCR with a pool of "
+        + threadCount + " threads");
     long totalNumberOfMigratedFiles = 0L;
     List<ComponentDocumentMigrator> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
@@ -65,6 +72,7 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
       executor.shutdown();
     }
     getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
+    getConsole().printMessage("*************************************************************");
     this.service.shutdown();
   }
 
@@ -76,14 +84,14 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
     try {
       stmt = getConnection().createStatement();
       rs = stmt.executeQuery(SELECT_COMPONENTS);
+      StringBuilder message = new StringBuilder();
       while (rs.next()) {
-        result.add(new ComponentDocumentMigrator(rs.getString("instanceid"), service, getConsole()));
-        getConsole().printMessage(rs.getString("instanceid"));
-        if (!rs.isLast()) {
-          getConsole().printMessage(", ");
-        }
+        String instanceId = rs.getString("instanceid");
+        result.add(new ComponentDocumentMigrator(instanceId, service, getConsole()));
+        message.append(instanceId).append(" ");
       }
-      getConsole().printMessage("*************************************************************");
+      getConsole().printMessage(message.toString());
+      getConsole().printMessage("");
       return result;
     } catch (SQLException sqlex) {
       throw sqlex;

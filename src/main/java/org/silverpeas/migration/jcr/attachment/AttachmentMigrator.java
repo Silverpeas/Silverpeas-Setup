@@ -23,7 +23,6 @@
  */
 package org.silverpeas.migration.jcr.attachment;
 
-import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,14 +32,20 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import org.apache.commons.dbutils.DbUtils;
-
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.util.ConfigurationHolder;
 
 public class AttachmentMigrator extends DbBuilderDynamicPart {
 
-  private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+  private static final ExecutorService executor;
+  private static final int threadCount;
+
+  static {
+    threadCount = ConfigurationHolder.getMaxThreadsCount();
+    executor = Executors.newFixedThreadPool(threadCount);
+  }
   private final SimpleDocumentService service;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
       + "sb_attachment_attachment ORDER BY instanceid";
@@ -54,6 +59,8 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
   }
 
   public void migrateAttachments() throws Exception {
+    getConsole().printMessage("Migration of the attachments in JCR with a pool of "
+        + threadCount + " threads");
     updateUniqueId();
     long totalNumberOfMigratedFiles = 0L;
     List<ComponentAttachmentMigrator> migrators = buildComponentMigrators();
@@ -71,6 +78,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       executor.shutdown();
     }
     getConsole().printMessage("Nb of migrated documents : " + totalNumberOfMigratedFiles);
+    getConsole().printMessage("*************************************************************");
     this.service.shutdown();
   }
 
@@ -82,15 +90,15 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
     try {
       stmt = getConnection().createStatement();
       rs = stmt.executeQuery(SELECT_COMPONENTS);
+      StringBuilder message = new StringBuilder();
       while (rs.next()) {
+        String instanceId = rs.getString("instanceid");
         result.add(
-            new ComponentAttachmentMigrator(rs.getString("instanceid"), service, getConsole()));
-        getConsole().printMessage(rs.getString("instanceid"));
-        if (!rs.isLast()) {
-          getConsole().printMessage(", ");
-        }
+            new ComponentAttachmentMigrator(instanceId, service, getConsole()));
+        message.append(instanceId).append(" ");
       }
-      getConsole().printMessage("*************************************************************");
+      getConsole().printMessage(message.toString());
+      getConsole().printMessage("");
       return result;
     } catch (SQLException sqlex) {
       throw sqlex;
@@ -117,7 +125,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       DbUtils.closeQuietly(rs);
       DbUtils.closeQuietly(stmt);
     }
-    PreparedStatement pstmt = null;
+    PreparedStatement pstmt;
     try {
       pstmt = getConnection().prepareStatement(UPDATE_UNIQUEID);
       pstmt.setLong(1, maxId);

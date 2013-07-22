@@ -33,54 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </layout>
   </appender>
 
-  <appender name="appbuilder" class="org.apache.log4j.FileAppender">
-    <param name="Threshold" value="INFO"/>
-    <param name="File" value="${silverpeas.home}/log/appBuilder.log" />
-    <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%n%p - %m"/>
-    </layout>
-  </appender>
-
-  <appender name="settings" class="org.apache.log4j.FileAppender">
-    <param name="Threshold" value="INFO"/>
-    <param name="File" value="${silverpeas.home}/log/settings.log" />
-    <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%n%p - %m"/>
-    </layout>
-  </appender>
-
-  <appender name="dbbuilder" class="org.apache.log4j.FileAppender">
-    <param name="Threshold" value="INFO"/>
-    <param name="File" value="${silverpeas.home}/log/dbBuilder.log" />
-    <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%n%p - %m"/>
-    </layout>
-  </appender>
-
-  <logger name="org.silverpeas.dbbuilder.DBBuilder">
-    <level value="info"/>
-    <appender-ref ref="dbbuilder" />
-  </logger>
-
-  <logger name="org.silverpeas.migration">
-    <level value="info"/>
-    <appender-ref ref="dbbuilder" />
-  </logger>
-
-  <logger name="org.silverpeas.applicationbuilder.ApplicationBuilder">
-    <level value="info"/>
-    <appender-ref ref="appbuilder" />
-  </logger>
-
-  <logger name="org.silverpeas.settings.SilverpeasSettings">
-    <level value="info"/>
-    <appender-ref ref="settings" />
-  </logger>
-
-  <logger name="org.springframework">
-    <level value="error"/>
-  </logger>
-
   <root>
     <priority value ="debug" />
     <appender-ref ref="console" />

@@ -25,20 +25,27 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
 import org.apache.commons.io.IOUtils;
 
-public class SilverpeasHomeResolver {
+/**
+ * This class holds all of the settings and parameters for the different applications used in the
+ * configuration of the Silverpeas portal.
+ *
+ * @author mmoquillon
+ */
+public class ConfigurationHolder {
 
-  private static final String HOME_KEY = "silverpeas.home";
-  private static final String ENV_KEY = "SILVERPEAS_HOME";
+  private static final String SILVERPEAS_HOME_PROP_KEY = "silverpeas.home";
+  private static final String SILVERPEAS_HOME_ENV_KEY = "SILVERPEAS_HOME";
+  private static final String THREADS_KEY = "threads";
   private static String silverpeasHome = null;
   private static GestionVariables configuration = null;
   private static boolean abortOnError = true;
-  private static final Console console = new Console(SilverpeasHomeResolver.class);
+  private static final Console console = new Console(ConfigurationHolder.class);
 
   static {
     try {
+      defineHome();
       configuration = loadConfiguration();
     } catch (IOException ex) {
       console.printWarning("Error loading configuration", ex);
@@ -87,19 +94,21 @@ public class SilverpeasHomeResolver {
   }
 
   private static void defineHome() {
-    if (!StringUtil.isDefined(System.getProperty(HOME_KEY)) && !StringUtil.isDefined(System.getenv(
-        ENV_KEY))) {
-      console.printError("### CANNOT FIND SILVERPEAS INSTALL LOCATION ###");
-      console.printError("please use \"-D" + HOME_KEY + "=install_location\" on the command line");
-      console.printError("or define the SILVERPEAS_HOME environment variable.");
-      if (getAbortOnError()) {
-        console.printError("### ABORTED ###");
-        System.exit(1);
-      }
-    }
-    silverpeasHome = System.getProperty(HOME_KEY);
+    silverpeasHome = System.getProperty(SILVERPEAS_HOME_PROP_KEY);
     if (!StringUtil.isDefined(silverpeasHome)) {
-      silverpeasHome = System.getenv(ENV_KEY);
+      silverpeasHome = System.getenv(SILVERPEAS_HOME_ENV_KEY);
+      if (!StringUtil.isDefined(silverpeasHome)) {
+        console.printError("### CANNOT FIND SILVERPEAS INSTALL LOCATION ###");
+        console.printError("please use \"-D" + SILVERPEAS_HOME_PROP_KEY
+            + "=install_location\" on the command line");
+        console.printError("or define the SILVERPEAS_HOME environment variable.");
+        if (getAbortOnError()) {
+          console.printError("### ABORTED ###");
+          System.exit(1);
+        }
+      } else {
+        System.setProperty(SILVERPEAS_HOME_PROP_KEY, silverpeasHome);
+      }
     }
   }
 
@@ -107,9 +116,19 @@ public class SilverpeasHomeResolver {
     return configuration.resolveAndEvalString("${SILVERPEAS_DATA_HOME}");
   }
 
+  /**
+   * Gets the maximum number of threads the executors of parallelized configuration tasks are
+   * permitted to allocate with their threads pool.
+   *
+   * @return the number of threads to use in pools.
+   */
+  public static int getMaxThreadsCount() {
+    return Integer.valueOf(System.getProperty(THREADS_KEY, "10"));
+  }
+
   private static GestionVariables loadConfiguration() throws IOException {
     Properties defaultConfig = new Properties();
-    InputStream in = SilverpeasHomeResolver.class.getResourceAsStream("/default_config.properties");
+    InputStream in = ConfigurationHolder.class.getResourceAsStream("/default_config.properties");
     try {
       defaultConfig.load(in);
     } finally {
@@ -129,6 +148,6 @@ public class SilverpeasHomeResolver {
     return new GestionVariables(config);
   }
 
-  private SilverpeasHomeResolver() {
+  private ConfigurationHolder() {
   }
 }

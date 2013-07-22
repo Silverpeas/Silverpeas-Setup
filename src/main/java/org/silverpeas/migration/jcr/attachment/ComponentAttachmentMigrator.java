@@ -33,9 +33,8 @@ import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
 import javax.jcr.ItemExistsException;
-
+import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.AttachmentService;
@@ -46,11 +45,9 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
-import org.silverpeas.util.SilverpeasHomeResolver;
+import org.silverpeas.util.ConfigurationHolder;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
-
-import org.apache.commons.dbutils.DbUtils;
 
 import static java.io.File.separatorChar;
 
@@ -69,11 +66,11 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       + "attachmentphysicalname, attachmentlogicalname, attachmenttype, attachmentsize, "
       + "instanceid, attachmentcreationdate, attachmentauthor, attachmenttitle, attachmentinfo, "
       + "xmlform FROM sb_attachment_attachmenti18n WHERE attachmentid = ? ORDER BY lang";
-  public static final String DELETE_ATTACHMENT_TRANSLATIONS
-      = "DELETE FROM sb_attachment_attachmenti18n "
+  public static final String DELETE_ATTACHMENT_TRANSLATIONS =
+      "DELETE FROM sb_attachment_attachmenti18n "
       + "WHERE attachmentid = ?";
-  public static final String DELETE_ATTACHMENT
-      = "DELETE FROM sb_attachment_attachment WHERE attachmentid = ?";
+  public static final String DELETE_ATTACHMENT =
+      "DELETE FROM sb_attachment_attachment WHERE attachmentid = ?";
   private final String componentId;
   private final AttachmentService service;
   private final Console console;
@@ -85,6 +82,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
   }
 
   protected long migrateComponent() throws SQLException, ParseException, IOException {
+    console.printMessage("Migrating component " + componentId);
+    long processStart = System.currentTimeMillis();
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
     ResultSet rs = null;
@@ -132,6 +131,10 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
       DbUtils.closeQuietly(pstmt);
       DbUtils.closeQuietly(connection);
     }
+    long processEnd = System.currentTimeMillis();
+    console.printMessage("Migrating the component " + componentId + " required the migration of "
+        + nbMigratedDocuments + " attachments in " + (processEnd - processStart) + "ms");
+    console.printMessage("");
     return nbMigratedDocuments;
   }
 
@@ -172,8 +175,8 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
         File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
             "attachmentphysicalname"));
         if (file != null) {
-          console.printMessage("Creating translation " + document.getFilename() + " for " + file.
-              getAbsolutePath());
+          console.printMessage("   => Creating translation " + document.getFilename() + " for "
+              + file.getAbsolutePath());
           service.createAttachment(document, file);
           files.add(file);
         }
@@ -190,26 +193,33 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
 
   protected void createDocument(SimpleDocument document, String context, File file) throws
       SQLException, ParseException, IOException {
-    console.printMessage("Creating document " + document.getFilename() + " for " + file.
+    console.printMessage("=> Creating document " + document.getFilename() + " for " + file.
         getAbsolutePath());
+    long processStart = System.currentTimeMillis();
+    long translationCount = 0;
     try {
       SimpleDocument result = service.createAttachment(document, file);
       Set<File> files = createTranslations(result, context);
+      translationCount = files.size();
       files.add(file);
       cleanAll(result.getOldSilverpeasId(), files);
     } catch (AttachmentException ex) {
       if (ex.getCause() instanceof ItemExistsException) {
-        console.printWarning("Document " + document.getFilename() + " for " + file.
+        console.printWarning("Attachment " + document.getFilename() + " for " + file.
             getAbsolutePath() + " seems to exists already", ex);
       } else {
         throw ex;
       }
     }
+    long processEnd = System.currentTimeMillis();
+    console.printMessage("   document  " + document.getFilename() + " with "
+        + translationCount + " translations has been created in " + (processEnd - processStart)
+        + "ms");
   }
 
   protected File getAttachmenFile(String instanceId, String context, String physicalName) throws
       IOException {
-    String baseDirectory = SilverpeasHomeResolver.getDataHome() + separatorChar + "workspaces"
+    String baseDirectory = ConfigurationHolder.getDataHome() + separatorChar + "workspaces"
         + separatorChar + instanceId;
     String contextDirectory = "";
     if (context != null) {

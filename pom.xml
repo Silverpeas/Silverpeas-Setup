@@ -187,7 +187,7 @@
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-core</artifactId>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-analyzers</artifactId>
@@ -219,7 +219,7 @@
         </excludes>
         <filtering>true</filtering>
       </resource>
-    </resources>    
+    </resources>
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>
