@@ -25,14 +25,13 @@ package org.silverpeas.migration.jcr.service.model;
 
 import java.io.Serializable;
 import java.util.Date;
-
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
 
-
 import static java.io.File.separatorChar;
+
 /**
  *
  * @author ehugonnet
@@ -61,6 +60,7 @@ public class SimpleDocument implements Serializable {
   private String nodeName;
   private String comment;
   private DocumentType documentType = DocumentType.attachment;
+  private String oldContext;
 
   public void setDocumentType(DocumentType documentType) {
     this.documentType = documentType;
@@ -70,8 +70,17 @@ public class SimpleDocument implements Serializable {
     return documentType;
   }
 
+  public String getOldContext() {
+    return oldContext;
+  }
+
+  public void setOldContext(String oldContext) {
+    this.oldContext = oldContext;
+  }
+
   /**
    * Get the value of cloneId
+   *
    * @return the value of cloneId
    */
   public String getCloneId() {
@@ -80,12 +89,12 @@ public class SimpleDocument implements Serializable {
 
   /**
    * Set the value of cloneId
+   *
    * @param cloneId new value of cloneId
    */
   public void setCloneId(String cloneId) {
     this.cloneId = cloneId;
   }
-
   private SimpleAttachment file;
 
   public SimpleDocument(SimpleDocumentPK pk, String foreignId, int order, boolean versioned,
@@ -361,7 +370,7 @@ public class SimpleDocument implements Serializable {
     return versioned;
   }
 
-  public SimpleAttachment getFile() {
+  public SimpleAttachment getAttachment() {
     return file;
   }
 
@@ -369,7 +378,7 @@ public class SimpleDocument implements Serializable {
     return this.pk;
   }
 
-  public void setFile(SimpleAttachment file) {
+  public void setAttachment(SimpleAttachment file) {
     this.file = file;
   }
 
@@ -408,6 +417,7 @@ public class SimpleDocument implements Serializable {
 
   /**
    * Full JCR path to the file node.
+   *
    * @return the full JCR path to the file node (starting with /).
    */
   public String getFullJcrContentPath() {
@@ -416,6 +426,7 @@ public class SimpleDocument implements Serializable {
 
   /**
    * Full JCR path to the document node.
+   *
    * @return the full JCR path to the document node (starting with /).
    */
   public String getFullJcrPath() {
@@ -428,6 +439,7 @@ public class SimpleDocument implements Serializable {
 
   /**
    * Path to the file stored on the filesystem.
+   *
    * @return the path to the file stored on the filesystem.
    */
   public String getAttachmentPath() {
@@ -437,6 +449,7 @@ public class SimpleDocument implements Serializable {
 
   /**
    * Path to the directory where the file is to be stored.
+   *
    * @param language the language of the document.
    * @return the path to the directory where the file is to be stored.
    */
@@ -490,6 +503,7 @@ public class SimpleDocument implements Serializable {
 
   /**
    * Returns the more recent public version of this document - null if none exists.
+   *
    * @return the more recent public version of this document - null if none exists.
    */
   public SimpleDocument getLastPublicVersion() {

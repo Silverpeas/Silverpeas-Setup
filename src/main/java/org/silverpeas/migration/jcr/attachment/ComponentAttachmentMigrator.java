@@ -43,9 +43,9 @@ import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
+import org.silverpeas.util.ConfigurationHolder;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
-import org.silverpeas.util.ConfigurationHolder;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
 
@@ -81,7 +81,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
     this.console = console;
   }
 
-  protected long migrateComponent() throws SQLException, ParseException, IOException {
+  protected long migrateComponent() throws Exception {
     console.printMessage("Migrating component " + componentId);
     long processStart = System.currentTimeMillis();
     Connection connection = getConnection();
@@ -169,7 +169,7 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
             language, rs.getString("attachmenttitle"), rs.getString("attachmentinfo"),
             rs.getLong("attachmentsize"), contentType, author, DateUtil.parse(rs.getString(
             "attachmentcreationdate")), rs.getString("xmlform"));
-        document.setFile(attachment);
+        document.setAttachment(attachment);
         document.setUpdated(attachment.getCreated());
         document.setUpdatedBy(author);
         File file = getAttachmenFile(rs.getString("instanceid"), context, rs.getString(
@@ -269,12 +269,47 @@ public class ComponentAttachmentMigrator implements Callable<Long> {
     }
   }
 
-  private Connection getConnection() throws SQLException {
+  protected Connection getConnection() throws SQLException {
     return ConnectionFactory.getConnection();
   }
 
   @Override
   public Long call() throws Exception {
     return migrateComponent();
+  }
+
+  public String getComponentId() {
+    return componentId;
+  }
+
+  public AttachmentService getService() {
+    return service;
+  }
+
+  public Console getConsole() {
+    return console;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 5;
+    hash = 73 * hash + (this.componentId != null ? this.componentId.hashCode() : 0);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final ComponentAttachmentMigrator other = (ComponentAttachmentMigrator) obj;
+    if ((this.componentId == null) ? (other.componentId != null)
+        : !this.componentId.equals(other.componentId)) {
+      return false;
+    }
+    return true;
   }
 }

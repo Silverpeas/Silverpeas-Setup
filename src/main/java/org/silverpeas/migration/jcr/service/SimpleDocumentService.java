@@ -33,10 +33,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
+import org.apache.commons.io.IOUtils;
 import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.ForeignPK;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
@@ -46,8 +45,6 @@ import org.silverpeas.migration.jcr.service.model.WAPrimaryKey;
 import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.StringUtil;
-
-import org.apache.commons.io.IOUtils;
 
 public class SimpleDocumentService implements AttachmentService {
 
@@ -63,6 +60,14 @@ public class SimpleDocumentService implements AttachmentService {
   public SimpleDocumentService() throws AttachmentException {
     repositoryManager = new RepositoryManager();
     repository = new DocumentRepository(repositoryManager);
+  }
+
+  public DocumentRepository getRepository() {
+    return repository;
+  }
+
+  public RepositoryManager getRepositoryManager() {
+    return repositoryManager;
   }
 
   /**
@@ -190,7 +195,7 @@ public class SimpleDocumentService implements AttachmentService {
       }
       boolean checkinRequired = repository.lock(session, document, owner);
       repository.updateDocument(session, document);
-      repository.addContent(session, document.getPk(), document.getFile());
+      repository.addContent(session, document.getPk(), document.getAttachment());
       repository.fillNodeName(session, document);
       SimpleDocument finalDocument = document;
       if (checkinRequired) {

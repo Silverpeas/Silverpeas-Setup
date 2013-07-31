@@ -88,7 +88,7 @@ class WysiwygDocumentMerger implements Callable<Long> {
       if (!StringUtil.isDefined(lang)) {
         lang = doc.getLanguage();
       }
-      mergedDocument.setFile(new SimpleAttachment(doc.getFilename(), lang, doc.getTitle(), doc
+      mergedDocument.setAttachment(new SimpleAttachment(doc.getFilename(), lang, doc.getTitle(), doc
           .getDescription(), doc.getSize(), doc.getContentType(), doc.getCreatedBy(), doc
           .getCreated(), doc.getXmlFormId()));
       File content = new File(doc.getAttachmentPath());
