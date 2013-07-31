@@ -94,14 +94,12 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       while (rs.next()) {
         String instanceId = rs.getString("instanceid");
         result.add(
-            new ComponentAttachmentMigrator(instanceId, service, getConsole()));
+            new AttachmentMigration(instanceId, service, getConsole()));
         message.append(instanceId).append(" ");
       }
       getConsole().printMessage(message.toString());
       getConsole().printMessage("");
       return result;
-    } catch (SQLException sqlex) {
-      throw sqlex;
     } finally {
       DbUtils.closeQuietly(rs);
       DbUtils.closeQuietly(stmt);

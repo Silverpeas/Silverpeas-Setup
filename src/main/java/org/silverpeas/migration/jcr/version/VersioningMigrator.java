@@ -35,6 +35,7 @@ import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.util.ConfigurationHolder;
+import org.silverpeas.util.StringUtil;
 
 public class VersioningMigrator extends DbBuilderDynamicPart {
 
@@ -87,8 +88,11 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
       StringBuilder message = new StringBuilder();
       while (rs.next()) {
         String instanceId = rs.getString("instanceid");
-        result.add(new ComponentDocumentMigrator(instanceId, service, getConsole()));
-        message.append(instanceId).append(" ");
+        // some times there are documents that don't belong to any component instance in Silverpeas!
+        if (StringUtil.isDefined(instanceId)) {
+          result.add(new VersionedDocumentMigration(instanceId, service, getConsole()));
+          message.append(instanceId).append(" ");
+        }
       }
       getConsole().printMessage(message.toString());
       getConsole().printMessage("");

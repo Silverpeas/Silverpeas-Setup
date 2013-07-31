@@ -113,7 +113,7 @@ class ComponentDocumentMigrator implements Callable<Long> {
           ConverterUtil.defaultLanguage, metadata.getTitle(), metadata.getDescription(), version
           .getSize(), version.getContentType(), version.getCreatedBy(), version.getCreation(),
           version.getXmlFormId());
-      document.setFile(attachment);
+      document.setAttachment(attachment);
       File file = version.getAttachment();
       document.setComment(version.getComment());
       document.setPublicDocument(version.isPublic());
@@ -158,7 +158,7 @@ class ComponentDocumentMigrator implements Callable<Long> {
     return nbMigratedDocuments;
   }
 
-  private String getDocumentVersionUUID(HistorisedDocument document, Version version) {
+  protected String getDocumentVersionUUID(HistorisedDocument document, Version version) {
     for (SimpleDocument doc : document.getHistory()) {
       if (doc.getMajorVersion() == version.getMajor() && doc.getMinorVersion() == version.getMinor()) {
         return doc.getId();
@@ -222,7 +222,13 @@ class ComponentDocumentMigrator implements Callable<Long> {
             DateUtil.parse(rs.getString("expirydate")), rs.getString("documentownerid"),
             DateUtil.parse(rs.getString("documentcheckoutdate")), rs.getString("instanceid"),
             rs.getString("foreignid"), rs.getLong("documentid"), rs.getString("documentname"));
-        documents.add(fillWithVersion(metadata));
+        OldDocumentMetadata aDocument = fillWithVersion(metadata);
+        if (aDocument.getHistory().isEmpty()) {
+          console.printWarning("The document " + metadata
+              + " doesn't belong to any component instance! So it is not taken into account");
+        } else {
+          documents.add(aDocument);
+        }
       }
     } catch (SQLException sqlex) {
       throw sqlex;
@@ -250,7 +256,17 @@ class ComponentDocumentMigrator implements Callable<Long> {
             rs.getString("versionphysicalname"), rs.getString("versionmimetype"),
             rs.getLong("versionsize"), rs.getString("xmlform"), rs.getString("versioncomments"),
             document.getInstanceId());
-        document.addVersion(version);
+        // the file related to this version
+        File attachment = version.getAttachment();
+        // some times, a version of the document can exist in database but references actually no
+        // attachements!
+        if (attachment != null && attachment.exists() && attachment.isFile() && attachment.length()
+            > 0L) {
+          document.addVersion(version);
+        } else {
+          console.printWarning("The file refered by " + version
+              + " doesn't exist in the filesystem! So, it is not taken into account");
+        }
       }
     } catch (SQLException sqlex) {
       throw sqlex;
@@ -262,7 +278,7 @@ class ComponentDocumentMigrator implements Callable<Long> {
     return document;
   }
 
-  private void createDocumentPermalink(HistorisedDocument document, OldDocumentMetadata metadata)
+  protected void createDocumentPermalink(HistorisedDocument document, OldDocumentMetadata metadata)
       throws SQLException {
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
@@ -281,7 +297,7 @@ class ComponentDocumentMigrator implements Callable<Long> {
     }
   }
 
-  private void createVersionPermalink(String uuid, int versionId) throws SQLException {
+  protected void createVersionPermalink(String uuid, int versionId) throws SQLException {
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
     try {
@@ -297,5 +313,17 @@ class ComponentDocumentMigrator implements Callable<Long> {
       DbUtils.closeQuietly(pstmt);
       DbUtils.closeQuietly(connection);
     }
+  }
+
+  protected String getComponentId() {
+    return componentId;
+  }
+
+  protected AttachmentService getService() {
+    return service;
+  }
+
+  protected Console getConsole() {
+    return console;
   }
 }
