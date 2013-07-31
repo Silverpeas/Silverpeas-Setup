@@ -43,6 +43,8 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.StringUtil;
 
+import static javax.jcr.Property.JCR_FROZEN_PRIMARY_TYPE;
+import static javax.jcr.Property.JCR_LAST_MODIFIED_BY;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
 
 import static org.silverpeas.migration.jcr.service.JcrConstants.*;
@@ -181,8 +183,10 @@ public class DocumentConverter extends AbstractJcrConverter {
 
   public void fillNode(SimpleDocument document, Node documentNode) throws RepositoryException {
     setDocumentNodeProperties(document, documentNode);
-    Node attachmentNode = getAttachmentNode(document.getAttachment().getNodeName(), documentNode);
-    attachmentConverter.fillNode(document.getAttachment(), attachmentNode);
+    if (document.getAttachment() != null) {
+      Node attachmentNode = getAttachmentNode(document.getAttachment().getNodeName(), documentNode);
+      attachmentConverter.fillNode(document.getAttachment(), attachmentNode);
+    }
   }
 
   public void setDocumentNodeProperties(SimpleDocument document, Node documentNode) throws

@@ -32,35 +32,34 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.IOUtils;
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.service.AttachmentException;
-import org.silverpeas.migration.jcr.service.AttachmentService;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.DocumentMigration;
 import org.silverpeas.migration.jcr.service.RepositoryManager;
-import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.repository.DocumentConverter;
 import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
+import org.silverpeas.util.ConfigurationHolder;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
 
-import static org.silverpeas.migration.jcr.attachment.ComponentAttachmentMigrator.SELECT_ATTACHMENTS;
-import static org.silverpeas.migration.jcr.attachment.ComponentAttachmentMigrator.SELECT_ATTACHMENT_TRANSLATION;
-import static org.silverpeas.migration.jcr.service.JcrConstants.SLV_PROPERTY_OLD_ID;
-import static org.silverpeas.migration.jcr.service.JcrConstants.SLV_SIMPLE_DOCUMENT;
+import static java.io.File.separatorChar;
 
 /**
  * An optimized alternative to the ComponentAttachmentMigrator class for migrating in the JCR all
@@ -68,18 +67,38 @@ import static org.silverpeas.migration.jcr.service.JcrConstants.SLV_SIMPLE_DOCUM
  *
  * @author mmoquillon
  */
-public class AttachmentMigration extends ComponentAttachmentMigrator {
+public class AttachmentMigration implements Callable<Long> {
 
+  public static final String SELECT_ATTACHMENTS = "SELECT attachmentid, attachmentphysicalname, "
+      + "attachmentlogicalname, attachmentdescription, attachmenttype, attachmentsize, "
+      + "attachmentcontext, attachmentforeignkey, instanceid, attachmentcreationdate, "
+      + "attachmentauthor, attachmenttitle, attachmentinfo, attachmentordernum, workerid, cloneid, "
+      + "lang , reservationdate, alertdate, expirydate, xmlform FROM sb_attachment_attachment "
+      + "WHERE instanceid = ? ORDER BY attachmentforeignkey, attachmentphysicalname, attachmentordernum";
+  public static final String SELECT_ATTACHMENT_TRANSLATION = "SELECT id, attachmentid, lang, "
+      + "attachmentphysicalname, attachmentlogicalname, attachmenttype, attachmentsize, "
+      + "instanceid, attachmentcreationdate, attachmentauthor, attachmenttitle, attachmentinfo, "
+      + "xmlform FROM sb_attachment_attachmenti18n WHERE attachmentid = ? ORDER BY lang";
+  public static final String DELETE_ATTACHMENT_TRANSLATIONS =
+      "DELETE FROM sb_attachment_attachmenti18n "
+      + "WHERE attachmentid = ?";
+  public static final String DELETE_ATTACHMENT =
+      "DELETE FROM sb_attachment_attachment WHERE attachmentid = ?";
+  private final String componentId;
+  private final RepositoryManager repositoryManager;
+  private final DocumentRepository documentRepository;
+  private final Console console;
   private static final DocumentConverter converter = new DocumentConverter();
 
-  public AttachmentMigration(String instanceId, AttachmentService service, Console console) {
-    super(instanceId, service, console);
+  public AttachmentMigration(String instanceId, RepositoryManager repositoryManager, Console console) {
+    this.componentId = instanceId;
+    this.repositoryManager = repositoryManager;
+    this.documentRepository = new DocumentRepository(repositoryManager);
+    this.console = console;
   }
 
-  @Override
   protected long migrateComponent() throws Exception {
-    Console console = getConsole();
-    console.printMessage("Migrating component " + getComponentId());
+    console.printMessage("Migrating component " + componentId);
     long processStart = System.currentTimeMillis();
     long migratedDocumentCount = 0;
     final Session session = openJCRSession();
@@ -91,10 +110,10 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
         }
       });
     } finally {
-      session.logout();
+      repositoryManager.logout(session);
     }
     long processEnd = System.currentTimeMillis();
-    console.printMessage("Migrating the component " + getComponentId()
+    console.printMessage("Migrating the component " + componentId
         + " required the migration of "
         + migratedDocumentCount + " documents in " + (processEnd - processStart) + "ms");
     console.printMessage("");
@@ -103,7 +122,7 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
 
   protected long migrateDocument(Session session, SimpleDocument document) throws Exception {
     File attachment = document.getAttachment().getFile();
-    getConsole().printMessage("=> Creating document " + document.getFilename() + " for "
+    console.printMessage("=> Creating document " + document.getFilename() + " for "
         + attachment.getAbsolutePath());
     long processStart = System.currentTimeMillis();
     long translationCount = 0;
@@ -115,14 +134,14 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
       cleanAll(document.getOldSilverpeasId(), files);
     } catch (AttachmentException ex) {
       if (ex.getCause() instanceof ItemExistsException) {
-        getConsole().printWarning("Attachment " + document.getFilename() + " for " + attachment.
+        console.printWarning("Attachment " + document.getFilename() + " for " + attachment.
             getAbsolutePath() + " seems to exists already", ex);
       } else {
         throw ex;
       }
     }
     long processEnd = System.currentTimeMillis();
-    getConsole().printMessage("   document  " + document.getFilename() + " with "
+    console.printMessage("   document  " + document.getFilename() + " with "
         + translationCount + " translations has been created in " + (processEnd - processStart)
         + "ms");
     return 1;
@@ -135,7 +154,7 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
       @Override
       public long migrate(SimpleDocument document) throws Exception {
         File file = document.getAttachment().getFile();
-        getConsole().printMessage("   => Creating translation " + document.getFilename() + " in "
+        console.printMessage("   => Creating translation " + document.getFilename() + " in "
             + document.getAttachment().getLanguage() + " for " + file.getAbsolutePath());
         createTranslationInJCR(session, document);
         translationFiles.add(file);
@@ -147,29 +166,7 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
 
   private void createDocumentNodeInJCR(Session session, SimpleDocument document) throws IOException {
     try {
-      DocumentRepository documentRepository = getDocumentRepository();
-      // set the order of this document relative to others for the given contribution to which
-      // it belongs. (The document is an attachment of the contribution.) Indeed, info about some
-      // non existing documents for a given contribution can exist in database, so their order
-      // hasn't to be taken for true.
-      SimpleDocument lastDocument = documentRepository.findLast(session, document.getInstanceId(),
-          document.getForeignId());
-      if ((null != lastDocument) && (0 >= document.getOrder())) {
-        document.setOrder(lastDocument.getOrder() + 1);
-      }
-
-      // get/create the parent nodes to the document: /<instance id>/<document type>
-      Node targetInstanceNode = converter.getFolder(session.getRootNode(), document.
-          getInstanceId());
-      Node docsNode = converter.getFolder(targetInstanceNode, document.getFolder());
-      // add the node representing the document as a versioned one, child of the above node
-      // (the oldSilverpeasId is set at node name computation)
-      Node documentNode = docsNode.addNode(document.computeNodeName(), SLV_SIMPLE_DOCUMENT);
-      // set the properties of the node and create the attachment node as a child of the node above
-      // and set also its properties
-      converter.fillNode(document, documentNode);
-      document.setId(documentNode.getIdentifier());
-      document.setOldSilverpeasId(documentNode.getProperty(SLV_PROPERTY_OLD_ID).getLong());
+      documentRepository.createDocument(session, document);
 
       // now copy the content of the file to the new location.
       copyContent(document);
@@ -212,7 +209,7 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
     ResultSet result = null;
     try {
       statement = connection.prepareStatement(SELECT_ATTACHMENTS);
-      statement.setString(1, getComponentId());
+      statement.setString(1, componentId);
       result = statement.executeQuery();
       while (result.next()) {
         String instanceId = result.getString("instanceid");
@@ -258,7 +255,7 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
           document.setUpdatedBy(author);
           migratedDocumentCount += migration.migrate(document);
         } else {
-          getConsole().printWarning("The file refered by " + attachment
+          console.printWarning("The file refered by " + attachment
               + " doesn't exist in the filesystem! So, it is not taken into account");
         }
       }
@@ -317,9 +314,70 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
     }
   }
 
+  protected File getAttachmenFile(String instanceId, String context, String physicalName) throws
+      IOException {
+    String baseDirectory = ConfigurationHolder.getDataHome() + separatorChar + "workspaces"
+        + separatorChar + instanceId;
+    String contextDirectory = "";
+    if (context != null) {
+      contextDirectory = context;
+    }
+    String attachmentDirectory = (baseDirectory + separatorChar + "Attachment" + separatorChar
+        + contextDirectory).replace('/', separatorChar);
+    String directory = (baseDirectory + separatorChar + contextDirectory)
+        .replace('/', separatorChar);
+    File file = new File(attachmentDirectory, physicalName);
+    if (!file.exists() || !file.isFile()) {
+      file = new File(directory, physicalName);
+      if (!file.exists() || !file.isFile()) {
+        file = null;
+      }
+    }
+    if (file == null) {
+      console.printError("File " + physicalName + " not found in " + attachmentDirectory + " or in "
+          + directory);
+    }
+    return file;
+  }
+
+  protected void cleanAll(long oldSilverpeasId, Set<File> files) throws SQLException {
+    Connection connection = getConnection();
+    PreparedStatement deleteTranslations = null;
+    PreparedStatement deleteAttachment = null;
+    try {
+      connection.setAutoCommit(false);
+      deleteTranslations = connection.prepareStatement(DELETE_ATTACHMENT_TRANSLATIONS);
+      deleteTranslations.setLong(1, oldSilverpeasId);
+      deleteTranslations.executeUpdate();
+      DbUtils.closeQuietly(deleteTranslations);
+      deleteAttachment = connection.prepareStatement(DELETE_ATTACHMENT);
+      deleteAttachment.setLong(1, oldSilverpeasId);
+      deleteAttachment.executeUpdate();
+      for (File file : files) {
+        ConverterUtil.deleteFile(file);
+      }
+      connection.commit();
+    } catch (SQLException ex) {
+      throw ex;
+    } finally {
+      DbUtils.closeQuietly(deleteTranslations);
+      DbUtils.closeQuietly(deleteAttachment);
+      DbUtils.closeQuietly(connection);
+    }
+  }
+
+  protected Connection getConnection() throws SQLException {
+    return ConnectionFactory.getConnection();
+  }
+
+  @Override
+  public Long call() throws Exception {
+    return migrateComponent();
+  }
+
   private Session openJCRSession() {
     try {
-      return getRepositoryManager().getSession();
+      return repositoryManager.getSession();
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     }
@@ -329,21 +387,11 @@ public class AttachmentMigration extends ComponentAttachmentMigrator {
     InputStream in = null;
     try {
       in = new BufferedInputStream(new FileInputStream(document.getAttachment().getFile()));
-      getDocumentRepository().storeContent(document, in);
+      documentRepository.storeContent(document, in);
     } catch (FileNotFoundException ex) {
       throw new AttachmentException(ex);
     } finally {
       IOUtils.closeQuietly(in);
     }
-  }
-
-  private RepositoryManager getRepositoryManager() {
-    SimpleDocumentService serviceImpl = (SimpleDocumentService) getService();
-    return serviceImpl.getRepositoryManager();
-  }
-
-  private DocumentRepository getDocumentRepository() {
-    SimpleDocumentService serviceImpl = (SimpleDocumentService) getService();
-    return serviceImpl.getRepository();
   }
 }

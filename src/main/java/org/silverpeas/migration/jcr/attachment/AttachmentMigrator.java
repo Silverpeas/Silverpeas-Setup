@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.migration.jcr.service.RepositoryManager;
 import org.silverpeas.util.ConfigurationHolder;
 
 public class AttachmentMigrator extends DbBuilderDynamicPart {
@@ -46,7 +46,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
     threadCount = ConfigurationHolder.getMaxThreadsCount();
     executor = Executors.newFixedThreadPool(threadCount);
   }
-  private final SimpleDocumentService service;
+  private final RepositoryManager repositoryManager;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
       + "sb_attachment_attachment ORDER BY instanceid";
   public static final String SELECT_MAX_ID =
@@ -55,7 +55,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       "INSERT INTO uniqueid (maxid, tablename) VALUES (?, 'sb_simple_document')";
 
   public AttachmentMigrator() {
-    this.service = new SimpleDocumentService();
+    this.repositoryManager = new RepositoryManager();
   }
 
   public void migrateAttachments() throws Exception {
@@ -63,7 +63,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
         + threadCount + " threads");
     updateUniqueId();
     long totalNumberOfMigratedFiles = 0L;
-    List<ComponentAttachmentMigrator> migrators = buildComponentMigrators();
+    List<AttachmentMigration> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
     try {
       for (Future<Long> nbOfMigratedDocuments : result) {
@@ -79,11 +79,11 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
     }
     getConsole().printMessage("Nb of migrated documents : " + totalNumberOfMigratedFiles);
     getConsole().printMessage("*************************************************************");
-    this.service.shutdown();
+    this.repositoryManager.shutdown();
   }
 
-  protected List<ComponentAttachmentMigrator> buildComponentMigrators() throws SQLException {
-    List<ComponentAttachmentMigrator> result = new ArrayList<ComponentAttachmentMigrator>(500);
+  protected List<AttachmentMigration> buildComponentMigrators() throws SQLException {
+    List<AttachmentMigration> result = new ArrayList<AttachmentMigration>(500);
     Statement stmt = null;
     ResultSet rs = null;
     getConsole().printMessage("All components to be migrated : ");
@@ -94,7 +94,7 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       while (rs.next()) {
         String instanceId = rs.getString("instanceid");
         result.add(
-            new AttachmentMigration(instanceId, service, getConsole()));
+            new AttachmentMigration(instanceId, repositoryManager, getConsole()));
         message.append(instanceId).append(" ");
       }
       getConsole().printMessage(message.toString());

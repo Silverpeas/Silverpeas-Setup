@@ -29,19 +29,24 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.version.VersionManager;
+import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
 import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.RepositoryManager;
-import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.HistorisedDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
@@ -51,11 +56,8 @@ import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
 import org.silverpeas.migration.jcr.version.model.OldDocumentMetadata;
 import org.silverpeas.migration.jcr.version.model.Version;
 import org.silverpeas.util.Console;
+import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
-
-import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
-
-import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
 /**
  * An optimized alternative to the ComponentDocumentMigrator class for migrating in the JCR all the
@@ -63,19 +65,38 @@ import static org.silverpeas.migration.jcr.service.JcrConstants.*;
  *
  * @author mmoquillon
  */
-class VersionedDocumentMigration extends ComponentDocumentMigrator {
+class VersionedDocumentMigration implements Callable<Long> {
 
+  public static final String SELECT_DOCUMENTS = "SELECT documentid, documentname, "
+      + "documentdescription, documentstatus, documentownerid, documentcheckoutdate, documentinfo, "
+      + "foreignid, instanceid, typeworklist, currentworklistorder, alertdate, expirydate, "
+      + "documentordernum FROM sb_version_document WHERE instanceid = ? ORDER BY foreignid, "
+      + "documentordernum";
+  public static final String SELECT_DOCUMENT_VERSION = "SELECT versionid, documentid, "
+      + "versionmajornumber, versionminornumber, versionauthorid, versioncreationdate, "
+      + "versioncomments, versiontype,  versionstatus, versionphysicalname, versionlogicalname, "
+      + "versionmimetype, versionsize, instanceid, xmlform FROM sb_version_version WHERE "
+      + "documentid = ? ORDER BY versionmajornumber, versionminornumber";
+  public static final String DELETE_DOCUMENT_VERSIONS =
+      "DELETE FROM sb_version_version WHERE documentid = ?";
+  public static final String DELETE_DOCUMENT =
+      "DELETE FROM sb_version_document WHERE documentid = ?";
+  private final String componentId;
+  private final RepositoryManager repositoryManager;
+  private final DocumentRepository documentRepository;
+  private final Console console;
   private static final DocumentConverter converter = new DocumentConverter();
 
-  VersionedDocumentMigration(String instanceId, SimpleDocumentService service, Console console) {
-    super(instanceId, service, console);
+  VersionedDocumentMigration(String instanceId, RepositoryManager repositoryManager, Console console) {
+    this.componentId = instanceId;
+    this.repositoryManager = repositoryManager;
+    this.documentRepository = new DocumentRepository(repositoryManager);
+    this.console = console;
   }
 
-  @Override
   protected long migrateComponent() throws SQLException, ParseException, IOException {
     long processStart = System.currentTimeMillis();
-    Console console = getConsole();
-    console.printMessage("Migrating component " + getComponentId());
+    console.printMessage("Migrating component " + componentId);
     long migratedDocumentCount = 0;
     List<OldDocumentMetadata> documents = listAllDocuments();
     Session session = openJCRSession();
@@ -84,10 +105,10 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
         migratedDocumentCount += migrateAllDocumentVersions(session, document);
       }
     } finally {
-      session.logout();
+      repositoryManager.logout(session);
     }
     long processEnd = System.currentTimeMillis();
-    console.printMessage("Migrating the component " + getComponentId()
+    console.printMessage("Migrating the component " + componentId
         + " required the migration of "
         + migratedDocumentCount + " documents in " + (processEnd - processStart) + "ms");
     console.printMessage("");
@@ -97,7 +118,6 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
 
   protected long migrateAllDocumentVersions(Session session, OldDocumentMetadata metadata) throws
       SQLException, ParseException, IOException {
-    Console console = getConsole();
     console.printMessage("=> Creating document for " + metadata.getTitle() + " with " + metadata
         .getHistory().size() + " versions");
     long processStart = System.currentTimeMillis();
@@ -148,41 +168,10 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
     document.setUpdatedBy(version.getCreatedBy());
   }
 
-  private RepositoryManager getRepositoryManager() {
-    SimpleDocumentService serviceImpl = (SimpleDocumentService) getService();
-    return serviceImpl.getRepositoryManager();
-  }
-
-  private DocumentRepository getDocumentRepository() {
-    SimpleDocumentService serviceImpl = (SimpleDocumentService) getService();
-    return serviceImpl.getRepository();
-  }
-
   private void createDocumentNodeInJCR(Session session, HistorisedDocument document) {
     try {
-      DocumentRepository documentRepository = getDocumentRepository();
-      // set the order of this document relative to others for the given contribution to which
-      // it belongs. (The document is an attachment of the contribution.) Indeed, info about some
-      // non existing documents for a given contribution can exist in database, so their order
-      // hasn't to be taken for true.
-      SimpleDocument lastDocument = documentRepository.findLast(session, document.getInstanceId(),
-          document.getForeignId());
-      if ((null != lastDocument) && (0 >= document.getOrder())) {
-        document.setOrder(lastDocument.getOrder() + 1);
-      }
-
-      // get/create the parent nodes to the document: /<instance id>/attachments
-      Node targetInstanceNode = converter.getFolder(session.getRootNode(), document.
-          getInstanceId());
-      Node docsNode = converter.getFolder(targetInstanceNode, document.getFolder());
-      // add the node representing the document as a versioned one, child of the above node
-      // (the oldSilverpeasId is set at node name computation)
-      Node documentNode = docsNode.addNode(document.computeNodeName(), SLV_SIMPLE_DOCUMENT);
-      converter.setDocumentNodeProperties(document, documentNode);
-      documentNode.addMixin(MIX_SIMPLE_VERSIONABLE);
-      document.setId(documentNode.getIdentifier());
-      document.setOldSilverpeasId(documentNode.getProperty(SLV_PROPERTY_OLD_ID).getLong());
-
+      // create the document node in the JCR
+      documentRepository.createDocument(session, document);
       // save the created node(s) in the JCR
       session.save();
     } catch (RepositoryException ex) {
@@ -193,34 +182,6 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
   private void createVersionNodeInJCR(Session session, HistorisedDocument document)
       throws IOException {
     try {
-      // checkout the document node to apply some changes on it
-      Node documentNode = session.getNodeByIdentifier(document.getId());
-      if (!documentNode.isCheckedOut()) {
-        session.getWorkspace().getVersionManager().checkout(documentNode.getPath());
-      }
-
-      // set the last owner of the attachment to the document node, who is the author of this
-      // attachment version.
-      String owner = document.getEditedBy();
-      if (!StringUtil.isDefined(owner)) {
-        owner = document.getUpdatedBy();
-      }
-      converter.addStringProperty(documentNode, SLV_PROPERTY_OWNER, owner);
-
-      // set the last changes carried by this version. If there is no one already attachment node
-      // for the attachment, then create it as a child of the document node.
-      converter.fillNode(document, documentNode);
-
-      // create a version node for the current attachment version
-      VersionManager versionManager = documentNode.getSession().getWorkspace().getVersionManager();
-      String versionLabel = converter.updateVersion(documentNode, document.getLanguage(), document.
-          isPublic());
-      session.save();
-      javax.jcr.version.Version lastVersion = versionManager.checkin(documentNode.getPath());
-      lastVersion.getContainingHistory().addVersionLabel(lastVersion.getName(), versionLabel, false);
-      Node versionNode = converter.getCurrentNodeForVersion(lastVersion);
-      document.getHistory().add(converter.convertNode(versionNode, document.getLanguage()));
-
       // get the location, in the filesystem, of the last version if any to duplicate the content
       // of this directory later
       File previousVersionDirectory = null;
@@ -229,18 +190,30 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
         previousVersionDirectory = new File(path).getParentFile();
       }
 
-      // update the version of the document.
-      document.setMajorVersion(converter.getIntProperty(documentNode, SLV_PROPERTY_MAJOR));
-      document.setMinorVersion(converter.getIntProperty(documentNode, SLV_PROPERTY_MINOR));
+      // set the last owner of the attachment to the document node, who is the author of this
+      // attachment version.
+      String owner = document.getEditedBy();
+      if (!StringUtil.isDefined(owner)) {
+        owner = document.getUpdatedBy();
+      }
+      // lock the document node for update. The new owner is set as a node property.
+      documentRepository.lock(session, document, owner);
+
+      // create a version node for the current attachment version. If there is no one already
+      // attachment node for the attachment, then create it as a child of the document node.
+      Node versionNode = documentRepository.unlock(session, document);
+      document.getHistory().add(converter.convertNode(versionNode, document.getLanguage()));
 
       // now create the file at the location corresponding to the current version in the filesystem,
       copyContent(document);
 
-      // duplicate the content of the previous version into the location of the new one.
-      String path = document.getDirectoryPath(document.getLanguage()).replace('/',
-          File.separatorChar);
-      File currentVersionDirectory = new File(path).getParentFile();
-      duplicateContents(previousVersionDirectory, currentVersionDirectory);
+      if (previousVersionDirectory != null) {
+        // duplicate the content of the previous version into the location of the new one.
+        String path = document.getDirectoryPath(document.getLanguage()).replace('/',
+            File.separatorChar);
+        File currentVersionDirectory = new File(path).getParentFile();
+        duplicateContents(previousVersionDirectory, currentVersionDirectory);
+      }
 
       // save the change in the JCR.
       session.save();
@@ -264,7 +237,7 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
     document.setAttachment(attachment);
     setVersioningAttributes(document, version);
     if (!StringUtil.isDefined(version.getCreatedBy())) {
-      getConsole().printWarning("We have a null id for the author of document " + document
+      console.printWarning("We have a null id for the author of document " + document
           + " and version " + metadata);
     }
     createVersionNodeInJCR(session, document);
@@ -272,7 +245,7 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
 
   private Session openJCRSession() {
     try {
-      return getRepositoryManager().getSession();
+      return repositoryManager.getSession();
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     }
@@ -282,7 +255,7 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
     InputStream in = null;
     try {
       in = new BufferedInputStream(new FileInputStream(document.getAttachment().getFile()));
-      getDocumentRepository().storeContent(document, in);
+      documentRepository.storeContent(document, in);
     } catch (FileNotFoundException ex) {
       throw new AttachmentException(ex);
     } finally {
@@ -304,5 +277,166 @@ class VersionedDocumentMigration extends ComponentDocumentMigrator {
         FileUtils.copyDirectory(langDir, targetLangDir);
       }
     }
+  }
+
+  protected String getDocumentVersionUUID(HistorisedDocument document, Version version) {
+    for (SimpleDocument doc : document.getHistory()) {
+      if (doc.getMajorVersion() == version.getMajor() && doc.getMinorVersion() == version.getMinor()) {
+        return doc.getId();
+      }
+    }
+    return document.getId();
+  }
+
+  protected void cleanAll(OldDocumentMetadata metadata) throws SQLException {
+    Connection connection = getConnection();
+    connection.setAutoCommit(false);
+    PreparedStatement deleteTranslations = null;
+    PreparedStatement deleteAttachment = null;
+    try {
+      deleteTranslations = connection.prepareStatement(DELETE_DOCUMENT_VERSIONS);
+      deleteTranslations.setLong(1, metadata.getOldSilverpeasId());
+      deleteTranslations.executeUpdate();
+      DbUtils.closeQuietly(deleteTranslations);
+      deleteAttachment = connection.prepareStatement(DELETE_DOCUMENT);
+      deleteAttachment.setLong(1, metadata.getOldSilverpeasId());
+      deleteAttachment.executeUpdate();
+      connection.commit();
+    } catch (SQLException ex) {
+      throw ex;
+    } finally {
+      DbUtils.closeQuietly(deleteTranslations);
+      DbUtils.closeQuietly(deleteAttachment);
+      DbUtils.closeQuietly(connection);
+    }
+    for (Version version : metadata.getHistory()) {
+      try {
+        File file = version.getAttachment();
+        if (file != null) {
+          ConverterUtil.deleteFile(file);
+        }
+      } catch (IOException ioex) {
+        console.printError("Error deleting file", ioex);
+      }
+    }
+  }
+
+  @Override
+  public Long call() throws Exception {
+    console.printMessage("Migrating component " + componentId);
+    return migrateComponent();
+  }
+
+  protected List<OldDocumentMetadata> listAllDocuments() throws ParseException, IOException,
+      SQLException {
+    Connection connection = getConnection();
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    List<OldDocumentMetadata> documents = new ArrayList<OldDocumentMetadata>(500);
+    try {
+      pstmt = connection.prepareStatement(SELECT_DOCUMENTS);
+      pstmt.setString(1, componentId);
+      rs = pstmt.executeQuery();
+      while (rs.next()) {
+        OldDocumentMetadata metadata = new OldDocumentMetadata(rs.getInt("documentordernum"),
+            rs.getString("documentdescription"), DateUtil.parse(rs.getString("alertdate")),
+            DateUtil.parse(rs.getString("expirydate")), rs.getString("documentownerid"),
+            DateUtil.parse(rs.getString("documentcheckoutdate")), rs.getString("instanceid"),
+            rs.getString("foreignid"), rs.getLong("documentid"), rs.getString("documentname"));
+        OldDocumentMetadata aDocument = fillWithVersion(metadata);
+        if (aDocument.getHistory().isEmpty()) {
+          console.printWarning("The document " + metadata
+              + " doesn't belong to any component instance! So it is not taken into account");
+        } else {
+          documents.add(aDocument);
+        }
+      }
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(pstmt);
+      DbUtils.closeQuietly(connection);
+    }
+    return documents;
+  }
+
+  protected OldDocumentMetadata fillWithVersion(OldDocumentMetadata document) throws ParseException,
+      IOException, SQLException {
+    Connection connection = getConnection();
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    try {
+      pstmt = connection.prepareStatement(SELECT_DOCUMENT_VERSION);
+      pstmt.setLong(1, document.getOldSilverpeasId());
+      rs = pstmt.executeQuery();
+      while (rs.next()) {
+        Version version = new Version(rs.getInt("versionid"), rs.getInt("versionminornumber"),
+            rs.getInt("versionmajornumber"), DateUtil.parse(rs.getString("versioncreationdate")),
+            rs.getString("versionauthorid"), rs.getString("versionlogicalname"),
+            rs.getString("versionphysicalname"), rs.getString("versionmimetype"),
+            rs.getLong("versionsize"), rs.getString("xmlform"), rs.getString("versioncomments"),
+            document.getInstanceId());
+        // the file related to this version
+        File attachment = version.getAttachment();
+        // some times, a version of the document can exist in database but references actually no
+        // attachements!
+        if (attachment != null && attachment.exists() && attachment.isFile() && attachment.length()
+            > 0L) {
+          document.addVersion(version);
+        } else {
+          console.printWarning("The file refered by " + version
+              + " doesn't exist in the filesystem! So, it is not taken into account");
+        }
+      }
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(pstmt);
+      DbUtils.closeQuietly(connection);
+    }
+    return document;
+  }
+
+  protected void createDocumentPermalink(HistorisedDocument document, OldDocumentMetadata metadata)
+      throws SQLException {
+    Connection connection = getConnection();
+    PreparedStatement pstmt = null;
+    try {
+      pstmt = connection.prepareStatement(
+          "INSERT INTO permalinks_document (documentId, documentUuid) VALUES( ?, ?)");
+      pstmt.setLong(1, metadata.getOldSilverpeasId());
+      pstmt.setString(2, document.getId());
+      pstmt.executeUpdate();
+      connection.commit();
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(pstmt);
+      DbUtils.closeQuietly(connection);
+    }
+  }
+
+  protected void createVersionPermalink(String uuid, int versionId) throws SQLException {
+    Connection connection = getConnection();
+    PreparedStatement pstmt = null;
+    try {
+      pstmt = connection.prepareStatement(
+          "INSERT INTO permalinks_version (versionId, versionUuid) VALUES( ?, ?)");
+      pstmt.setLong(1, versionId);
+      pstmt.setString(2, uuid);
+      pstmt.executeUpdate();
+      connection.commit();
+    } catch (SQLException sqlex) {
+      throw sqlex;
+    } finally {
+      DbUtils.closeQuietly(pstmt);
+      DbUtils.closeQuietly(connection);
+    }
+  }
+
+  private Connection getConnection() throws SQLException {
+    return ConnectionFactory.getConnection();
   }
 }

@@ -41,7 +41,7 @@ public class HistorisedDocument extends SimpleDocument {
   }
 
   public HistorisedDocument() {
-    super(new SimpleDocumentPK(null), null, 0, true, new SimpleAttachment());
+    super(new SimpleDocumentPK(null), null, 0, true, null);
   }
 
   public HistorisedDocument(SimpleDocument doc) {
