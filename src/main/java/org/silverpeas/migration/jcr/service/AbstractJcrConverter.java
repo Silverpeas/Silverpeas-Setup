@@ -37,7 +37,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Binary;
 import javax.jcr.ItemNotFoundException;
@@ -50,14 +49,14 @@ import javax.jcr.lock.LockException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionException;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.jackrabbit.JcrConstants;
-
 import org.silverpeas.util.file.FileUtil;
+
 import static javax.jcr.Property.*;
+
 import static org.silverpeas.migration.jcr.service.JcrConstants.NT_FOLDER;
 import static org.silverpeas.migration.jcr.service.JcrConstants.SLV_PROPERTY_NAME;
 
@@ -68,13 +67,14 @@ public abstract class AbstractJcrConverter {
 
   /**
    * Return the property value as String for a JCR Node. If the property doesn't exist return null.
+   *
    * @param node the node whose property is required.
    * @param propertyName the name of the property required.
    * @return the String value of the property - null if the property doesn't exist.
    * @throws RepositoryException
    * @throws ValueFormatException
    */
-  protected String getStringProperty(Node node, String propertyName)
+  public String getStringProperty(Node node, String propertyName)
       throws ValueFormatException, RepositoryException {
     if (node.hasProperty(propertyName)) {
       return node.getProperty(propertyName).getString();
@@ -85,6 +85,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Compute the componentId corresponding to the specified node by checking the name of the first
    * Ancestor.
+   *
    * @param node the node whose componentId is required.
    * @return the componentId of the specified node.
    * @throws ItemNotFoundException
@@ -99,6 +100,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Defines the value of a JCR Node's property. If the specified value is null then the
    * corresponding property is removed from the Node.
+   *
    * @param node the node whose property is being set.
    * @param propertyName the name of the property being set.
    * @param value the value being set. If it is null then the property is removed.
@@ -123,6 +125,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Defines the Calendar value of a JCR Node's property. If the specified value is null then the
    * corresponding property is removed from the Node.
+   *
    * @param node the node whose property is being set.
    * @param propertyName the name of the property being set.
    * @param value the value being set. If it is null then the property is removed.
@@ -150,6 +153,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Defines the Calendar value of a JCR Node's property. If the specified value is null then the
    * corresponding property is removed from the Node.
+   *
    * @param node the node whose property is being set.
    * @param propertyName the name of the property being set.
    * @param value the value being set. If it is null then the property is removed.
@@ -175,6 +179,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Return the property value as Calendar for a JCR Node. If the property doesn't exist return
    * null.
+   *
    * @param node the node whose property is required.
    * @param propertyName the name of the property required.
    * @return the Calendar value of the property - null if the property doesn't exist.
@@ -192,6 +197,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Return the property value as java.util.Date for a JCR Node. If the property doesn't exist
    * return null.
+   *
    * @param node the node whose property is required.
    * @param propertyName the name of the property required.
    * @return the java.util.Date value of the property - null if the property doesn't exist.
@@ -208,13 +214,14 @@ public abstract class AbstractJcrConverter {
 
   /**
    * Return the property value as an int for a JCR Node. If the property doesn't exist return 0.
+   *
    * @param node the node whose property is required.
    * @param propertyName the name of the property required.
    * @return the int value of the property - 0 if the property doesn't exist.
    * @throws RepositoryException
    * @throws ValueFormatException
    */
-  protected int getIntProperty(Node node, String propertyName) throws ValueFormatException,
+  public int getIntProperty(Node node, String propertyName) throws ValueFormatException,
       RepositoryException {
     if (node.hasProperty(propertyName)) {
       return Long.valueOf(node.getProperty(propertyName).getLong()).intValue();
@@ -225,6 +232,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Return the property value as a boolean for a JCR Node. If the property doesn't exist return
    * false.
+   *
    * @param node the node whose property is required.
    * @param propertyName the name of the property required.
    * @return the boolean value of the property - false if the property doesn't exist.
@@ -241,6 +249,7 @@ public abstract class AbstractJcrConverter {
 
   /**
    * Return the property value as an long for a JCR Node. If the property doesn't exist return 0.
+   *
    * @param node the node whose property is required.
    * @param propertyName the name of the property required.
    * @return the long value of the property - 0 if the property doesn't exist.
@@ -258,6 +267,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Remove a reference from an array of javax.jcr.Value. If the reference is not found no change is
    * done to the array.
+   *
    * @param values the array of references
    * @param uuid the reference to be removed
    * @return the updated arry of references.
@@ -282,6 +292,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Compute a unique node name if a node with the same name already exists under the same parent
    * node.
+   *
    * @param prefix
    * @param tableName the name of the column used to stored the id.
    * @return the name of the node.
@@ -319,6 +330,7 @@ public abstract class AbstractJcrConverter {
 
   /**
    * Returns the mime-type of the jcr:content node stored in the fileNode.
+   *
    * @param fileNode
    * @return the mime-type of the jcr:content node stored in the fileNode.
    * @throws RepositoryException
@@ -334,6 +346,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Return the size of the file in the jcr:content node which is a child node of the specified
    * node.
+   *
    * @param fileNode
    * @return the size of the content.
    * @throws RepositoryException
@@ -366,6 +379,7 @@ public abstract class AbstractJcrConverter {
 
   /**
    * Add binary content to the specified node.
+   *
    * @param fileNode the node.
    * @param content the binary content.
    * @param mimeType the mime type of the content.
@@ -458,6 +472,7 @@ public abstract class AbstractJcrConverter {
   /**
    * Return the node whith the specified parent and name. Create a nt:folder with the specified
    * parent and name if the node doesn't exist.
+   *
    * @param parent parent node of the folder.
    * @param name name of the folder.
    * @return the node whith the specified parent and name.
@@ -474,6 +489,7 @@ public abstract class AbstractJcrConverter {
    * Return true if the specified mixin type is explicitly assigned to the node. It does not include
    * mixin types inherited through the addition of supertypes to the primary type hierarchy or
    * through the addition of supertypes to the type hierarchy of any of the declared mixin types.
+   *
    * @param node the node on which we are looking for the specified mixin.
    * @param mixin the name of the mixin.
    * @return rue if the specified mixin type is explicitly assigned to the node false otherwise.

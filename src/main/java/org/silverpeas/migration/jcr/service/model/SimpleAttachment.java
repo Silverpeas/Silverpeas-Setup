@@ -23,17 +23,17 @@
  */
 package org.silverpeas.migration.jcr.service.model;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
-
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 
 /**
  * @author ehugonnet
  */
 public class SimpleAttachment implements Serializable {
-  private static final long serialVersionUID = -6153003608158238503L;
 
+  private static final long serialVersionUID = -6153003608158238503L;
   private String filename;
   private String language = ConverterUtil.defaultLanguage;
   private String title;
@@ -45,6 +45,7 @@ public class SimpleAttachment implements Serializable {
   private String updatedBy;
   private Date updated;
   private String xmlFormId;
+  private File file;
 
   public SimpleAttachment(String filename, String language, String title, String description,
       long size, String contentType, String createdBy, Date created, String xmlFormId) {
@@ -168,6 +169,14 @@ public class SimpleAttachment implements Serializable {
     this.xmlFormId = xmlFormId;
   }
 
+  public File getFile() {
+    return file;
+  }
+
+  public void setFile(File file) {
+    this.file = file;
+  }
+
   @Override
   public int hashCode() {
     int hash = 7;
@@ -240,8 +249,7 @@ public class SimpleAttachment implements Serializable {
   @Override
   public String toString() {
     return "SimpleAttachment{" + "filename=" + filename + ", language=" + language + ", title="
-        + title + ", description=" + description + ", size=" + size + ", contentType=" +
-        contentType
+        + title + ", description=" + description + ", size=" + size + ", contentType=" + contentType
         + ", createdBy=" + createdBy + ", created=" + created + ", updatedBy=" + updatedBy
         + ", updated=" + updated + ", xmlFormId=" + xmlFormId + '}';
   }

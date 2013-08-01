@@ -29,7 +29,7 @@ import java.util.List;
 public class HistorisedDocument extends SimpleDocument {
 
   private static final long serialVersionUID = 1L;
-  private List<SimpleDocument> history;
+  private List<SimpleDocument> history = new ArrayList<SimpleDocument>();
 
   public HistorisedDocument(SimpleDocumentPK pk, String foreignId, int order, SimpleAttachment file) {
     super(pk, foreignId, order, true, file);
@@ -41,12 +41,12 @@ public class HistorisedDocument extends SimpleDocument {
   }
 
   public HistorisedDocument() {
-    super(new SimpleDocumentPK(null), null, 0, true, new SimpleAttachment());
+    super(new SimpleDocumentPK(null), null, 0, true, null);
   }
 
   public HistorisedDocument(SimpleDocument doc) {
     super(doc.getPk(), doc.getForeignId(), doc.getOrder(), true, doc.getEditedBy(), doc.
-        getReservation(), doc.getAlert(), doc.getExpiry(), doc.getComment(), doc.getFile());
+        getReservation(), doc.getAlert(), doc.getExpiry(), doc.getComment(), doc.getAttachment());
     setMajorVersion(doc.getMajorVersion());
     setMinorVersion(doc.getMinorVersion());
     setStatus(doc.getStatus());
@@ -64,7 +64,7 @@ public class HistorisedDocument extends SimpleDocument {
   }
 
   public void setHistory(List<SimpleDocument> history) {
-    this.history = history;
+    this.history = new ArrayList<SimpleDocument>(history);
   }
 
   public List<SimpleDocument> getPublicVersions() {

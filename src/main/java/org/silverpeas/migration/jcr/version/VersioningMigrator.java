@@ -33,8 +33,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.migration.jcr.service.RepositoryManager;
 import org.silverpeas.util.ConfigurationHolder;
+import org.silverpeas.util.StringUtil;
 
 public class VersioningMigrator extends DbBuilderDynamicPart {
 
@@ -45,19 +46,19 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
     threadCount = ConfigurationHolder.getMaxThreadsCount();
     executor = Executors.newFixedThreadPool(threadCount);
   }
-  private final SimpleDocumentService service;
+  private final RepositoryManager repositoryManager;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
       + "sb_version_document ORDER BY instanceid";
 
   public VersioningMigrator() {
-    this.service = new SimpleDocumentService();
+    this.repositoryManager = new RepositoryManager();
   }
 
   public void migrateDocuments() throws Exception {
     getConsole().printMessage("Migration of the versioned documents in JCR with a pool of "
         + threadCount + " threads");
     long totalNumberOfMigratedFiles = 0L;
-    List<ComponentDocumentMigrator> migrators = buildComponentMigrators();
+    List<VersionedDocumentMigration> migrators = buildComponentMigrators();
     List<Future<Long>> result = executor.invokeAll(migrators);
     try {
       for (Future<Long> nbOfMigratedDocuments : result) {
@@ -73,11 +74,11 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
     }
     getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
     getConsole().printMessage("*************************************************************");
-    this.service.shutdown();
+    repositoryManager.shutdown();
   }
 
-  private List<ComponentDocumentMigrator> buildComponentMigrators() throws SQLException {
-    List<ComponentDocumentMigrator> result = new ArrayList<ComponentDocumentMigrator>(500);
+  private List<VersionedDocumentMigration> buildComponentMigrators() throws SQLException {
+    List<VersionedDocumentMigration> result = new ArrayList<VersionedDocumentMigration>(500);
     Statement stmt = null;
     ResultSet rs = null;
     getConsole().printMessage("All components to be migrated : ");
@@ -87,8 +88,11 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
       StringBuilder message = new StringBuilder();
       while (rs.next()) {
         String instanceId = rs.getString("instanceid");
-        result.add(new ComponentDocumentMigrator(instanceId, service, getConsole()));
-        message.append(instanceId).append(" ");
+        // some times there are documents that don't belong to any component instance in Silverpeas!
+        if (StringUtil.isDefined(instanceId)) {
+          result.add(new VersionedDocumentMigration(instanceId, repositoryManager, getConsole()));
+          message.append(instanceId).append(" ");
+        }
       }
       getConsole().printMessage(message.toString());
       getConsole().printMessage("");

@@ -25,7 +25,6 @@ package org.silverpeas.migration.jcr.service.repository;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -33,7 +32,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
-
+import org.apache.jackrabbit.core.state.NoSuchItemStateException;
 import org.silverpeas.migration.jcr.service.AbstractJcrConverter;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.model.DocumentType;
@@ -44,18 +43,17 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.util.StringUtil;
 
-import org.apache.jackrabbit.core.state.NoSuchItemStateException;
-
 import static javax.jcr.Property.JCR_FROZEN_PRIMARY_TYPE;
 import static javax.jcr.Property.JCR_LAST_MODIFIED_BY;
 import static javax.jcr.nodetype.NodeType.MIX_SIMPLE_VERSIONABLE;
+
 import static org.silverpeas.migration.jcr.service.JcrConstants.*;
 
 /**
  *
  * @author ehugonnet
  */
-class DocumentConverter extends AbstractJcrConverter {
+public class DocumentConverter extends AbstractJcrConverter {
 
   final SimpleAttachmentConverter attachmentConverter = new SimpleAttachmentConverter();
 
@@ -115,7 +113,7 @@ class DocumentConverter extends AbstractJcrConverter {
     if (node.getParent() != null && node.getParent() instanceof Version) {
       //We are accessing a version directly throught its id
       HistorisedDocument document = new HistorisedDocument(fillDocument(node, lang));
-      Node fullNode = getCurrentNodeForVersion((Version)node.getParent());
+      Node fullNode = getCurrentNodeForVersion((Version) node.getParent());
       document.setHistory(convertDocumentHistory(fullNode, lang));
       return document;
     }
@@ -185,11 +183,13 @@ class DocumentConverter extends AbstractJcrConverter {
 
   public void fillNode(SimpleDocument document, Node documentNode) throws RepositoryException {
     setDocumentNodeProperties(document, documentNode);
-    Node attachmentNode = getAttachmentNode(document.getFile().getNodeName(), documentNode);
-    attachmentConverter.fillNode(document.getFile(), attachmentNode);
+    if (document.getAttachment() != null) {
+      Node attachmentNode = getAttachmentNode(document.getAttachment().getNodeName(), documentNode);
+      attachmentConverter.fillNode(document.getAttachment(), attachmentNode);
+    }
   }
 
-  private void setDocumentNodeProperties(SimpleDocument document, Node documentNode) throws
+  public void setDocumentNodeProperties(SimpleDocument document, Node documentNode) throws
       RepositoryException {
     addStringProperty(documentNode, SLV_PROPERTY_FOREIGN_KEY, document.getForeignId());
     documentNode.setProperty(SLV_PROPERTY_VERSIONED, document.isVersioned());

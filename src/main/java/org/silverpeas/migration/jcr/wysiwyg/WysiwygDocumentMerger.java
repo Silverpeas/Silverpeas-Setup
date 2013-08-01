@@ -26,8 +26,7 @@ package org.silverpeas.migration.jcr.wysiwyg;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
-
-import org.silverpeas.migration.jcr.service.AttachmentService;
+import org.apache.commons.io.FilenameUtils;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachment;
@@ -35,12 +34,10 @@ import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.StringUtil;
 
-import org.apache.commons.io.FilenameUtils;
-
 class WysiwygDocumentMerger implements Callable<Long> {
 
   private final String componentId;
-  private final AttachmentService service;
+  private final SimpleDocumentService service;
   private final Console console;
 
   WysiwygDocumentMerger(String instanceId, SimpleDocumentService service, Console console) {
@@ -88,7 +85,7 @@ class WysiwygDocumentMerger implements Callable<Long> {
       if (!StringUtil.isDefined(lang)) {
         lang = doc.getLanguage();
       }
-      mergedDocument.setFile(new SimpleAttachment(doc.getFilename(), lang, doc.getTitle(), doc
+      mergedDocument.setAttachment(new SimpleAttachment(doc.getFilename(), lang, doc.getTitle(), doc
           .getDescription(), doc.getSize(), doc.getContentType(), doc.getCreatedBy(), doc
           .getCreated(), doc.getXmlFormId()));
       File content = new File(doc.getAttachmentPath());
