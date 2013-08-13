@@ -76,10 +76,10 @@ public class AttachmentMigrator extends DbBuilderDynamicPart {
       throw ex;
     } finally {
       executor.shutdown();
+      repositoryManager.shutdown();
     }
     getConsole().printMessage("Nb of migrated documents : " + totalNumberOfMigratedFiles);
     getConsole().printMessage("*************************************************************");
-    this.repositoryManager.shutdown();
   }
 
   protected List<AttachmentMigration> buildComponentMigrators() throws SQLException {
