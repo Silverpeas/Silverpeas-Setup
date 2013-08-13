@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Locale;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import org.apache.commons.dbutils.DbUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.RepositoryManager;
@@ -188,12 +189,8 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
       return listInstanceId;
     } finally {
-      if (rs != null) {
-        rs.close();
-      }
-      if (stmt != null) {
-        stmt.close();
-      }
+      DbUtils.closeQuietly(rs);
+      DbUtils.close(stmt);
     }
   }
 
@@ -212,12 +209,8 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
       return xmlFormName;
     } finally {
-      if (rs != null) {
-        rs.close();
-      }
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.closeQuietly(rs);
+      DbUtils.close(pstmt);
     }
   }
 
@@ -241,12 +234,8 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
       return listTemplateId;
     } finally {
-      if (rs != null) {
-        rs.close();
-      }
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.closeQuietly(rs);
+      DbUtils.close(pstmt);
     }
   }
 
@@ -269,12 +258,8 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
       return listRecord;
     } finally {
-      if (rs != null) {
-        rs.close();
-      }
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.closeQuietly(rs);
+      DbUtils.close(pstmt);
     }
   }
 
@@ -297,12 +282,8 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       }
       return listValue;
     } finally {
-      if (rs != null) {
-        rs.close();
-      }
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.closeQuietly(rs);
+      DbUtils.close(pstmt);
     }
   }
 
@@ -319,9 +300,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       pstmt.setInt(3, classifiedId);
       pstmt.executeUpdate();
     } finally {
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.close(pstmt);
     }
   }
 
@@ -333,9 +312,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       pstmt.setInt(1, recordId);
       pstmt.executeUpdate();
     } finally {
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.close(pstmt);
     }
   }
 
@@ -348,9 +325,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
       pstmt.setString(2, fieldPhotoName);
       pstmt.executeUpdate();
     } finally {
-      if (pstmt != null) {
-        pstmt.close();
-      }
+      DbUtils.close(pstmt);
     }
   }
 

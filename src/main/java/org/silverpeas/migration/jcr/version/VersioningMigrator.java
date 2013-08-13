@@ -71,10 +71,10 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
       throw ex;
     } finally {
       executor.shutdown();
+      repositoryManager.shutdown();
     }
     getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
     getConsole().printMessage("*************************************************************");
-    repositoryManager.shutdown();
   }
 
   private List<VersionedDocumentMigration> buildComponentMigrators() throws SQLException {
