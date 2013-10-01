@@ -94,16 +94,25 @@ class VersionedDocumentMigration implements Callable<Long> {
     this.console = console;
   }
 
-  protected long migrateComponent() throws SQLException, ParseException, IOException {
+  protected long migrateComponent() throws Exception {
     long processStart = System.currentTimeMillis();
     console.printMessage("Migrating component " + componentId);
     long migratedDocumentCount = 0;
-    List<OldDocumentMetadata> documents = listAllDocuments();
-    Session session = openJCRSession();
+    Session session = null;
     try {
+      List<OldDocumentMetadata> documents = listAllDocuments();
+      session = openJCRSession();
       for (OldDocumentMetadata document : documents) {
         migratedDocumentCount += migrateAllDocumentVersions(session, document);
       }
+      if (session.hasPendingChanges()) {
+        session.save();
+      }
+      cleanAll(documents);
+    } catch (Exception ex) {
+      console.printError("Error during the migration of the versioned documents in component "
+          + componentId + ": " + ex.getMessage(), ex);
+      throw ex;
     } finally {
       repositoryManager.logout(session);
     }
@@ -116,7 +125,7 @@ class VersionedDocumentMigration implements Callable<Long> {
     return migratedDocumentCount;
   }
 
-  protected long migrateAllDocumentVersions(Session session, OldDocumentMetadata metadata) throws
+  private long migrateAllDocumentVersions(Session session, OldDocumentMetadata metadata) throws
       SQLException, ParseException, IOException {
     console.printMessage("=> Creating document for " + metadata.getTitle() + " with " + metadata
         .getHistory().size() + " versions");
@@ -134,7 +143,6 @@ class VersionedDocumentMigration implements Callable<Long> {
     console.printMessage("   we have created  " + migratedDocumentCount + " for " + metadata.
         getTitle() + " with " + metadata.getHistory().size() + " versions in " + (processEnd
         - processStart) + "ms");
-    cleanAll(metadata);
     return migratedDocumentCount;
   }
 
@@ -204,9 +212,11 @@ class VersionedDocumentMigration implements Callable<Long> {
       Node versionNode = documentRepository.unlock(session, document);
       document.getHistory().add(converter.convertNode(versionNode, document.getLanguage()));
 
+      // save the change in the JCR.
+      session.save();
+
       // now create the file at the location corresponding to the current version in the filesystem,
       copyContent(document);
-
       if (previousVersionDirectory != null) {
         // duplicate the content of the previous version into the location of the new one.
         String path = document.getDirectoryPath(document.getLanguage()).replace('/',
@@ -215,8 +225,6 @@ class VersionedDocumentMigration implements Callable<Long> {
         duplicateContents(previousVersionDirectory, currentVersionDirectory);
       }
 
-      // save the change in the JCR.
-      session.save();
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     }
@@ -279,7 +287,7 @@ class VersionedDocumentMigration implements Callable<Long> {
     }
   }
 
-  protected String getDocumentVersionUUID(HistorisedDocument document, Version version) {
+  private String getDocumentVersionUUID(HistorisedDocument document, Version version) {
     for (SimpleDocument doc : document.getHistory()) {
       if (doc.getMajorVersion() == version.getMajor() && doc.getMinorVersion() == version.getMinor()) {
         return doc.getId();
@@ -288,36 +296,44 @@ class VersionedDocumentMigration implements Callable<Long> {
     return document.getId();
   }
 
-  protected void cleanAll(OldDocumentMetadata metadata) throws SQLException {
+  private void cleanAll(List<OldDocumentMetadata> metadata) throws SQLException {
+    console.printMessage("   Clean all the deprecated documents in " + this.componentId);
     Connection connection = getConnection();
     connection.setAutoCommit(false);
-    PreparedStatement deleteTranslations = null;
-    PreparedStatement deleteAttachment = null;
+    PreparedStatement deleteVersions = connection.prepareStatement(DELETE_DOCUMENT_VERSIONS);
+    PreparedStatement deleteAttachment = connection.prepareStatement(DELETE_DOCUMENT);
     try {
-      deleteTranslations = connection.prepareStatement(DELETE_DOCUMENT_VERSIONS);
-      deleteTranslations.setLong(1, metadata.getOldSilverpeasId());
-      deleteTranslations.executeUpdate();
-      DbUtils.closeQuietly(deleteTranslations);
-      deleteAttachment = connection.prepareStatement(DELETE_DOCUMENT);
-      deleteAttachment.setLong(1, metadata.getOldSilverpeasId());
-      deleteAttachment.executeUpdate();
-      connection.commit();
-    } catch (SQLException ex) {
-      throw ex;
+      for (OldDocumentMetadata document : metadata) {
+        try {
+          deleteVersions.setLong(1, document.getOldSilverpeasId());
+          deleteVersions.executeUpdate();
+          deleteAttachment.setLong(1, document.getOldSilverpeasId());
+          deleteAttachment.executeUpdate();
+          connection.commit();
+          deleteVersions.clearParameters();
+          deleteAttachment.clearParameters();
+        } catch (SQLException ex) {
+          console.printError("Error while cleaning up in database the document " + document.
+              getTitle() + " (id = " + document.getOldSilverpeasId() + ")");
+          throw ex;
+        }
+        for (Version version : document.getHistory()) {
+          File file = null;
+          try {
+            file = version.getAttachment();
+            if (file != null) {
+              ConverterUtil.deleteFile(file);
+            }
+          } catch (IOException ioex) {
+            String fileName = (file != null ? file.getPath() : "");
+            console.printError("Error deleting file " + fileName, ioex);
+          }
+        }
+      }
     } finally {
-      DbUtils.closeQuietly(deleteTranslations);
+      DbUtils.closeQuietly(deleteVersions);
       DbUtils.closeQuietly(deleteAttachment);
       DbUtils.closeQuietly(connection);
-    }
-    for (Version version : metadata.getHistory()) {
-      try {
-        File file = version.getAttachment();
-        if (file != null) {
-          ConverterUtil.deleteFile(file);
-        }
-      } catch (IOException ioex) {
-        console.printError("Error deleting file", ioex);
-      }
     }
   }
 
@@ -327,7 +343,7 @@ class VersionedDocumentMigration implements Callable<Long> {
     return migrateComponent();
   }
 
-  protected List<OldDocumentMetadata> listAllDocuments() throws ParseException, IOException,
+  private List<OldDocumentMetadata> listAllDocuments() throws ParseException, IOException,
       SQLException {
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
@@ -361,7 +377,7 @@ class VersionedDocumentMigration implements Callable<Long> {
     return documents;
   }
 
-  protected OldDocumentMetadata fillWithVersion(OldDocumentMetadata document) throws ParseException,
+  private OldDocumentMetadata fillWithVersion(OldDocumentMetadata document) throws ParseException,
       IOException, SQLException {
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
@@ -399,7 +415,7 @@ class VersionedDocumentMigration implements Callable<Long> {
     return document;
   }
 
-  protected void createDocumentPermalink(HistorisedDocument document, OldDocumentMetadata metadata)
+  private void createDocumentPermalink(HistorisedDocument document, OldDocumentMetadata metadata)
       throws SQLException {
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
@@ -418,7 +434,7 @@ class VersionedDocumentMigration implements Callable<Long> {
     }
   }
 
-  protected void createVersionPermalink(String uuid, int versionId) throws SQLException {
+  private void createVersionPermalink(String uuid, int versionId) throws SQLException {
     Connection connection = getConnection();
     PreparedStatement pstmt = null;
     try {

@@ -64,11 +64,6 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
       for (Future<Long> nbOfMigratedDocuments : result) {
         totalNumberOfMigratedFiles += nbOfMigratedDocuments.get();
       }
-    } catch (InterruptedException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      getConsole().printError("Error during migration of attachments " + ex, ex);
-      throw ex;
     } finally {
       executor.shutdown();
       repositoryManager.shutdown();
