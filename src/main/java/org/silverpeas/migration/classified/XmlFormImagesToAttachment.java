@@ -23,7 +23,6 @@
  */
 package org.silverpeas.migration.classified;
 
-import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -57,7 +56,7 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
     this.documentRepository = new DocumentRepository(repositoryManager);
   }
 
-  public void migrate() throws IOException, SQLException {
+  public void migrate() throws Exception {
     Session session = openJCRSession();
     try {
       getConsole()
@@ -158,6 +157,9 @@ public class XmlFormImagesToAttachment extends DbBuilderDynamicPart {
           getConsole().printTrace("---------------------");
         }
 
+        if (session.hasPendingChanges()) {
+          session.save();
+        }
         long instanceMigrationEnd = System.currentTimeMillis();
         getConsole().printMessage("Classified instance " + instanceId + " has been migrated in "
             + (instanceMigrationEnd - instanceMigrationStart) + " ms");

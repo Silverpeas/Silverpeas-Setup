@@ -109,6 +109,9 @@ public class AttachmentMigration implements Callable<Long> {
           return migrateDocument(session, document);
         }
       });
+      if (session.hasPendingChanges()) {
+        session.save();
+      }
     } finally {
       repositoryManager.logout(session);
     }
@@ -137,6 +140,8 @@ public class AttachmentMigration implements Callable<Long> {
         console.printWarning("Attachment " + document.getFilename() + " for " + attachment.
             getAbsolutePath() + " seems to exists already", ex);
       } else {
+        console.printError("Error in component " + componentId + " while migrating attachment "
+            + document.getFilename() + ": " + ex.getMessage(), ex);
         throw ex;
       }
     }
@@ -168,11 +173,11 @@ public class AttachmentMigration implements Callable<Long> {
     try {
       documentRepository.createDocument(session, document);
 
-      // now copy the content of the file to the new location.
-      copyContent(document);
-
       // save the created node(s) in the JCR
       session.save();
+
+      // now copy the content of the file to the new location.
+      copyContent(document);
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     }
@@ -305,6 +310,9 @@ public class AttachmentMigration implements Callable<Long> {
           document.setUpdated(attachment.getCreated());
           document.setUpdatedBy(attachment.getCreatedBy());
           migration.migrate(document);
+        } else {
+          console.printWarning("The translation in " + language
+              + " doesn't exist in the filesystem! So, it is not taken into account");
         }
       }
     } finally {
