@@ -1,5 +1,5 @@
 @REM
-@REM Copyright (C) 2000 - 2012 Silverpeas
+@REM Copyright (C) 2000 - 2013 Silverpeas
 @REM
 @REM This program is free software: you can redistribute it and/or modify
 @REM it under the terms of the GNU Affero General Public License as
