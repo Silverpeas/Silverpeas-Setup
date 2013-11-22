@@ -22,10 +22,13 @@ package org.silverpeas.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Properties;
 import org.apache.commons.io.IOUtils;
+import org.silverpeas.util.file.FileUtil;
 
 /**
  * This class holds all of the settings and parameters for the different applications used in the
@@ -37,7 +40,9 @@ public class ConfigurationHolder {
 
   private static final String SILVERPEAS_HOME_PROP_KEY = "silverpeas.home";
   private static final String SILVERPEAS_HOME_ENV_KEY = "SILVERPEAS_HOME";
+  private static final String JCR_PROPERTIES = "org/silverpeas/util/jcr.properties";
   private static final String THREADS_KEY = "threads";
+  private static final String JCR_HOME_KEY = "jcr.home.dir.url";
   private static String silverpeasHome = null;
   private static GestionVariables configuration = null;
   private static boolean abortOnError = true;
@@ -114,6 +119,51 @@ public class ConfigurationHolder {
 
   public static String getDataHome() throws IOException {
     return configuration.resolveAndEvalString("${SILVERPEAS_DATA_HOME}");
+  }
+
+  /**
+   * Gets the home directory of the JCR repository in Silverpeas.
+   *
+   * @return the absolute path of the JCR repository home directory.
+   * @throws IOException if an errors occurs while getting the parameter.
+   */
+  public static String getJCRRepositoryHome() throws IOException {
+    String repositoryHome = ConfigurationHolder.getDataHome() + File.separatorChar
+        + "jackrabbit";
+    Properties props = FileUtil.loadResource(JCR_PROPERTIES);
+    repositoryHome = props.getProperty(JCR_HOME_KEY, repositoryHome);
+    File repositoryHomeDir;
+    if (repositoryHome.toLowerCase().startsWith("file:")) {
+      repositoryHomeDir = new File(URI.create(repositoryHome));
+    } else {
+      repositoryHomeDir = new File(repositoryHome);
+    }
+    if (!repositoryHomeDir.isDirectory()) {
+      throw new FileNotFoundException("The JCR home directory '" + repositoryHome + "' isn't found");
+    }
+    return repositoryHomeDir.getAbsolutePath();
+  }
+
+  /**
+   * Gets the location of the JCR repository configuration file. Usually this configuration is done
+   * in an XML file repository.xml.
+   *
+   * @return the absolute path of the configuration file of the JCR repository.
+   * @throws java.io.IOException if an error occurs while getting the configuration file.
+   */
+  public static String getJCRRepositoryConfiguration() throws IOException {
+    String conf = ConfigurationHolder.getHome() + File.separatorChar + "setup"
+        + File.separatorChar + "jackrabbit" + File.separatorChar + "repository.xml";
+    File confFile;
+    if (conf.toLowerCase().startsWith("file:")) {
+      confFile = new File(URI.create(conf));
+    } else {
+      confFile = new File(conf);
+    }
+    if (!confFile.exists()) {
+      throw new FileNotFoundException("The JCR Configuration file '" + conf + "' isn't found");
+    }
+    return confFile.getAbsolutePath();
   }
 
   /**
