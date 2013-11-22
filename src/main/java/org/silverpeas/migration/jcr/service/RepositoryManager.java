@@ -23,7 +23,6 @@
  */
 package org.silverpeas.migration.jcr.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -56,10 +55,8 @@ public class RepositoryManager {
 
   public RepositoryManager() {
     try {
-      String conf = ConfigurationHolder.getHome() + File.separatorChar + "setup"
-          + File.separatorChar + "jackrabbit" + File.separatorChar + "repository.xml";
-      String repositoryHome = ConfigurationHolder.getDataHome() + File.separatorChar
-          + "jackrabbit";
+      String conf = ConfigurationHolder.getJCRRepositoryConfiguration();
+      String repositoryHome = ConfigurationHolder.getJCRRepositoryHome();
       initRepository(repositoryHome, conf);
     } catch (RepositoryException ex) {
       logger.error("Error during JCR repository initalisation", ex);
@@ -77,6 +74,8 @@ public class RepositoryManager {
   }
 
   private void initRepository(String repositoryHome, String conf) throws RepositoryException {
+    logger.info("Initialize repository [JCR Home: '" + repositoryHome + "', JCR Configuration: '"
+        + conf + "']");
     Map<String, String> parameters = new HashMap<String, String>(2);
     parameters.put(RepositoryFactoryImpl.REPOSITORY_HOME, repositoryHome);
     parameters.put(RepositoryFactoryImpl.REPOSITORY_CONF, conf);
