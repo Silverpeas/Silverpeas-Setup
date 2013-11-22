@@ -20,13 +20,31 @@
  */
 package org.silverpeas.util;
 
+import java.net.URI;
+
 public class StringUtil {
 
   public static final int RECURSION_THRESHOLD = 10;
 
   /**
+   * Converts the specified path to an URI.
+   *
+   * @param anURI the string representation of an URI to convert.
+   * @return either the URI form of the specified string or null if the string isn't an URI.
+   */
+  public static URI toURI(String anURI) {
+    try {
+      URI uri = URI.create(anURI);
+      return uri;
+    } catch (IllegalArgumentException ex) {
+      return null;
+    }
+  }
+
+  /**
    * Search a string for all instances of a substring and replace it with another string. Amazing
    * that this is not a method of java.lang.String since I use it all the time.
+   *
    * @param search Substring to search for
    * @param replace String to replace it with
    * @param source String to search through
@@ -64,6 +82,7 @@ public class StringUtil {
   /**
    * Match a file glob style expression without ranges. '*' matches zero or more chars. '?' matches
    * any single char.
+   *
    * @param pattern A glob-style pattern to match
    * @param input The string to match
    * @return whether or not the string matches the pattern.
@@ -135,7 +154,6 @@ public class StringUtil {
 
     // this is where all those years of c/c++ pay off in java
     // boolean foundkey = false;
-
     char[] sb = str.toCharArray();
     int len = sb.length;
 
