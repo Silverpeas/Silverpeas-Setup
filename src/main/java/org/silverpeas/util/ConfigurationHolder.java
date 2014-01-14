@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
+
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.silverpeas.util.file.FileUtil;
 
@@ -134,7 +136,7 @@ public class ConfigurationHolder {
     repositoryHome = props.getProperty(JCR_HOME_KEY, repositoryHome);
     File repositoryHomeDir;
     if (repositoryHome.toLowerCase().startsWith("file:")) {
-      repositoryHomeDir = new File(URI.create(repositoryHome));
+      repositoryHomeDir = new File(URI.create(FilenameUtils.separatorsToUnix(repositoryHome)));
     } else {
       repositoryHomeDir = new File(repositoryHome);
     }
