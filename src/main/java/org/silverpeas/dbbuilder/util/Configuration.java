@@ -24,6 +24,9 @@ package org.silverpeas.dbbuilder.util;
 import org.silverpeas.util.ConfigurationHolder;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author ehugonnet
@@ -48,6 +51,23 @@ public class Configuration {
 
   public static String getContributionFilesDir() {
     return DIR_CONTRIBUTIONFILESROOT;
+  }
+
+  public static String getSilverpeasData() {
+    try {
+      return ConfigurationHolder.getDataHome();
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  public static String getSilverpeasDataMigrationSaves() {
+    try {
+      return ConfigurationHolder.getDataHome() + File.separatorChar + "migrationSaves" +
+          new SimpleDateFormat("_yyyy-MM-dd_HH.mm").format(new Date());
+    } catch (IOException e) {
+      return null;
+    }
   }
 
   public static String getPiecesFilesDir() {
