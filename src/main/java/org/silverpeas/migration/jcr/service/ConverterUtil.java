@@ -20,6 +20,16 @@
  */
 package org.silverpeas.migration.jcr.service;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.jackrabbit.util.ISO9075;
+import org.apache.jackrabbit.util.Text;
+import org.silverpeas.dbbuilder.sql.ConnectionFactory;
+import org.silverpeas.util.DateUtil;
+import org.silverpeas.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,17 +46,6 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.silverpeas.dbbuilder.sql.ConnectionFactory;
-import org.silverpeas.util.DateUtil;
-import org.silverpeas.util.StringUtil;
-
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.jackrabbit.util.ISO9075;
-import org.apache.jackrabbit.util.Text;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Utility class for path and date conversions between JCR and Slverpeas Pojo.
  *
@@ -57,15 +56,22 @@ public class ConverterUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(ConverterUtil.class);
   public static final String defaultLanguage = "fr";
-  private static final Pattern WysiwygLangPattern = Pattern
-      .compile("[0-9]+wysiwyg_([a-z][a-z])\\.txt");
-  private static final Pattern WysiwygBaseNamePattern = Pattern.compile(
-      "([0-9]+wysiwyg).*\\.txt");
+  private static final Pattern WysiwygLangPattern = Pattern.compile(".+wysiwyg_([a-z][a-z])\\.txt");
+  private static final Pattern WysiwygBaseNamePattern =
+      Pattern.compile("(.+wysiwyg)(_[a-z][a-z]|)\\.txt");
 
   public static String extractLanguage(String filename) {
     Matcher matcher = WysiwygLangPattern.matcher(filename);
     if (matcher.matches()) {
       return matcher.group(1);
+    }
+    return null;
+  }
+
+  public static String replaceLanguage(String filename, String newLanguage) {
+    String basename = extractBaseName(filename);
+    if (basename != null) {
+      return basename + (StringUtil.isDefined(newLanguage) ? ("_" + newLanguage) : "") + ".txt";
     }
     return null;
   }
