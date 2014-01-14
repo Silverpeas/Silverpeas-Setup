@@ -23,20 +23,17 @@
  */
 package org.silverpeas.migration.jcr.service;
 
-import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
 
 /**
  *
  * @author ehugonnet
  */
 public class ConverterUtilTest {
-
-  public ConverterUtilTest() {
-  }
 
   /**
    * Test of extractLanguage method, of class ConverterUtil.
@@ -45,16 +42,41 @@ public class ConverterUtilTest {
   public void testExtractLanguage() {
     String filename = "6961wysiwyg_de.txt";
     String result = ConverterUtil.extractLanguage(filename);
-    Assert.assertThat(result, is("de"));
+    assertThat(result, is("de"));
     filename = "6961wysiwyg_fr.txt";
     result = ConverterUtil.extractLanguage(filename);
-    Assert.assertThat(result, is("fr"));
+    assertThat(result, is("fr"));
     filename = "6961wysiwyg.txt";
     result = ConverterUtil.extractLanguage(filename);
-    Assert.assertThat(result, is(Matchers.nullValue()));
+    assertThat(result, is(nullValue()));
+    filename = "Node_1939wysiwyg_zk.txt";
+    result = ConverterUtil.extractLanguage(filename);
+    assertThat(result, is("zk"));
     filename = "Node_1939wysiwyg.txt";
     result = ConverterUtil.extractLanguage(filename);
-    Assert.assertThat(result, is(Matchers.nullValue()));
+    assertThat(result, is(nullValue()));
+  }
+
+  /**
+   * Test of replaceLanguage method, of class ConverterUtil.
+   */
+  @Test
+  public void testReplaceLanguage() {
+    String filename = "6961wysiwyg_de.txt";
+    String result = ConverterUtil.replaceLanguage(filename, "fr");
+    assertThat(result, is("6961wysiwyg_fr.txt"));
+    filename = "6961wysiwyg.txt";
+    result = ConverterUtil.replaceLanguage(filename, "en");
+    assertThat(result, is("6961wysiwyg_en.txt"));
+    filename = "Node_1939wysiwyg_zk.txt";
+    result = ConverterUtil.replaceLanguage(filename, "de");
+    assertThat(result, is("Node_1939wysiwyg_de.txt"));
+    filename = "Node_1939wysiwyg.txt";
+    result = ConverterUtil.replaceLanguage(filename, "de");
+    assertThat(result, is("Node_1939wysiwyg_de.txt"));
+    filename = "Node_1939wysiwyg_zkx.txt";
+    result = ConverterUtil.replaceLanguage(filename, "de");
+    assertThat(result, is(nullValue()));
   }
 
   /**
@@ -64,16 +86,22 @@ public class ConverterUtilTest {
   public void testExtractBaseName() {
     String filename = "6961wysiwyg_de.txt";
     String result = ConverterUtil.extractBaseName(filename);
-    Assert.assertThat(result, is("6961wysiwyg"));
+    assertThat(result, is("6961wysiwyg"));
     filename = "6961wysiwyg_fr.txt";
     result = ConverterUtil.extractBaseName(filename);
-    Assert.assertThat(result, is("6961wysiwyg"));
+    assertThat(result, is("6961wysiwyg"));
     filename = "6961wysiwyg.txt";
     result = ConverterUtil.extractBaseName(filename);
-    Assert.assertThat(result, is("6961wysiwyg"));
-    filename = "Node_1939wysiwyg.txt";
+    assertThat(result, is("6961wysiwyg"));
+    filename = "Node_1939wysiwyg_zk.txt";
     result = ConverterUtil.extractBaseName(filename);
-    Assert.assertThat(result, is(Matchers.nullValue()));
+    assertThat(result, is("Node_1939wysiwyg"));
+    filename = "Node_1939wysiwyg_zkw.txt";
+    result = ConverterUtil.extractBaseName(filename);
+    assertThat(result, is(nullValue()));
+    filename = "Node_1939wysiwygi_zkw.txt";
+    result = ConverterUtil.extractBaseName(filename);
+    assertThat(result, is(nullValue()));
   }
 
 }

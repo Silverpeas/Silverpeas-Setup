@@ -23,15 +23,15 @@
  */
 package org.silverpeas.migration.jcr.wysiwyg;
 
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.util.StringUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.migration.jcr.service.SimpleDocumentService;
-import org.silverpeas.util.StringUtil;
 
 public class WysiwygCorrector extends DbBuilderDynamicPart {
 
@@ -53,17 +53,17 @@ public class WysiwygCorrector extends DbBuilderDynamicPart {
     } catch (InterruptedException ex) {
       throw ex;
     } catch (Exception ex) {
-      getConsole().printError("Error during migration of attachments " + ex, ex);
+      getConsole().printError("Error during adjustment of wysiwyg attachments " + ex, ex);
       throw ex;
     } finally {
       executor.shutdown();
     }
-    getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
+    getConsole().printMessage("Nb of adjusted wysiwyg documents : " + totalNumberOfMigratedFiles);
     this.service.shutdown();
   }
 
   private List<WysiwygDocumentMerger> buildWysiwygDocumentMergers() {
-    getConsole().printMessage("All components to be migrated : ");
+    getConsole().printMessage("All components to be adjusted : ");
     List<String> componentIds = service.listComponentIdsWithWysiwyg();
     List<WysiwygDocumentMerger> result = new ArrayList<WysiwygDocumentMerger>(componentIds.size());
     for (String componentId : componentIds) {
