@@ -23,6 +23,14 @@
  */
 package org.silverpeas.migration.jcr.service;
 
+import org.apache.commons.io.IOUtils;
+import org.silverpeas.migration.jcr.service.model.SimpleDocument;
+import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
+import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
+import org.silverpeas.util.StringUtil;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,13 +39,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import org.apache.commons.io.IOUtils;
-import org.silverpeas.migration.jcr.service.model.SimpleDocument;
-import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
-import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
-import org.silverpeas.util.StringUtil;
 
 public class SimpleDocumentService {
 
@@ -125,7 +126,8 @@ public class SimpleDocumentService {
     }
   }
 
-  public SimpleDocument mergeDocument(SimpleDocument document, SimpleDocument merge) {
+  public SimpleDocument mergeDocument(SimpleDocument document, SimpleDocument merge,
+      boolean deleteAfterMerge) {
     File content = new File(merge.getAttachmentPath());
     if (!content.exists() || !content.isFile()) {
       merge.setLanguage(ConverterUtil.defaultLanguage);
@@ -133,7 +135,9 @@ public class SimpleDocumentService {
     }
     if (content.exists() && content.isFile()) {
       updateAttachment(document, content);
-      deleteAttachment(merge);
+      if (deleteAfterMerge) {
+        deleteAttachment(merge);
+      }
     }
     return searchDocumentById(document.getPk(), document.getLanguage());
   }
