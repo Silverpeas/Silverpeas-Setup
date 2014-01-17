@@ -37,6 +37,9 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -96,14 +99,45 @@ class WysiwygDocumentMerger implements Callable<Long> {
     return nbAdjustedDocuments;
   }
 
+  /**
+   * First :
+   * Order documents by descendind lastModified information.
+   * <p/>
+   * Secondly :
+   * Search from the given ordered list the wysiwyg simpledoc which name doesn't have the language
+   * suffix.
+   * If it does not exist, then searching the first document in the ordered list which name prefix
+   * is the default language.
+   * If it does not exist, then returning the first of the given ordered list.
+   * @param documents
+   * @param basename
+   * @return
+   */
   private SimpleDocument getMergeDocument(List<SimpleDocument> documents, String basename) {
+    // Firstly
+    Collections.sort(documents, new Comparator<SimpleDocument>() {
+      @Override
+      public int compare(final SimpleDocument o1, final SimpleDocument o2) {
+        return o1.getUpdated().compareTo(o2.getUpdated()) * -1;
+      }
+    });
+
+    // Secondly
+    SimpleDocument theFirstWhichNameHasDefaultLanguageSuffix = null;
     for (SimpleDocument document : documents) {
-      if (basename.equals(FilenameUtils.getBaseName(document.getFilename())) &&
-          ConverterUtil.defaultLanguage.equals(document.getLanguage())) {
-        return document;
+      String filenameLanguage =
+          ConverterUtil.checkLanguage(ConverterUtil.extractLanguage(document.getFilename()));
+      if (ConverterUtil.defaultLanguage.equals(filenameLanguage)) {
+        if (basename.equals(FilenameUtils.getBaseName(document.getFilename()))) {
+          return document;
+        }
+        if (theFirstWhichNameHasDefaultLanguageSuffix == null) {
+          theFirstWhichNameHasDefaultLanguageSuffix = document;
+        }
       }
     }
-    return documents.get(0);
+    return theFirstWhichNameHasDefaultLanguageSuffix != null ?
+        theFirstWhichNameHasDefaultLanguageSuffix : documents.get(0);
   }
 
   /**
@@ -134,14 +168,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
 
           // Renaming the original document
           document.setLanguage(documentLanguageBeforeAdjustment);
-          document.setFilename(ConverterUtil
-              .replaceLanguage(document.getFilename(), documentLanguageBeforeAdjustment));
-          service.updateAttachment(document, contentToCopy);
-          console.printMessage(
-              "Renaming " + contentToCopy.getName() + " into with the right language : " +
-                  document.getFilename());
+          renameWithRightLanguageSuffix(document);
           adjustmentDone = true;
-          FileUtils.deleteQuietly(contentToCopy);
 
         } else {
           console.printWarning(parentDirectory.getPath() + " already exists!");
@@ -149,6 +177,37 @@ class WysiwygDocumentMerger implements Callable<Long> {
       }
     }
     return adjustmentDone;
+  }
+
+  /**
+   * Rename document with right language suffix.
+   * @param documentToRename
+   * @return
+   */
+  private boolean renameWithRightLanguageSuffix(SimpleDocument documentToRename) {
+    String languageFromFilename =
+        ConverterUtil.checkLanguage(ConverterUtil.extractLanguage(documentToRename.getFilename()));
+    // Renaming document that is in other language than this of default language
+    if (!languageFromFilename.equals(documentToRename.getLanguage())) {
+      File contentToRename = new File(documentToRename.getAttachmentPath());
+      if (contentToRename.exists() && contentToRename.isFile()) {
+        documentToRename.setFilename(ConverterUtil
+            .replaceLanguage(documentToRename.getFilename(), documentToRename.getLanguage()));
+        File contentRenamed = new File(documentToRename.getAttachmentPath());
+        console.printMessage(
+            "Renaming " + contentToRename.getPath() + " with the right language suffix : " +
+                documentToRename.getFilename());
+        if (contentRenamed.exists()) {
+          console.printWarning(contentRenamed.getPath() +
+              " already exists! Nothing is renamed and a manual intervention must be performed.");
+          return false;
+        }
+        service.updateAttachment(documentToRename, contentToRename);
+        FileUtils.deleteQuietly(contentToRename);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -160,6 +219,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
   private boolean mergeDocuments(SimpleDocument document, List<SimpleDocument> documents) {
     boolean adjustmentDone = false;
     SimpleDocument documentTarget = document;
+    List<SimpleDocument> documentsToRename = new ArrayList<SimpleDocument>();
+    List<SimpleDocument> documentsToDelete = new ArrayList<SimpleDocument>();
     for (SimpleDocument documentToMerge : documents) {
       String lang = ConverterUtil.extractLanguage(documentToMerge.getFilename());
       if (!StringUtil.isDefined(lang)) {
@@ -185,9 +246,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
         if (documentTargetBeforeAdjustment != null &&
             documentTargetBeforeAdjustment.getUpdated().after(documentToMerge.getUpdated())) {
 
-          // In that case, the current used JCR node has been updated between a first migration and
-          // this execution of treatment
-
+          // In that case, the current used JCR node has been updated between a first migration
+          // and this execution of treatment
           console.printMessage(content.getAbsolutePath() + " has not been merged into the target " +
               documentTarget.getAttachmentPath() +
               " (because the target has been already updated)");
@@ -195,11 +255,16 @@ class WysiwygDocumentMerger implements Callable<Long> {
           // Deleting documents that are not necessary (but they are saved just before,
           // we never know !)
           backupDocument(documentToMerge);
-          service.deleteAttachment(documentToMerge);
-          adjustmentDone = true;
-
-          console.printMessage("The wysiwyg document " + content.getAbsolutePath() +
-              " has been deleted from the JCR");
+          if (documentTarget.getNodeName().equals(documentToMerge.getNodeName())) {
+            console.printMessage("The wysiwyg document " + content.getAbsolutePath() +
+                " will be renamed with right language suffix");
+            documentsToRename.add(documentToMerge);
+          } else {
+            console.printMessage("The wysiwyg document " + content.getAbsolutePath() +
+                " will be deleted from the JCR");
+            documentsToDelete.add(documentToMerge);
+            adjustmentDone = true;
+          }
 
           // No merge has to be done here, performing the next document content if any.
           continue;
@@ -211,7 +276,17 @@ class WysiwygDocumentMerger implements Callable<Long> {
 
         // Saving the new last update (in order to keep the most recent file)
         boolean wasBackupDone = backupDocument(documentTarget);
-        documentTarget = service.mergeDocument(documentTarget, documentToMerge);
+        documentTarget = service.mergeDocument(documentTarget, documentToMerge, false);
+        adjustmentDone = true;
+        if (documentTarget.getNodeName().equals(documentToMerge.getNodeName())) {
+          console.printMessage("The wysiwyg document " + content.getAbsolutePath() +
+              " will be renamed with right language suffix");
+          documentsToRename.add(documentToMerge);
+        } else {
+          console.printMessage("The wysiwyg document " + content.getAbsolutePath() +
+              " will be deleted from the JCR");
+          documentsToDelete.add(documentToMerge);
+        }
         if (documentTargetBeforeAdjustment != null &&
             !documentTargetBeforeAdjustment.getAttachmentPath()
                 .equals(documentTarget.getAttachmentPath())) {
@@ -220,9 +295,24 @@ class WysiwygDocumentMerger implements Callable<Long> {
         console.printMessage(
             content.getAbsolutePath() + " has been " + (wasBackupDone ? "merged" : "copied") +
                 " into " + documentTarget.getAttachmentPath());
-        adjustmentDone = true;
       } else {
         console.printMessage(content.getAbsolutePath() + " has not been found");
+      }
+    }
+    for (SimpleDocument documentToRename : documentsToRename) {
+      boolean renameDone = renameWithRightLanguageSuffix(documentToRename);
+      if (renameDone) {
+        adjustmentDone = true;
+      }
+    }
+    for (SimpleDocument documentToDelete : documentsToDelete) {
+      try {
+        service.deleteAttachment(documentToDelete);
+        adjustmentDone = true;
+        console.printMessage("Node " + documentToDelete.getNodeName() + " has been deleted");
+      } catch (Exception exc) {
+        // In case the node was already deleted, an exception is thrown...
+        // So it is catched here.
       }
     }
     return adjustmentDone;
