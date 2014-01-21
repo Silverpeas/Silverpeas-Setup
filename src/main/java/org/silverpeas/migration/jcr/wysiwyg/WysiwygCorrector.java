@@ -42,7 +42,7 @@ public class WysiwygCorrector extends DbBuilderDynamicPart {
     this.service = new SimpleDocumentService();
   }
 
-  public void migrateDocuments() throws Exception {
+  public void adjustDocuments() throws Exception {
     long totalNumberOfMigratedFiles = 0L;
     List<WysiwygDocumentMerger> mergers = buildWysiwygDocumentMergers();
     List<Future<Long>> result = executor.invokeAll(mergers);
