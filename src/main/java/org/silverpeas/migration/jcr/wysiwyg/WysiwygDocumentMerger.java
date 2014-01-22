@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -100,6 +101,20 @@ class WysiwygDocumentMerger implements Callable<Long> {
   }
 
   /**
+   * Gets the last update date from a document.
+   * If the last update date is not explicitly known, the date of creation is returned.
+   * @param document
+   * @return
+   */
+  private static Date getLastDocumentUpdateDate(SimpleDocument document) {
+    Date lastUpdateDate = document.getUpdated();
+    if (lastUpdateDate == null) {
+      lastUpdateDate = document.getCreated();
+    }
+    return lastUpdateDate;
+  }
+
+  /**
    * First :
    * Order documents by descendind lastModified information.
    * <p/>
@@ -117,8 +132,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
     // Firstly
     Collections.sort(documents, new Comparator<SimpleDocument>() {
       @Override
-      public int compare(final SimpleDocument o1, final SimpleDocument o2) {
-        return o1.getUpdated().compareTo(o2.getUpdated()) * -1;
+      public int compare(final SimpleDocument sd1, final SimpleDocument sd2) {
+        return getLastDocumentUpdateDate(sd2).compareTo(getLastDocumentUpdateDate(sd1));
       }
     });
 
@@ -244,7 +259,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
             loadDocumentFrom(documentTarget.getPk(), documentTarget.getLanguage());
 
         if (documentTargetBeforeAdjustment != null &&
-            documentTargetBeforeAdjustment.getUpdated().after(documentToMerge.getUpdated())) {
+            getLastDocumentUpdateDate(documentTargetBeforeAdjustment)
+                .after(getLastDocumentUpdateDate(documentToMerge))) {
 
           // In that case, the current used JCR node has been updated between a first migration
           // and this execution of treatment
