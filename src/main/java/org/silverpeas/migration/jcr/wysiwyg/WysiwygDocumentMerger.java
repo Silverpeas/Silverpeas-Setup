@@ -41,7 +41,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 class WysiwygDocumentMerger implements Callable<Long> {
@@ -79,20 +81,42 @@ class WysiwygDocumentMerger implements Callable<Long> {
     for (String basename : basenames) {
       console.printMessage("Adjusting wysiwyg for basename " + basename);
       // Getting documents ordered by their names
-      List<SimpleDocument> documents = service.listWysiwygForBasename(basename, componentId);
-      if (!documents.isEmpty()) {
-        if (documents.size() > 1) {
-          console.printMessage(
-              "There is " + documents.size() + " documents to handle for basename " + basename);
-          SimpleDocument merge = getMergeDocument(documents, basename);
-          documents.remove(merge);
-          if (mergeDocuments(merge, documents)) {
-            nbAdjustedDocuments++;
+      List<SimpleDocument> documentsStartingWithBasename =
+          service.listWysiwygForBasename(basename, componentId);
+      if (!documentsStartingWithBasename.isEmpty()) {
+
+        // Splitting the previous list by foreignKey
+        Map<String, List<SimpleDocument>> documentListByForeignKey =
+            new HashMap<String, List<SimpleDocument>>();
+        for (SimpleDocument document : documentsStartingWithBasename) {
+          String foreignKey = document.getForeignId();
+          List<SimpleDocument> foreignKeyDocuments = documentListByForeignKey.get(foreignKey);
+          if (foreignKeyDocuments == null) {
+            foreignKeyDocuments = new ArrayList<SimpleDocument>();
+            documentListByForeignKey.put(foreignKey, foreignKeyDocuments);
           }
-        } else {
-          console.printMessage("There is 1 document to handle for basename " + basename);
-          if (copyIntoRightLanguageLocation(documents.get(0))) {
-            nbAdjustedDocuments++;
+          foreignKeyDocuments.add(document);
+        }
+
+        // Process each list of documents by unique foreignKey
+        for (Map.Entry<String, List<SimpleDocument>> entry : documentListByForeignKey.entrySet()) {
+          List<SimpleDocument> documents = entry.getValue();
+          if (documents.size() > 1) {
+            console.printMessage(
+                "There is " + documents.size() + " documents to handle for basename " + basename +
+                    " and foreignId " + entry.getKey());
+            SimpleDocument merge = getMergeDocument(documents, basename);
+            documents.remove(merge);
+            if (mergeDocuments(merge, documents)) {
+              nbAdjustedDocuments++;
+            }
+          } else {
+            console.printMessage(
+                "There is 1 document to handle for basename " + basename + " and foreignId " +
+                    entry.getKey());
+            if (copyIntoRightLanguageLocation(documents.get(0))) {
+              nbAdjustedDocuments++;
+            }
           }
         }
       }
@@ -146,7 +170,9 @@ class WysiwygDocumentMerger implements Callable<Long> {
         if (basename.equals(FilenameUtils.getBaseName(document.getFilename()))) {
           return document;
         }
-        if (theFirstWhichNameHasDefaultLanguageSuffix == null) {
+        if (theFirstWhichNameHasDefaultLanguageSuffix == null ||
+            !theFirstWhichNameHasDefaultLanguageSuffix.getLanguage()
+                .equals(ConverterUtil.defaultLanguage)) {
           theFirstWhichNameHasDefaultLanguageSuffix = document;
         }
       }
@@ -166,7 +192,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
     String languageFromFilename =
         ConverterUtil.checkLanguage(ConverterUtil.extractLanguage(document.getFilename()));
     // Adjusting location of content that is in other language than this of default language
-    if (!languageFromFilename.equals(document.getLanguage())) {
+    if (document.getLanguage().equals(ConverterUtil.defaultLanguage) &&
+        !languageFromFilename.equals(document.getLanguage())) {
       String documentLanguageBeforeAdjustment = document.getLanguage();
       File contentToCopy = new File(document.getAttachmentPath());
       if (contentToCopy.exists() && contentToCopy.isFile()) {
@@ -203,7 +230,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
     String languageFromFilename =
         ConverterUtil.checkLanguage(ConverterUtil.extractLanguage(documentToRename.getFilename()));
     // Renaming document that is in other language than this of default language
-    if (!languageFromFilename.equals(documentToRename.getLanguage())) {
+    if (documentToRename.getLanguage().equals(ConverterUtil.defaultLanguage) &&
+        !languageFromFilename.equals(documentToRename.getLanguage())) {
       File contentToRename = new File(documentToRename.getAttachmentPath());
       if (contentToRename.exists() && contentToRename.isFile()) {
         documentToRename.setFilename(ConverterUtil
@@ -238,7 +266,8 @@ class WysiwygDocumentMerger implements Callable<Long> {
     List<SimpleDocument> documentsToDelete = new ArrayList<SimpleDocument>();
     for (SimpleDocument documentToMerge : documents) {
       String lang = ConverterUtil.extractLanguage(documentToMerge.getFilename());
-      if (!StringUtil.isDefined(lang)) {
+      if (!StringUtil.isDefined(lang) ||
+          !documentToMerge.getLanguage().equals(ConverterUtil.defaultLanguage)) {
         lang = documentToMerge.getLanguage();
       }
       documentTarget.setAttachment(
@@ -322,13 +351,18 @@ class WysiwygDocumentMerger implements Callable<Long> {
       }
     }
     for (SimpleDocument documentToDelete : documentsToDelete) {
-      try {
-        service.deleteAttachment(documentToDelete);
-        adjustmentDone = true;
-        console.printMessage("Node " + documentToDelete.getNodeName() + " has been deleted");
-      } catch (Exception exc) {
-        // In case the node was already deleted, an exception is thrown...
-        // So it is catched here.
+      if (documentTarget.getNodeName().equals(documentToDelete.getNodeName())) {
+        console.printWarning("Node " + documentToDelete.getNodeName() +
+            " has finally not been deleted (because it was the selected target)");
+      } else {
+        try {
+          service.deleteAttachment(documentToDelete);
+          adjustmentDone = true;
+          console.printMessage("Node " + documentToDelete.getNodeName() + " has been deleted");
+        } catch (Exception exc) {
+          // In case the node was already deleted, an exception is thrown...
+          // So it is catched here.
+        }
       }
     }
     return adjustmentDone;
