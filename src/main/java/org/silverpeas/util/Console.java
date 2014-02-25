@@ -23,19 +23,18 @@
  */
 package org.silverpeas.util;
 
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.FileUtils;
+import org.silverpeas.dbbuilder.util.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-
-import org.apache.commons.io.Charsets;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.silverpeas.dbbuilder.util.Configuration;
 
 /**
  * Console into which messages are displayed. It wraps the source into which messages are printed
@@ -107,16 +106,17 @@ public class Console {
   }
 
   private synchronized void printMessage(String msg, boolean isError) {
+    String message = "Thread " + Thread.currentThread().getId() + " - " + (msg != null ? msg : "");
     if (null != logBuffer) {
-      logBuffer.print(msg);
+      logBuffer.print(message);
     }
     if (echoAsDotEnabled) {
       System.out.print(".");
     } else {
-      System.out.println(newline + msg + newline);
+      System.out.println(newline + message + newline);
     }
     if (!isError) {
-      logger.info(msg);
+      logger.info(message);
     }
   }
 
