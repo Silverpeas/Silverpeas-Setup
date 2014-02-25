@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+
+  <sb_comment_comment commentId="2" commentOwnerId="2773" commentCreationDate="2013/09/10" commentModificationDate="2013/09/10"
+                      commentComment="smalltalk back to the future" instanceId="kmelia1" resourceType="Publication" resourceId="1"/>
+  <sb_comment_comment commentId="12" commentOwnerId="0" commentCreationDate="2013/11/22" commentModificationDate="2013/11/22"
+                      commentComment="j&#39;ai déplacé ta publication dans une autre GED" instanceId="kmelia7" resourceType="Publication" resourceId="205"/>
+  <sb_comment_comment commentId="22" commentOwnerId="2773" commentCreationDate="2013/11/22" commentModificationDate="2013/11/22"
+                      commentComment="boo le commentaire" instanceId="kmelia1" resourceType="Publication" resourceId="206"/>
+  <sb_comment_comment commentId="36" commentOwnerId="2773" commentCreationDate="2014/02/21" commentModificationDate="2014/02/21"
+                      commentComment="L&#39;apostrophe &gt; sans fin &lt;" instanceId="kmelia1" resourceType="Publication" resourceId="256"/>
+
+  <sb_publication_publi pubid="101"  infoid="0"  pubname="Publication 2" pubdescription="Publication 2 Valide avec dates ok"  pubcreationdate="2008/11/18"
+                        pubbegindate="2009/10/18" pubenddate="2020/12/18"  pubcreatorid="101" pubimportance="5"
+                        pubversion=""  pubkeywords="test"  pubcontent="Contenu de la publication 2"
+                        pubstatus="Valid" pubupdatedate="2010/10/26"
+                        instanceid="kmelia1" pubupdaterid="200" pubvalidatedate="2008/11/18"
+                        pubvalidatorid="300" pubbeginhour="01:10" pubendhour="20:35" pubauthor="Bart Simpson"
+                        pubtargetvalidatorid="[NULL]" pubcloneid="-1" pubclonestatus="[NULL]" lang="fr" />
+  <sb_publication_publi pubid="205"  infoid="0"  pubname="Utilisation d&#39;AngularJS dans Silverpeas" pubdescription="Présentation de l&#39;utilisation d&#39;AngularJS dans une page Web de Silverpeas"  pubcreationdate="2013/11/18"
+                        pubbegindate="2013/11/18" pubenddate="9999/99/99"  pubcreatorid="103" pubimportance="5"
+                        pubversion=""  pubkeywords="Silverpeas, AngularJS, Web, Javascript"  pubcontent="''"
+                        pubstatus="Valid" pubupdatedate="2013/11/22"
+                        instanceid="kmelia1" pubupdaterid="103" pubvalidatedate="2013/11/22"
+                        pubvalidatorid="0" pubbeginhour="00:00" pubendhour="23:59" pubauthor="[NULL]"
+                        pubtargetvalidatorid="[NULL]" pubcloneid="-1" pubclonestatus="[NULL]" lang="[NULL]" />
+  <sb_publication_publi pubid="255"  infoid="0"  pubname="Vente anticipé sur un marché en expansion" pubdescription="Technique de vente avancé"  pubcreationdate="2013/11/18"
+                        pubbegindate="2013/11/18" pubenddate="9999/99/99"  pubcreatorid="103" pubimportance="5"
+                        pubversion=""  pubkeywords="[NULL]"  pubcontent="''"
+                        pubstatus="Valid" pubupdatedate="2013/11/22"
+                        instanceid="kmelia7" pubupdaterid="103" pubvalidatedate="2013/11/22"
+                        pubvalidatorid="0" pubbeginhour="00:00" pubendhour="23:59" pubauthor="[NULL]"
+                        pubtargetvalidatorid="[NULL]" pubcloneid="-1" pubclonestatus="[NULL]" lang="[NULL]" />
+
+</dataset>
