@@ -9,7 +9,7 @@
   <groupId>com.silverpeas.builder</groupId>
   <artifactId>configuration</artifactId>
   <packaging>jar</packaging>
-  <version>5.14</version>
+  <version>5.14.1-SNAPSHOT</version>
   <name>Silverpeas Configuration Tools - ${project.version}</name>
 
   <scm>
