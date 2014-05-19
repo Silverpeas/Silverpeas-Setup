@@ -182,8 +182,13 @@ public class DocumentConverter extends AbstractJcrConverter {
   }
 
   public void fillNode(SimpleDocument document, Node documentNode) throws RepositoryException {
+    fillNode(document, documentNode, false);
+  }
+
+  public void fillNode(SimpleDocument document, Node documentNode, boolean skipAttachmentContent)
+      throws RepositoryException {
     setDocumentNodeProperties(document, documentNode);
-    if (document.getAttachment() != null) {
+    if (!skipAttachmentContent && document.getAttachment() != null) {
       Node attachmentNode = getAttachmentNode(document.getAttachment().getNodeName(), documentNode);
       attachmentConverter.fillNode(document.getAttachment(), attachmentNode);
     }

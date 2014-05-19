@@ -20,18 +20,19 @@
  */
 package org.silverpeas.util.file;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.tika.Tika;
+import org.silverpeas.dbbuilder.util.Configuration;
+import org.silverpeas.util.ConfigurationHolder;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.tika.Tika;
 
-import org.silverpeas.dbbuilder.util.Configuration;
-import org.silverpeas.util.ConfigurationHolder;
 import static java.io.File.separatorChar;
 
 /**
@@ -76,8 +77,8 @@ public final class FileUtil {
 
   /**
    * ---------------------------------------------------------------------
-   * @param from
-   * @param to
+   * @param fromDir
+   * @param toDir
    * @throws IOException
    * @see
    */
@@ -87,8 +88,8 @@ public final class FileUtil {
 
   /**
    * ---------------------------------------------------------------------
-   * @param from
-   * @param to
+   * @param fromDir
+   * @param toDir
    * @throws IOException if from doesn't exist
    * @see
    */
@@ -186,5 +187,15 @@ public final class FileUtil {
       }
     }
 
+  }
+
+  /**
+   * Delete the directory if it is empty.
+   * @param directory the directory to delete if it is empty.
+   * @return true if the directory was deleted, false otherwise.
+   */
+  public static boolean deleteEmptyDir(File directory) {
+    return directory.exists() && directory.isDirectory() && directory.list() != null &&
+        directory.list().length == 0 && directory.delete();
   }
 }

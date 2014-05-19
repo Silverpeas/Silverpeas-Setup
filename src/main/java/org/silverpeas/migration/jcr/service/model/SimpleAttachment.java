@@ -23,15 +23,16 @@
  */
 package org.silverpeas.migration.jcr.service.model;
 
+import org.silverpeas.migration.jcr.service.ConverterUtil;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
-import org.silverpeas.migration.jcr.service.ConverterUtil;
 
 /**
  * @author ehugonnet
  */
-public class SimpleAttachment implements Serializable {
+public class SimpleAttachment implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -6153003608158238503L;
   private String filename;
@@ -58,6 +59,24 @@ public class SimpleAttachment implements Serializable {
     this.createdBy = createdBy;
     setCreated(created);
     this.xmlFormId = xmlFormId;
+  }
+
+  public SimpleAttachment(final String filename, final String language, final String title,
+      final String description, final long size, final String contentType, final String createdBy,
+      final Date created, final String updatedBy, final Date updated, final String xmlFormId,
+      final File file) {
+    this.filename = filename;
+    this.language = language;
+    this.title = title;
+    this.description = description;
+    this.size = size;
+    this.contentType = contentType;
+    this.createdBy = createdBy;
+    this.created = created;
+    this.updatedBy = updatedBy;
+    this.updated = updated;
+    this.xmlFormId = xmlFormId;
+    this.file = file;
   }
 
   public SimpleAttachment() {
@@ -252,5 +271,15 @@ public class SimpleAttachment implements Serializable {
         + title + ", description=" + description + ", size=" + size + ", contentType=" + contentType
         + ", createdBy=" + createdBy + ", created=" + created + ", updatedBy=" + updatedBy
         + ", updated=" + updated + ", xmlFormId=" + xmlFormId + '}';
+  }
+
+  @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
+  @Override
+  public SimpleAttachment clone() {
+    try {
+      return (SimpleAttachment) super.clone();
+    } catch (CloneNotSupportedException e) {
+      return null;
+    }
   }
 }
