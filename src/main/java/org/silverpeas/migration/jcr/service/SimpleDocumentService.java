@@ -23,11 +23,14 @@
  */
 package org.silverpeas.migration.jcr.service;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.silverpeas.migration.jcr.service.model.DocumentType;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.migration.jcr.service.model.SimpleDocumentPK;
 import org.silverpeas.migration.jcr.service.repository.DocumentRepository;
 import org.silverpeas.util.StringUtil;
+import org.silverpeas.util.file.FileUtil;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -37,6 +40,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -142,11 +146,105 @@ public class SimpleDocumentService {
     return searchDocumentById(document.getPk(), document.getLanguage());
   }
 
+  public void removeContent(SimpleDocument document, String lang) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      boolean requireLock = repository.lock(session, document, document.getEditedBy());
+      boolean existsOtherContents = repository.removeContent(session, document.getPk(), lang);
+      session.save();
+      SimpleDocument finalDocument = document;
+      if (requireLock) {
+        finalDocument = repository.unlockFromContentDeletion(session, document);
+        if (existsOtherContents) {
+          repository.duplicateContent(document, finalDocument);
+        }
+      }
+      finalDocument.setLanguage(lang);
+      final File fileToDelete;
+      if (!existsOtherContents) {
+        fileToDelete =
+            new File(finalDocument.getDirectoryPath(null)).getParentFile().getParentFile();
+      } else {
+        fileToDelete = new File(finalDocument.getAttachmentPath());
+      }
+      FileUtils.deleteQuietly(fileToDelete);
+      FileUtil.deleteEmptyDir(fileToDelete.getParentFile());
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } catch (IOException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  public void getBinaryContent(OutputStream output, SimpleDocumentPK pk, String lang) {
+    getBinaryContent(output, pk, lang, 0, -1);
+  }
+
+  public void getBinaryContent(final OutputStream output, final SimpleDocumentPK pk,
+      final String lang, final long contentOffset, final long contentLength) {
+    Session session = null;
+    InputStream in = null;
+    try {
+      session = repositoryManager.getSession();
+      in = repository.getContent(session, pk, lang);
+      if (in != null) {
+        IOUtils.copyLarge(in, output, contentOffset, contentLength);
+      }
+    } catch (IOException ex) {
+      throw new AttachmentException(ex);
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      IOUtils.closeQuietly(in);
+      repositoryManager.logout(session);
+    }
+  }
+
   public List<String> listBasenames(String instanceId) {
     Session session = null;
     try {
       session = repositoryManager.getSession();
       return new ArrayList<String>(repository.listWysiwygFileNames(session, instanceId));
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  public List<String> listForeignIdsWithWysiwyg(String instanceId) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      return new ArrayList<String>(
+          repository.listForeignIdsByType(session, instanceId, DocumentType.wysiwyg));
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  /**
+   * Gets the list of attachments of WYSIWYG type for the given instance identifier and
+   * foreign identifier. For each document represented by a master JCR Node, the number of
+   * SimpleDocument returned depends on the number of languages registered for the JCR Node.
+   * For a document, if it exists one version in "fr" and an other one in "en" (for example), two
+   * SimpleDocument are returned, one for the "fr" language and an other one for "en" language.
+   * @param instanceId the identifier of the component instance limitation.
+   * @param foreignId the identifier of object limitation.
+   * @return
+   * @throws RepositoryException
+   */
+  public List<SimpleDocument> listWysiwygByForeignId(String instanceId, String foreignId) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      return repository.listAttachmentsByForeignIdAndDocumentType(session, instanceId, foreignId,
+          DocumentType.wysiwyg);
     } catch (RepositoryException ex) {
       throw new AttachmentException(ex);
     } finally {

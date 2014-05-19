@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
@@ -46,6 +47,7 @@ public class Console {
   private File logFile;
   private PrintWriter logBuffer;
   private boolean echoAsDotEnabled = true;
+  private PrintStream out = System.out;
 
   /**
    * Creates and open a console upon the specified file. All messages will be printed into the file.
@@ -111,9 +113,9 @@ public class Console {
       logBuffer.print(message);
     }
     if (echoAsDotEnabled) {
-      System.out.print(".");
+      out.print(".");
     } else {
-      System.out.println(newline + message + newline);
+      out.println(newline + message + newline);
     }
     if (!isError) {
       logger.info(message);
@@ -126,7 +128,13 @@ public class Console {
     }
   }
 
-  public synchronized void setEchoAsDotEnabled(boolean on) {
+  public synchronized Console setEchoAsDotEnabled(boolean on) {
     echoAsDotEnabled = on;
+    return this;
+  }
+
+  public Console setOut(final PrintStream out) {
+    this.out = out;
+    return this;
   }
 }
