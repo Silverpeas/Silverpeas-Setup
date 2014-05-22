@@ -36,7 +36,7 @@ import static java.io.File.separatorChar;
  *
  * @author ehugonnet
  */
-public class SimpleDocument implements Serializable {
+public class SimpleDocument implements Serializable, Cloneable {
 
   private static final long serialVersionUID = 8778738762037114180L;
   public static final String WEBDAV_FOLDER = "webdav";
@@ -144,6 +144,32 @@ public class SimpleDocument implements Serializable {
     this.alert = DateUtil.getBeginOfDay(alert);
     this.expiry = DateUtil.getBeginOfDay(expiry);
     this.comment = comment;
+    this.file = file;
+  }
+
+  public SimpleDocument(final SimpleDocumentPK pk, final String foreignId, final int order,
+      final boolean versioned, final String editedBy, final Date reservation, final Date alert,
+      final Date expiry, final String status, final String cloneId, final int minorVersion,
+      final int majorVersion, final boolean publicDocument, final String nodeName,
+      final String comment, final DocumentType documentType, final String oldContext,
+      final SimpleAttachment file) {
+    this.pk = pk;
+    this.foreignId = foreignId;
+    this.order = order;
+    this.versioned = versioned;
+    this.editedBy = editedBy;
+    this.reservation = reservation;
+    this.alert = alert;
+    this.expiry = expiry;
+    this.status = status;
+    this.cloneId = cloneId;
+    this.minorVersion = minorVersion;
+    this.majorVersion = majorVersion;
+    this.publicDocument = publicDocument;
+    this.nodeName = nodeName;
+    this.comment = comment;
+    this.documentType = documentType;
+    this.oldContext = oldContext;
     this.file = file;
   }
 
@@ -512,5 +538,18 @@ public class SimpleDocument implements Serializable {
 
   public String getFolder() {
     return documentType.getFolderName();
+  }
+
+  @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
+  @Override
+  public SimpleDocument clone() {
+    try {
+      SimpleDocument clone = (SimpleDocument) super.clone();
+      clone.setPK(clone.getPk().clone());
+      clone.setAttachment(clone.getAttachment().clone());
+      return clone;
+    } catch (CloneNotSupportedException e) {
+      return null;
+    }
   }
 }
