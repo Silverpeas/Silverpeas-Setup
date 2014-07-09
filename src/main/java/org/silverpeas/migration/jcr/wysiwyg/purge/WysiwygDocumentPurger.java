@@ -27,6 +27,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
@@ -136,7 +137,7 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
     commonLogPart += " - empty content";
     for (WysiwygContent wysiwygContent : new ArrayList<WysiwygContent>(
         context.getWysiwygOfForeignId())) {
-      if (isEmptyContent(wysiwygContent.getAttachment())) {
+      if (isPhysicalFileExistingWithEmptyContent(commonLogPart, wysiwygContent.getAttachment())) {
         service.removeContent(wysiwygContent.getAttachment(), wysiwygContent.getLanguage());
         console.printMessage(commonLogPart + " - doc=" + wysiwygContent.getNodeName() + ", lang=" +
                 wysiwygContent.getLanguage() + " - removed"
@@ -292,32 +293,47 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
    * Gets the content of the given wysiwyg/language.
    * @param commonLogPart
    * @param wysiwygLangAttachment
-   * @return a String that represents the content in UTF8.
+   * @return a String that represents the content in UTF8, a dummy string if physical file does
+   * not exist.
    */
   private String getContent(String commonLogPart, SimpleDocument wysiwygLangAttachment) {
     ByteArrayOutputStream content = new ByteArrayOutputStream();
-    service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
-        wysiwygLangAttachment.getLanguage());
     try {
+      service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
+          wysiwygLangAttachment.getLanguage());
       return content.toString(Charsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       console
           .printError(commonLogPart + " - doc=" + wysiwygLangAttachment.getNodeName() + ", lang=" +
               wysiwygLangAttachment.getLanguage() + " - unsupported encoding", e);
       return UUID.randomUUID().toString();
+    } catch (AttachmentException ae) {
+      console
+          .printError(commonLogPart + " - doc=" + wysiwygLangAttachment.getNodeName() + ", lang=" +
+              wysiwygLangAttachment.getLanguage() + " - inconsistent data, nothing is done", ae);
+      return UUID.randomUUID().toString();
     }
   }
 
   /**
    * Indicates if the content of given wysiwyg/language is empty.
+   * @param commonLogPart
    * @param wysiwygLangAttachment
-   * @return true if empty, false otherwise.
+   * @return true if exists and is empty, false otherwise.
    */
-  private boolean isEmptyContent(SimpleDocument wysiwygLangAttachment) {
+  private boolean isPhysicalFileExistingWithEmptyContent(String commonLogPart,
+      SimpleDocument wysiwygLangAttachment) {
     ByteArrayOutputStream content = new ByteArrayOutputStream();
-    service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
-        wysiwygLangAttachment.getLanguage(), 0, 1);
-    return content.size() == 0;
+    try {
+      service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
+          wysiwygLangAttachment.getLanguage(), 0, 1);
+      return content.size() == 0;
+    } catch (AttachmentException ae) {
+      console
+          .printError(commonLogPart + " - doc=" + wysiwygLangAttachment.getNodeName() + ", lang=" +
+              wysiwygLangAttachment.getLanguage() + " - inconsistent data, nothing is done", ae);
+      return false;
+    }
   }
 
   /**
