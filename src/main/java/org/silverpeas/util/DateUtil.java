@@ -20,14 +20,14 @@
  */
 package org.silverpeas.util;
 
+import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-
-import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 
 import static java.util.Calendar.*;
 
@@ -67,13 +67,13 @@ public class DateUtil {
     TIME_PARSER = new SimpleDateFormat("HH:mm");
     TIME_PARSER.setLenient(false);
     TIME_FORMATTER = FastDateFormat.getInstance("HH:mm");
+    ISO8601_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     ISO8601DATE_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm");
     ISO8601DAY_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd");
     ICALDAY_FORMATTER = FastDateFormat.getInstance("yyyyMMdd");
     ICALDATE_FORMATTER = FastDateFormat.getInstance("yyyyMMdd'T'HHmmss");
     TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
     ICALUTCDATE_FORMATTER = FastDateFormat.getInstance("yyyyMMdd'T'HHmmss'Z'", utcTimeZone);
-    ISO8601_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss'Z'", utcTimeZone);
   }
 
   public static Date getDate(Date date, String hour) {
@@ -392,6 +392,16 @@ public class DateUtil {
    */
   public static String formatAsISO8601Date(final Date date) {
     return ISO8601DATE_FORMATTER.format(date);
+  }
+
+  /**
+   * Formats the specified date according to the ISO 8601 format.
+   * @param date the date to format.
+   * @return a String representation of the date in one of the ISO 8601 format (with the UTC
+   * offset).
+   */
+  public static String formatAsISO8601WithUtcOffset(final Date date) {
+    return ISO8601_FORMATTER.format(date);
   }
 
   /**
