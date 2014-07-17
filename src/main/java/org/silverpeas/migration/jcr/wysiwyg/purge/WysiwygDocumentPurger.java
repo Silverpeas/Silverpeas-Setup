@@ -25,6 +25,7 @@ package org.silverpeas.migration.jcr.wysiwyg.purge;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.silverpeas.migration.jcr.service.AttachmentException;
@@ -32,6 +33,7 @@ import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.util.Console;
+import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.MapUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -70,8 +72,10 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
 
   @Override
   public Result call() throws Exception {
-    console
-        .printMessage("Starting wysiwyg contents purge for component instance id " + componentId);
+    Date startDate = new Date();
+    console.printMessage(
+        "Starting wysiwyg contents purge for component instance id " + componentId + ", at " +
+            DateUtil.formatAsISO8601WithUtcOffset(startDate));
     Result result = purgeWysiwyg();
     String message = "Finishing wysiwyg contents purge for component instance id " + componentId;
     if (result.getNbWysiwygContentPurged() > 0L) {
@@ -85,16 +89,26 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
     } else {
       message += " and no wysiwyg content file name renamed";
     }
-    console.printMessage(message);
+    Date endDate = new Date();
+    console.printMessage(
+        message + ", at " + DateUtil.formatAsISO8601WithUtcOffset(endDate) + " (duration of " +
+            DurationFormatUtils.formatDurationHMS(endDate.getTime() - startDate.getTime()) + ")");
     return result;
   }
 
   private Result purgeWysiwyg() {
+    final String headerLogPart = "instanceId=" + componentId;
     Result result = new Result();
+
+    long startIdentification = System.currentTimeMillis();
     List<String> foreignIdsWithWysiwyg = service.listForeignIdsWithWysiwyg(componentId);
+    console.printMessage(
+        headerLogPart + " - identifying foreign ids (" + foreignIdsWithWysiwyg.size() + ") in " +
+            DurationFormatUtils
+                .formatDurationHMS(System.currentTimeMillis() - startIdentification));
+
     for (String foreignIdWithWysiwyg : foreignIdsWithWysiwyg) {
-      String commonLogPart = "instanceId=" + componentId + ", foreignId=" +
-          foreignIdWithWysiwyg;
+      String commonLogPart = headerLogPart + ", foreignId=" + foreignIdWithWysiwyg;
       console.printMessage(commonLogPart + " - verifying wysiwyg contents ...");
 
       // Getting documents ordered by their names
@@ -125,6 +139,8 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
           commonLogPart + " - " + context.getNbRemovedContent() + "/" + nbContents + " purged.");
       console.printMessage(
           commonLogPart + " - " + context.getNbRenamedContent() + "/" + nbContents + " renamed.");
+      console.printMessage(commonLogPart + " - duration of " +
+          DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - startIdentification));
     }
     return result;
   }
