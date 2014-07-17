@@ -23,12 +23,15 @@
  */
 package org.silverpeas.migration.jcr.wysiwyg.purge;
 
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
 import org.silverpeas.migration.jcr.service.RepositoryManager;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
+import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.StringUtil;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -73,6 +76,9 @@ public class WysiwygPurger extends DbBuilderDynamicPart {
    * @throws Exception
    */
   public void purgeDocuments() throws Exception {
+    Date startDate = new Date();
+    getConsole().printMessage("Starting the WYSIWYG purge process at " +
+        DateUtil.formatAsISO8601WithUtcOffset(startDate));
     long totalNumberOfPurgedFiles = 0L;
     long totalNumberOfRenamedFiles = 0L;
     List<WysiwygDocumentPurger> mergers = buildWysiwygDocumentPurgers();
@@ -95,6 +101,11 @@ public class WysiwygPurger extends DbBuilderDynamicPart {
     getConsole().printMessage("Nb of purged wysiwyg contents : " + totalNumberOfPurgedFiles);
     getConsole()
         .printMessage("Nb of renamed wysiwyg content file names : " + totalNumberOfRenamedFiles);
+    Date endDate = new Date();
+    getConsole().printMessage(
+        "Finishing the WYSIWYG purge process at " + DateUtil.formatAsISO8601WithUtcOffset(endDate) +
+            " (total duration of " +
+            DurationFormatUtils.formatDurationHMS(endDate.getTime() - startDate.getTime()) + ")");
     if (!RepositoryManager.isIsJcrTestEnv()) {
       this.service.shutdown();
     }
