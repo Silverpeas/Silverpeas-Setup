@@ -315,6 +315,29 @@ public class DocumentRepository {
   }
 
   /**
+   * Search all the documents of the specified type in a specified instance.
+   *
+   * @param session the current JCR session.
+   * @param instanceId the component id containing the documents.
+   * @return an ordered list of the documents.
+   * @throws RepositoryException
+   */
+  private NodeIterator selectDocumentsByInstanceIdAndType(Session session, String instanceId,
+      DocumentType type) throws RepositoryException {
+    QueryManager manager = session.getWorkspace().getQueryManager();
+    QueryObjectModelFactory factory = manager.getQOMFactory();
+    Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
+    ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
+        getPath() + instanceId + '/' + type.getFolderName());
+    Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
+        SLV_PROPERTY_ORDER));
+    QueryObjectModel query =
+        factory.createQuery(source, childNodeConstraint, new Ordering[]{order}, null);
+    QueryResult result = query.execute();
+    return result.getNodes();
+  }
+
+  /**
    * Search all the documents of the specified type in an instance with the specified foreignId.
    *
    * @param session the current JCR session.
@@ -330,13 +353,15 @@ public class DocumentRepository {
     Selector source = factory.selector(SLV_SIMPLE_DOCUMENT, SIMPLE_DOCUMENT_ALIAS);
     ChildNode childNodeConstraint = factory.childNode(SIMPLE_DOCUMENT_ALIAS, session.getRootNode().
         getPath() + instanceId + '/' + type.getFolderName());
-    Comparison foreignIdComparison = factory.comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
-        SLV_PROPERTY_FOREIGN_KEY), QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
-        literal(session.getValueFactory().createValue(foreignId)));
-    Ordering order = factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS,
-        SLV_PROPERTY_ORDER));
-    QueryObjectModel query = factory.createQuery(source, factory.and(childNodeConstraint,
-        foreignIdComparison), new Ordering[]{order}, null);
+    Comparison foreignIdComparison = factory
+        .comparison(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS, SLV_PROPERTY_FOREIGN_KEY),
+            QueryObjectModelFactory.JCR_OPERATOR_EQUAL_TO, factory.
+            literal(session.getValueFactory().createValue(foreignId)));
+    Ordering order =
+        factory.ascending(factory.propertyValue(SIMPLE_DOCUMENT_ALIAS, SLV_PROPERTY_ORDER));
+    QueryObjectModel query = factory
+        .createQuery(source, factory.and(childNodeConstraint, foreignIdComparison),
+            new Ordering[]{order}, null);
     QueryResult result = query.execute();
     return result.getNodes();
   }
@@ -623,6 +648,35 @@ public class DocumentRepository {
       }
     }
     return foreignIds;
+  }
+
+  /**
+   * Gets the list of attachments of given document type for the given instance identifier.
+   * For each document represented by a master JCR Node, the number of
+   * SimpleDocument returned depends on the number of languages registered for the JCR Node.
+   * For a document, if it exists one version in "fr" and an other one in "en" (for example), two
+   * SimpleDocument are returned, one for the "fr" language and an other one for "en" language.
+   * @param session the JCR session.
+   * @param instanceId the identifier of the component instance limitation.
+   * @param documentType the type of document that must be verified.
+   * @return
+   * @throws RepositoryException
+   */
+  public List<SimpleDocument> listAttachmentsByInstanceIdAndDocumentType(Session session,
+      String instanceId, DocumentType documentType) throws RepositoryException {
+    NodeIterator iter =
+        selectDocumentsByInstanceIdAndType(session, instanceId, documentType);
+    List<SimpleDocument> result = new ArrayList<SimpleDocument>((int) iter.getSize());
+    while (iter.hasNext()) {
+      Node documentNode = iter.nextNode();
+      NodeIterator attachmentsIter = documentNode.getNodes();
+      while (attachmentsIter.hasNext()) {
+        Node attachmentNode = attachmentsIter.nextNode();
+        String language = attachmentNode.getProperty(JCR_LANGUAGE).getString();
+        result.add(converter.convertNode(attachmentNode.getParent(), language));
+      }
+    }
+    return result;
   }
 
   /**
