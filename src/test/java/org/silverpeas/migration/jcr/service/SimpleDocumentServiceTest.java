@@ -464,6 +464,148 @@ public class SimpleDocumentServiceTest {
     }.execute();
   }
 
+  /**
+   * Test of listWysiwygByInstanceId method, of class DocumentRepository.
+   */
+  @Test
+  public void listWysiwygByInstanceId() throws Exception {
+    new JcrSimpleDocumentServiceTest() {
+      @Override
+      public void run() throws Exception {
+        Set<String> createdIds = new HashSet<String>();
+        // No WYSIWYG content exists
+        List<String> wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, notNullValue());
+        assertThat(wysiwygFIdLangFilenames, hasSize(0));
+
+        // Creating an FR "attachment" content.
+        String createdUuid =
+            createAttachmentForTest(defaultDocumentBuilder("fId_1").setDocumentType(attachment),
+                defaultFRContentBuilder(), "fId_1_fr").getId();
+        createdIds.add(createdUuid);
+        SimpleDocument enDocument = getDocumentById(createdUuid, "en");
+        assertThat(enDocument, notNullValue());
+        assertThat(enDocument.getAttachment(), nullValue());
+        SimpleDocument frDocument = getDocumentById(createdUuid, "fr");
+        assertThat(frDocument, notNullValue());
+        assertThat(frDocument.getAttachment(), notNullValue());
+        assertThat(frDocument.getDocumentType(), is(attachment));
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(0));
+
+        // Updating attachment with EN content.
+        setEnData(frDocument);
+        updateAttachmentForTest(frDocument, "en", "fId_1_en");
+        createdIds.add(frDocument.getId());
+
+        // Vérifying the attachment exists into both of tested languages.
+        enDocument = getDocumentById(createdUuid, "en");
+        assertThat(enDocument, notNullValue());
+        assertThat(enDocument.getAttachment(), notNullValue());
+        assertThat(enDocument.getDocumentType(), is(attachment));
+        checkEnglishSimpleDocument(enDocument);
+        frDocument = getDocumentById(createdUuid, "fr");
+        assertThat(frDocument, notNullValue());
+        assertThat(frDocument.getAttachment(), notNullValue());
+        assertThat(frDocument.getDocumentType(), is(attachment));
+        checkFrenchSimpleDocument(frDocument);
+
+        // No WYSIWYG : that is what it is expected
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(0));
+
+        // Adding several documents, but no WYSIWYG
+        Set<DocumentType> documentTypes = EnumSet.allOf(DocumentType.class);
+        documentTypes.remove(DocumentType.wysiwyg);
+        int id = 2;
+        for (DocumentType documentType : documentTypes) {
+          createdIds.add(createAttachmentForTest(
+              defaultDocumentBuilder("fId_" + id).setDocumentType(documentType),
+              defaultFRContentBuilder().setFilename("fId_" + id + "_wysiwyg_en.txt"),
+              "fId_" + id + "_fr").getId());
+          id++;
+        }
+
+        // No WYSIWYG : that is what it is expected
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(0));
+
+        // Number of expected created documents
+        int nbDocuments = 1 + (DocumentType.values().length - 1);
+        assertThat(createdIds.size(), is(nbDocuments));
+
+        // Adding the first WYSIWYG EN content
+        SimpleDocument createdDocument =
+            createAttachmentForTest(defaultDocumentBuilder("fId_26").setDocumentType(wysiwyg),
+                defaultENContentBuilder(), "fId_26_en");
+        createdIds.add(createdDocument.getId());
+
+        // One wrong WYSIWYG base name
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(1));
+        assertThat(wysiwygFIdLangFilenames, contains("fId_26|en|test.pdf"));
+
+        // Updating wysiwyg file name
+        createdDocument.setFilename("fId_26_wysiwyg_en.txt");
+        updateAttachmentForTest(createdDocument);
+
+        // One WYSIWYG base name
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(1));
+        assertThat(wysiwygFIdLangFilenames, contains("fId_26|en|fId_26_wysiwyg_en.txt"));
+
+        // Adding the FR content to the first WYSIWYG document
+        enDocument = getDocumentById(createdDocument.getId(), "en");
+        setFrData(enDocument);
+        enDocument.setFilename("fId_26_wysiwyg_fr.txt");
+        updateAttachmentForTest(enDocument, "fr", "fId_26_fr");
+        createdIds.add(enDocument.getId());
+
+        // One WYSIWYG on one Component
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(2));
+        assertThat(wysiwygFIdLangFilenames, containsInAnyOrder("fId_26|fr|fId_26_wysiwyg_fr.txt",
+            "fId_26|en|fId_26_wysiwyg_en.txt"));
+
+        // Adding the second WYSIWYG document (on same component)
+        SimpleDocument secondCreatedDocument =
+            createAttachmentForTest(defaultDocumentBuilder("fId_27").setDocumentType(wysiwyg),
+                defaultFRContentBuilder().setFilename("fId_27_wysiwyg_fr.txt"), "fId_27_fr");
+        createdIds.add(secondCreatedDocument.getId());
+
+        // Two WYSIWYG on one Component
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(3));
+        assertThat(wysiwygFIdLangFilenames,
+            containsInAnyOrder("fId_26|fr|fId_26_wysiwyg_fr.txt", "fId_26|en|fId_26_wysiwyg_en.txt",
+                "fId_27|fr|fId_27_wysiwyg_fr.txt"));
+
+        // Updating wysiwyg file name
+        setEnData(secondCreatedDocument);
+        secondCreatedDocument.setFilename(secondCreatedDocument.getFilename());
+        updateAttachmentForTest(secondCreatedDocument, "en", "fId_27_en");
+
+        // Two WYSIWYG (each one in two languages) on one Component
+        wysiwygFIdLangFilenames = extractForeignIdLanguageFilenames(
+            getSimpleDocumentService().listWysiwygByInstanceId(instanceId));
+        assertThat(wysiwygFIdLangFilenames, hasSize(4));
+        assertThat(wysiwygFIdLangFilenames,
+            containsInAnyOrder("fId_26|fr|fId_26_wysiwyg_fr.txt", "fId_26|en|fId_26_wysiwyg_en.txt",
+                "fId_27|fr|fId_27_wysiwyg_fr.txt", "fId_27|en|fId_27_wysiwyg_fr.txt"));
+
+        assertThat(createdIds, hasSize(nbDocuments + 2));
+      }
+    }.execute();
+  }
+
   private List<String> extractForeignIdLanguageFilenames(List<SimpleDocument> documents) {
     List<String> languageFilenames = new ArrayList<String>(documents.size());
     for (SimpleDocument document : documents) {

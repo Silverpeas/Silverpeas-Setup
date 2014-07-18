@@ -229,6 +229,29 @@ public class SimpleDocumentService {
   }
 
   /**
+   * Gets the list of attachments of WYSIWYG type for the given instance identifier .
+   * For each document represented by a master JCR Node, the number of
+   * SimpleDocument returned depends on the number of languages registered for the JCR Node.
+   * For a document, if it exists one version in "fr" and an other one in "en" (for example), two
+   * SimpleDocument are returned, one for the "fr" language and an other one for "en" language.
+   * @param instanceId the identifier of the component instance limitation.
+   * @return
+   * @throws RepositoryException
+   */
+  public List<SimpleDocument> listWysiwygByInstanceId(String instanceId) {
+    Session session = null;
+    try {
+      session = repositoryManager.getSession();
+      return repository
+          .listAttachmentsByInstanceIdAndDocumentType(session, instanceId, DocumentType.wysiwyg);
+    } catch (RepositoryException ex) {
+      throw new AttachmentException(ex);
+    } finally {
+      repositoryManager.logout(session);
+    }
+  }
+
+  /**
    * Gets the list of attachments of WYSIWYG type for the given instance identifier and
    * foreign identifier. For each document represented by a master JCR Node, the number of
    * SimpleDocument returned depends on the number of languages registered for the JCR Node.
