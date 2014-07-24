@@ -21,9 +21,12 @@
 package org.silverpeas.dbbuilder.dbbuilder_dl;
 
 
-import java.sql.Connection;
-
+import org.silverpeas.util.ConfigurationHolder;
 import org.silverpeas.util.Console;
+
+import java.sql.Connection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Titre : Description : Copyright : Copyright (c) 2002 Société :
@@ -32,12 +35,37 @@ import org.silverpeas.util.Console;
  */
 public abstract class DbBuilderDynamicPart {
 
+  private static final ExecutorService executor;
+  private static final int threadCount;
+
+  static {
+    threadCount = ConfigurationHolder.getMaxThreadsCount();
+    executor = Executors.newFixedThreadPool(threadCount);
+  }
+
   private String SILVERPEAS_HOME = null;
   private String SILVERPEAS_DATA = null;
   private Console console;
   private Connection con = null;
 
   public DbBuilderDynamicPart() {
+  }
+
+  /**
+   * Gets the thread pool executor.
+   * @return {@link ExecutorService}
+   */
+  public ExecutorService getThreadExecutor() {
+    return executor;
+  }
+
+  /**
+   * Gets the number of threads handled by the thread pool executor provided by ({@link
+   * #getThreadExecutor()}).
+   * @return the number of threads of the pool.
+   */
+  public int getThreadExecutorPoolCount() {
+    return threadCount;
   }
 
   public void setSILVERPEAS_HOME(String sh) throws Exception {
