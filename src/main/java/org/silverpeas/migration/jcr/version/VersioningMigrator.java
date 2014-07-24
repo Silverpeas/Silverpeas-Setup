@@ -23,29 +23,20 @@
  */
 package org.silverpeas.migration.jcr.version;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
+import org.silverpeas.migration.jcr.service.RepositoryManager;
+import org.silverpeas.util.StringUtil;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.apache.commons.dbutils.DbUtils;
-import org.silverpeas.dbbuilder.dbbuilder_dl.DbBuilderDynamicPart;
-import org.silverpeas.migration.jcr.service.RepositoryManager;
-import org.silverpeas.util.ConfigurationHolder;
-import org.silverpeas.util.StringUtil;
 
 public class VersioningMigrator extends DbBuilderDynamicPart {
 
-  private static final ExecutorService executor;
-  private static final int threadCount;
-
-  static {
-    threadCount = ConfigurationHolder.getMaxThreadsCount();
-    executor = Executors.newFixedThreadPool(threadCount);
-  }
   private final RepositoryManager repositoryManager;
   public static final String SELECT_COMPONENTS = "SELECT DISTINCT instanceid FROM "
       + "sb_version_document ORDER BY instanceid";
@@ -56,16 +47,16 @@ public class VersioningMigrator extends DbBuilderDynamicPart {
 
   public void migrateDocuments() throws Exception {
     getConsole().printMessage("Migration of the versioned documents in JCR with a pool of "
-        + threadCount + " threads");
+        + getThreadExecutorPoolCount() + " threads");
     long totalNumberOfMigratedFiles = 0L;
     List<VersionedDocumentMigration> migrators = buildComponentMigrators();
-    List<Future<Long>> result = executor.invokeAll(migrators);
+    List<Future<Long>> result = getThreadExecutor().invokeAll(migrators);
     try {
       for (Future<Long> nbOfMigratedDocuments : result) {
         totalNumberOfMigratedFiles += nbOfMigratedDocuments.get();
       }
     } finally {
-      executor.shutdown();
+      getThreadExecutor().shutdown();
       repositoryManager.shutdown();
     }
     getConsole().printMessage("Nb of migrated versioned documents : " + totalNumberOfMigratedFiles);
