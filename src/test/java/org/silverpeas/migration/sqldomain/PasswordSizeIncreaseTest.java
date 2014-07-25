@@ -23,28 +23,23 @@
  */
 package org.silverpeas.migration.sqldomain;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Statement;
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import org.apache.commons.io.IOUtils;
-import org.dbunit.DataSourceDatabaseTester;
-import org.dbunit.IDatabaseTester;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.silverpeas.passwordencryption.Sha512Crypt;
+import org.silverpeas.test.Database;
+import org.silverpeas.test.SpringContext;
 import org.silverpeas.test.SystemInitializationForTests;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.Statement;
+
 import static org.junit.Assert.fail;
 
 /**
@@ -52,13 +47,12 @@ import static org.junit.Assert.fail;
  *
  * @author mmoquillon
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "/spring-domain-datasource.xml")
 public class PasswordSizeIncreaseTest {
 
-  private IDatabaseTester databaseTester;
-  @Inject
-  private DataSource dataSource;
+  @Rule
+  public SpringContext springContext = new SpringContext(this, "/spring-domain-datasource.xml");
+  @Rule
+  public Database database = new Database(springContext.getBean(DataSource.class), getDataSet());
 
   public PasswordSizeIncreaseTest() {
   }
@@ -68,27 +62,14 @@ public class PasswordSizeIncreaseTest {
     SystemInitializationForTests.initialize();
   }
 
-  @Before
-  public void prepareDatabase() throws Exception {
-    assertThat(dataSource, notNullValue());
-    databaseTester = new DataSourceDatabaseTester(dataSource);
-    databaseTester.setDataSet(getDataSet());
-    databaseTester.onSetup();
-  }
-
-  @After
-  public void cleanDatabase() throws Exception {
-    databaseTester.onTearDown();
-  }
-
   /**
    * Test of migrate method, of class PasswordSizeIncrease.
    */
   @Test
   public void testMigrate() throws Exception {
     PasswordSizeIncrease migration = new PasswordSizeIncrease();
-    migration.setConnection(databaseTester.getConnection().getConnection());
-    migration.setSharedConnection(databaseTester.getConnection().getConnection());
+    migration.setConnection(database.getConnection());
+    migration.setSharedConnection(database.getConnection());
     migration.migrate();
 
     assertPasswordTypeFor("Toto");
@@ -96,10 +77,12 @@ public class PasswordSizeIncreaseTest {
 
   }
 
-  protected IDataSet getDataSet() throws Exception {
-    InputStream in = getClass().getResourceAsStream("domain-dataset.xml");
+  protected static IDataSet getDataSet() {
+    InputStream in = PasswordSizeIncreaseTest.class.getResourceAsStream("domain-dataset.xml");
     try {
       return new FlatXmlDataSetBuilder().build(in);
+    } catch (Exception ex) {
+      return null;
     } finally {
       IOUtils.closeQuietly(in);
     }
@@ -112,8 +95,10 @@ public class PasswordSizeIncreaseTest {
   protected void assertPasswordTypeFor(String domain) throws Exception {
     String tableName = "Domain" + domain + "_User";
     Statement statement = null;
+    Connection connection = null;
     try {
-      statement = databaseTester.getConnection().getConnection().createStatement();
+      connection = database.openConnection();
+      statement = connection.createStatement();
       statement.executeUpdate("update " + tableName + " set password='" + longPassword()
           + "' where id=1");
     } catch (Exception ex) {
@@ -121,6 +106,9 @@ public class PasswordSizeIncreaseTest {
     } finally {
       if (statement != null) {
         statement.close();
+      }
+      if (connection != null) {
+        database.closeConnection(connection);
       }
     }
   }
