@@ -23,36 +23,31 @@
  */
 package org.silverpeas.migration.contentmanagement;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import org.apache.commons.io.IOUtils;
-import org.dbunit.DataSourceDatabaseTester;
-import org.dbunit.IDatabaseTester;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.silverpeas.test.Database;
+import org.silverpeas.test.SpringContext;
+import org.silverpeas.test.SystemInitializationForTests;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
 
 import static org.dbunit.Assertion.assertEquals;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 /**
  * Tests on the migration of the sb_contentmanager_content table.
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "/spring-content-datasource.xml")
 public class DuplicatedContentRemovingTest {
 
   public static final String CONTENT_TABLE = "sb_contentmanager_content";
@@ -61,25 +56,20 @@ public class DuplicatedContentRemovingTest {
   public static final int DUPLICATE_CONTENT_COUNT = 5;
   public static final int DUPLICATE_CONTENT_CLASSIFICATION_COUNT = 1;
   public static final int CONTENT_CLASSIFICATION_COUNT = 4;
-  private IDatabaseTester databaseTester;
-  @Inject
-  private DataSource dataSource;
+
+  @Rule
+  public SpringContext context = new SpringContext(this, "/spring-content-datasource.xml");
+  @Rule
+  public Database database = new Database(context.getBean(DataSource.class), getDataSet());
+
+  @BeforeClass
+  public static void setUp() throws IOException {
+    SystemInitializationForTests.initialize();
+  }
 
   public DuplicatedContentRemovingTest() {
   }
 
-  @Before
-  public void prepareDatabase() throws Exception {
-    assertThat(dataSource, notNullValue());
-    databaseTester = new DataSourceDatabaseTester(dataSource);
-    databaseTester.setDataSet(getDataSet());
-    databaseTester.onSetup();
-  }
-
-  @After
-  public void cleanDatabase() throws Exception {
-    databaseTester.onTearDown();
-  }
 
   /**
    * Test the migration of the sb_contentmanager_content table.
@@ -87,7 +77,7 @@ public class DuplicatedContentRemovingTest {
   @Test
   public void testMigration() throws Exception {
     DuplicateContentRemoving duplicateContentRemoving = new DuplicateContentRemoving();
-    duplicateContentRemoving.setConnection(databaseTester.getConnection().getConnection());
+    duplicateContentRemoving.setConnection(database.getConnection());
 
     duplicateContentRemoving.migrate();
 
@@ -103,10 +93,12 @@ public class DuplicatedContentRemovingTest {
     assertEquals(expectedClassificationTable, actualClassificationTable);
   }
 
-  protected IDataSet getDataSet() throws Exception {
+  protected IDataSet getDataSet() {
     InputStream in = getClass().getResourceAsStream("pdc-dataset.xml");
     try {
       return new FlatXmlDataSetBuilder().build(in);
+    } catch (Exception e) {
+      return null;
     } finally {
       IOUtils.closeQuietly(in);
     }
@@ -122,11 +114,11 @@ public class DuplicatedContentRemovingTest {
   }
 
   protected ITable getActualTable(String tableName) throws Exception {
-    Connection connection = DataSourceUtils.getConnection(dataSource);
+    Connection connection = database.openConnection();
     IDatabaseConnection databaseConnection = new DatabaseConnection(connection);
     IDataSet dataSet = databaseConnection.createDataSet();
     ITable table = dataSet.getTable(tableName);
-    DataSourceUtils.releaseConnection(connection, dataSource);
+    database.closeConnection(connection);
     return table;
   }
 

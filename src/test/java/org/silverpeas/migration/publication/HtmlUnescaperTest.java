@@ -23,30 +23,29 @@
  */
 package org.silverpeas.migration.publication;
 
-import java.io.IOException;
-import java.io.InputStream;
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.dbunit.DataSourceDatabaseTester;
-import org.dbunit.IDatabaseTester;
+import org.dbunit.database.DatabaseConnection;
+import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.ReplacementDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
-
-import static org.hamcrest.Matchers.*;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.owasp.encoder.Encode;
+import org.silverpeas.test.Database;
+import org.silverpeas.test.SpringContext;
 import org.silverpeas.test.SystemInitializationForTests;
 import org.silverpeas.util.Console;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -55,13 +54,12 @@ import static org.junit.Assert.assertThat;
  *
  * @author mmoquillon
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "/spring-publi-datasource.xml")
 public class HtmlUnescaperTest {
 
-  private IDatabaseTester databaseTester;
-  @Inject
-  private DataSource dataSource;
+  @Rule
+  public SpringContext context = new SpringContext(this, "/spring-publi-datasource.xml");
+  @Rule
+  public Database database = new Database(context.getBean(DataSource.class), getDataSet());
 
   public HtmlUnescaperTest() {
   }
@@ -69,19 +67,6 @@ public class HtmlUnescaperTest {
   @BeforeClass
   public static void setUp() throws IOException {
     SystemInitializationForTests.initialize();
-  }
-
-  @Before
-  public void prepareDatabase() throws Exception {
-    assertThat(dataSource, notNullValue());
-    databaseTester = new DataSourceDatabaseTester(dataSource);
-    databaseTester.setDataSet(getDataSet());
-    databaseTester.onSetup();
-  }
-
-  @After
-  public void cleanDatabase() throws Exception {
-    databaseTester.onTearDown();
   }
 
   @Test
@@ -95,36 +80,43 @@ public class HtmlUnescaperTest {
   @Test
   public void unescapePublicationAndCommentsText() throws Exception {
     HtmlUnescaper unescaper = new HtmlUnescaper();
-    unescaper.setConnection(dataSource.getConnection());
+    unescaper.setConnection(database.getConnection());
     unescaper.setConsole(new Console());
 
     unescaper.unescapeHtml();
 
-    String text = (String) databaseTester.getDataSet().getTable("sb_publication_publi").getValue(1,
-        "pubname");
+    String text = (String) getActualTable("sb_publication_publi").getValue(1, "pubname");
     assertThat(text, not(containsString("&#39;")));
 
-    text = (String) databaseTester.getDataSet().getTable("sb_publication_publi").getValue(1,
-        "pubdescription");
+    text = (String) getActualTable("sb_publication_publi").getValue(1, "pubdescription");
     assertThat(text, not(containsString("&#39;")));
 
-    text = (String) databaseTester.getDataSet().getTable("sb_comment_comment").getValue(1,
-        "commentcomment");
+    text = (String) getActualTable("sb_comment_comment").getValue(1, "commentcomment");
     assertThat(text, not(containsString("&#39;")));
 
-    text = (String) databaseTester.getDataSet().getTable("sb_comment_comment").getValue(3,
-        "commentcomment");
+    text = (String) getActualTable("sb_comment_comment").getValue(3, "commentcomment");
     assertThat(text, not(containsString("&#39;")));
     assertThat(text, not(containsString("&gt;")));
     assertThat(text, not(containsString("&#lt;")));
   }
 
-  protected IDataSet getDataSet() throws Exception {
-    InputStream in = getClass().getResourceAsStream("publication-dataset.xml");
+  protected ITable getActualTable(String tableName) throws Exception {
+    Connection connection = database.openConnection();
+    IDatabaseConnection databaseConnection = new DatabaseConnection(connection);
+    IDataSet dataSet = databaseConnection.createDataSet();
+    ITable table = dataSet.getTable(tableName);
+    database.closeConnection(connection);
+    return table;
+  }
+
+  protected static IDataSet getDataSet() {
+    InputStream in = HtmlUnescaperTest.class.getResourceAsStream("publication-dataset.xml");
     try {
       ReplacementDataSet dataSet = new ReplacementDataSet(new FlatXmlDataSetBuilder().build(in));
       dataSet.addReplacementObject("[NULL]", null);
       return dataSet;
+    } catch (Exception e) {
+      return null;
     } finally {
       IOUtils.closeQuietly(in);
     }
