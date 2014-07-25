@@ -29,13 +29,10 @@ import org.silverpeas.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class WysiwygCorrector extends DbBuilderDynamicPart {
 
-  private static final ExecutorService executor = Executors.newFixedThreadPool(10);
   private final SimpleDocumentService service;
 
   public WysiwygCorrector() {
@@ -45,7 +42,7 @@ public class WysiwygCorrector extends DbBuilderDynamicPart {
   public void adjustDocuments() throws Exception {
     long totalNumberOfMigratedFiles = 0L;
     List<WysiwygDocumentMerger> mergers = buildWysiwygDocumentMergers();
-    List<Future<Long>> result = executor.invokeAll(mergers);
+    List<Future<Long>> result = getThreadExecutor().invokeAll(mergers);
     try {
       for (Future<Long> nbOfMigratedDocuments : result) {
         totalNumberOfMigratedFiles += nbOfMigratedDocuments.get();
@@ -56,7 +53,7 @@ public class WysiwygCorrector extends DbBuilderDynamicPart {
       getConsole().printError("Error during adjustment of wysiwyg attachments " + ex, ex);
       throw ex;
     } finally {
-      executor.shutdown();
+      getThreadExecutor().shutdown();
     }
     getConsole().printMessage("Nb of adjusted wysiwyg documents : " + totalNumberOfMigratedFiles);
     this.service.shutdown();

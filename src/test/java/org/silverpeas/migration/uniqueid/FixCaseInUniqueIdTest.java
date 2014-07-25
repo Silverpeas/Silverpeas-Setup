@@ -23,55 +23,45 @@
  */
 package org.silverpeas.migration.uniqueid;
 
-import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.database.DatabaseConnection;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import java.sql.Connection;
-import org.dbunit.dataset.ITable;
-import javax.inject.Inject;
-import javax.sql.DataSource;
+import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.DataSetException;
 import org.dbunit.dataset.IDataSet;
-import org.dbunit.DataSourceDatabaseTester;
-import org.dbunit.IDatabaseTester;
-import org.dbunit.dataset.xml.FlatXmlDataSet;
+import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.silverpeas.migration.contentmanagement.DuplicateContentRemoving;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
-import static org.dbunit.Assertion.*;
+import org.silverpeas.test.Database;
+import org.silverpeas.test.SpringContext;
+import org.silverpeas.test.SystemInitializationForTests;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+
+import static org.dbunit.Assertion.assertEquals;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests on the migration of the sb_contentmanager_content table.
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "/spring-uniqueid-datasource.xml")
 public class FixCaseInUniqueIdTest {
 
   public static final String UNIQUEID_TABLE = "uniqueId";
-  private IDatabaseTester databaseTester;
-  @Inject
-  private DataSource dataSource;
+
+  @Rule
+  public SpringContext context = new SpringContext(this, "/spring-uniqueid-datasource.xml");
+  @Rule
+  public Database database = new Database(context.getBean(DataSource.class), getDataSet());
 
   public FixCaseInUniqueIdTest() {
   }
 
-  @Before
-  public void prepareDatabase() throws Exception {
-    assertThat(dataSource, notNullValue());
-    databaseTester = new DataSourceDatabaseTester(dataSource);
-    databaseTester.setDataSet(getDataSet());
-    databaseTester.onSetup();
-  }
-
-  @After
-  public void cleanDatabase() throws Exception {
-    databaseTester.onTearDown();
+  @BeforeClass
+  public static void setUp() throws IOException {
+    SystemInitializationForTests.initialize();
   }
 
   /**
@@ -80,7 +70,7 @@ public class FixCaseInUniqueIdTest {
   @Test
   public void testMigration() throws Exception {
     FixCaseInUniqueId fixCaseInUniqueId = new FixCaseInUniqueId();
-    fixCaseInUniqueId.setConnection(databaseTester.getConnection().getConnection());
+    fixCaseInUniqueId.setConnection(database.getConnection());
     fixCaseInUniqueId.migrate();
     ITable actualContentTable = getActualTable(UNIQUEID_TABLE);
     ITable expectedContentTable = getExpectedTable(UNIQUEID_TABLE);
@@ -88,8 +78,13 @@ public class FixCaseInUniqueIdTest {
     assertEquals(expectedContentTable, actualContentTable);
   }
 
-  protected IDataSet getDataSet() throws Exception {
-    return new FlatXmlDataSetBuilder().build(getClass().getResourceAsStream("uniqueId-dataset.xml"));
+  protected static IDataSet getDataSet() {
+    try {
+      return new FlatXmlDataSetBuilder()
+          .build(FixCaseInUniqueIdTest.class.getResourceAsStream("uniqueId-dataset.xml"));
+    } catch (DataSetException e) {
+      return null;
+    }
   }
 
   protected IDataSet getExpectedDataSet() throws Exception {
@@ -98,11 +93,11 @@ public class FixCaseInUniqueIdTest {
   }
 
   protected ITable getActualTable(String tableName) throws Exception {
-    Connection connection = DataSourceUtils.getConnection(dataSource);
+    Connection connection = database.openConnection();
     IDatabaseConnection databaseConnection = new DatabaseConnection(connection);
     IDataSet dataSet = databaseConnection.createDataSet();
     ITable table = dataSet.getTable(tableName);
-    DataSourceUtils.releaseConnection(connection, dataSource);
+    database.closeConnection(connection);
     return table;
   }
 

@@ -541,6 +541,45 @@ public class WysiwygPurgerTest {
     }.execute();
   }
 
+  @Test
+  public void testPurgeWithInconsistentData() throws Exception {
+    new JcrWysiwygPurgerTest() {
+      @Override
+      public void run() throws Exception {
+        /*
+        Preparing
+         */
+
+        SimpleDocument fr = createFrWysiwygForTest(instanceId_A, foreignId_1);
+        addEnWysiwygForTest(fr);
+        addFreeDeWysiwygForTest(fr, "de_content");
+        SimpleDocument en = createEnWysiwygForTest(instanceId_A, foreignId_2);
+        addFrWysiwygForTest(en);
+
+        assertContent(fr.getId(), "fr", "fr_content_kmelia1_foreignId_1");
+        assertContent(fr.getId(), "en", "en_content_kmelia1_foreignId_1");
+        assertContent(fr.getId(), "de", "de_content");
+        assertContent(en.getId(), "fr", "fr_content_kmelia1_foreignId_2");
+        assertContent(en.getId(), "en", "en_content_kmelia1_foreignId_2");
+        assertContent(en.getId(), "de", null);
+
+        // Inconsistent JCR data
+        new File(fr.getAttachmentPath()).delete();
+
+        /*
+        The test
+         */
+        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService(), 1);
+        purger.setConsole(new Console().setEchoAsDotEnabled(false));
+        purger.purgeDocuments();
+
+        /*
+        No exception
+         */
+      }
+    }.execute();
+  }
+
   /**
    * Centralization for purge tests.
    * @param test

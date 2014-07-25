@@ -25,12 +25,15 @@ package org.silverpeas.migration.jcr.wysiwyg.purge;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.silverpeas.migration.jcr.service.AttachmentException;
 import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.SimpleDocumentService;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.util.Console;
+import org.silverpeas.util.DateUtil;
 import org.silverpeas.util.MapUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -69,8 +72,10 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
 
   @Override
   public Result call() throws Exception {
-    console
-        .printMessage("Starting wysiwyg contents purge for component instance id " + componentId);
+    Date startDate = new Date();
+    console.printMessage(
+        "Starting wysiwyg contents purge for component instance id " + componentId + ", at " +
+            DateUtil.formatAsISO8601WithUtcOffset(startDate));
     Result result = purgeWysiwyg();
     String message = "Finishing wysiwyg contents purge for component instance id " + componentId;
     if (result.getNbWysiwygContentPurged() > 0L) {
@@ -84,21 +89,35 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
     } else {
       message += " and no wysiwyg content file name renamed";
     }
-    console.printMessage(message);
+    Date endDate = new Date();
+    console.printMessage(
+        message + ", at " + DateUtil.formatAsISO8601WithUtcOffset(endDate) + " (duration of " +
+            DurationFormatUtils.formatDurationHMS(endDate.getTime() - startDate.getTime()) + ")");
     return result;
   }
 
   private Result purgeWysiwyg() {
+    final String headerLogPart = "instanceId=" + componentId;
     Result result = new Result();
-    List<String> foreignIdsWithWysiwyg = service.listForeignIdsWithWysiwyg(componentId);
-    for (String foreignIdWithWysiwyg : foreignIdsWithWysiwyg) {
-      String commonLogPart = "instanceId=" + componentId + ", foreignId=" +
-          foreignIdWithWysiwyg;
+
+    long startIdentification = System.currentTimeMillis();
+    Map<String, List<SimpleDocument>> wysiwygByForeignIds =
+        loadComponentWysiwygIndexedByForeignIds();
+    console
+        .printMessage(headerLogPart + " - identifying foreign ids (" + wysiwygByForeignIds.size() +
+            ") and corresponding wysiwyg documents in " +
+            DurationFormatUtils
+                .formatDurationHMS(System.currentTimeMillis() - startIdentification));
+
+    for (Map.Entry<String, List<SimpleDocument>> wysiwygForForeignId : wysiwygByForeignIds
+        .entrySet()) {
+      long startForeignId = System.currentTimeMillis();
+
+      String commonLogPart = headerLogPart + ", foreignId=" + wysiwygForForeignId.getKey();
       console.printMessage(commonLogPart + " - verifying wysiwyg contents ...");
 
       // Getting documents ordered by their names
-      ForeignIdProcessContext context = new ForeignIdProcessContext(
-          service.listWysiwygByForeignId(componentId, foreignIdWithWysiwyg));
+      ForeignIdProcessContext context = new ForeignIdProcessContext(wysiwygForForeignId.getValue());
 
       int nbContents = context.getWysiwygOfForeignId().size();
 
@@ -124,6 +143,23 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
           commonLogPart + " - " + context.getNbRemovedContent() + "/" + nbContents + " purged.");
       console.printMessage(
           commonLogPart + " - " + context.getNbRenamedContent() + "/" + nbContents + " renamed.");
+      console.printMessage(commonLogPart + " - duration of " +
+          DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - startForeignId));
+    }
+    return result;
+  }
+
+  /**
+   * Loads the wysiwyg documents existing into a component and indexed by foreignIds.
+   * @return a Map for which an entry key is a foreignId and an entry value is the corresponding
+   * wysiwyg documents.
+   */
+  private Map<String, List<SimpleDocument>> loadComponentWysiwygIndexedByForeignIds() {
+    List<SimpleDocument> componentDocuments = service.listWysiwygByInstanceId(componentId);
+    Map<String, List<SimpleDocument>> result =
+        new HashMap<String, List<SimpleDocument>>(componentDocuments.size());
+    for (SimpleDocument wysiwygDocument : componentDocuments) {
+      MapUtil.putAddList(result, wysiwygDocument.getForeignId(), wysiwygDocument);
     }
     return result;
   }
@@ -133,18 +169,20 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
    * @param context the context.
    */
   private void removeEmptyOnes(String commonLogPart, ForeignIdProcessContext context) {
+    long start = System.currentTimeMillis();
     commonLogPart += " - empty content";
     for (WysiwygContent wysiwygContent : new ArrayList<WysiwygContent>(
         context.getWysiwygOfForeignId())) {
-      if (isEmptyContent(wysiwygContent.getAttachment())) {
+      if (isPhysicalFileExistingWithEmptyContent(commonLogPart, wysiwygContent.getAttachment())) {
         service.removeContent(wysiwygContent.getAttachment(), wysiwygContent.getLanguage());
         console.printMessage(commonLogPart + " - doc=" + wysiwygContent.getNodeName() + ", lang=" +
-                wysiwygContent.getLanguage() + " - removed"
-        );
+                wysiwygContent.getLanguage() + " - removed");
         context.remove(wysiwygContent);
       }
     }
     context.resetIndexation();
+    console.printMessage(commonLogPart + " - duration of " +
+        DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
   }
 
   /**
@@ -153,6 +191,7 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
    */
   private void removeDuplicatesForEachLanguage(String commonLogPart,
       ForeignIdProcessContext context) {
+    long start = System.currentTimeMillis();
     commonLogPart += " - duplicates for a language";
     for (String language : new ArrayList<String>(context.getWysiwygIndexedByLangs().keySet())) {
       List<WysiwygContent> wysiwygContentsForCurrentLanguage =
@@ -161,9 +200,9 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
         List<WysiwygContent> wysiwygContentsToRemove =
             new ArrayList<WysiwygContent>(wysiwygContentsForCurrentLanguage);
         WysiwygContent firstWysiwygContent = wysiwygContentsToRemove.remove(0);
-        String firstContent = firstWysiwygContent.getContent(commonLogPart);
+        WysiwygContent firstContent = firstWysiwygContent;
         for (WysiwygContent wysiwygContent : wysiwygContentsForCurrentLanguage) {
-          if (!wysiwygContent.getContent(commonLogPart).equals(firstContent)) {
+          if (!wysiwygContent.isContentEqualTo(commonLogPart, firstContent)) {
             wysiwygContentsToRemove.clear();
             break;
           }
@@ -171,6 +210,8 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
         removeWysiwygContents(commonLogPart, context, firstWysiwygContent, wysiwygContentsToRemove);
       }
     }
+    console.printMessage(commonLogPart + " - duration of " +
+        DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
   }
 
   /**
@@ -182,10 +223,11 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
    */
   private void removeDuplicatesBetweenAllLanguages(String commonLogPart,
       ForeignIdProcessContext context) {
+    long start = System.currentTimeMillis();
     commonLogPart += " - duplicates between all languages";
     if (context.getWysiwygIndexedByLangs().size() > 1) {
       WysiwygContent defaultWysiwygContent = null;
-      String firstContent = null;
+      WysiwygContent firstContent = null;
       List<WysiwygContent> wysiwygContentsToRemove =
           new ArrayList<WysiwygContent>(context.getWysiwygIndexedByLangs().size());
       for (Map.Entry<String, List<WysiwygContent>> languageWysiwygContents : context
@@ -203,10 +245,10 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
                   currentWysiwygContent.getLanguage().equals(ConverterUtil.defaultLanguage)) {
             defaultWysiwygContent = currentWysiwygContent;
             if (firstContent == null) {
-              firstContent = defaultWysiwygContent.getContent(commonLogPart);
+              firstContent = defaultWysiwygContent;
             }
           }
-          if (firstContent.equals(currentWysiwygContent.getContent(commonLogPart))) {
+          if (firstContent.isContentEqualTo(commonLogPart, currentWysiwygContent)) {
             wysiwygContentsToRemove.add(currentWysiwygContent);
           } else {
             // Contents between languages are differents, stopping the treatment of this method.
@@ -216,6 +258,8 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
       }
       removeWysiwygContents(commonLogPart, context, defaultWysiwygContent, wysiwygContentsToRemove);
     }
+    console.printMessage(commonLogPart + " - duration of " +
+        DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
   }
 
   /**
@@ -223,38 +267,42 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
    * @param context the context.
    */
   private void renameFilenames(String commonLogPart, ForeignIdProcessContext context) {
+    long start = System.currentTimeMillis();
     commonLogPart += " - wysiwyg content file name";
-    for (WysiwygContent wysiwygContent : new ArrayList<WysiwygContent>(
-        context.getWysiwygOfForeignId())) {
-      String fileNameLanguage = ConverterUtil.checkLanguage(
-          ConverterUtil.extractLanguage(wysiwygContent.getAttachment().getFilename()));
-      if (!wysiwygContent.getLanguage().equals(fileNameLanguage)) {
-        File contentToRename = new File(wysiwygContent.getAttachment().getAttachmentPath());
-        if (contentToRename.exists() && contentToRename.isFile()) {
-          wysiwygContent.getAttachment().setFilename(ConverterUtil
-              .replaceLanguage(wysiwygContent.getAttachment().getFilename(),
-                  wysiwygContent.getLanguage()));
-          File contentRenamed = new File(wysiwygContent.getAttachment().getAttachmentPath());
-          console
-              .printMessage(commonLogPart + " - doc=" + wysiwygContent.getNodeName() + ", lang=" +
-                      wysiwygContent.getLanguage() + " - " + contentToRename.getName() +
-                      " renaming to " + contentRenamed.getName()
-              );
-          if (contentRenamed.exists()) {
+    try {
+      for (WysiwygContent wysiwygContent : new ArrayList<WysiwygContent>(
+          context.getWysiwygOfForeignId())) {
+        String fileNameLanguage = ConverterUtil.checkLanguage(
+            ConverterUtil.extractLanguage(wysiwygContent.getAttachment().getFilename()));
+        if (!wysiwygContent.getLanguage().equals(fileNameLanguage)) {
+          File contentToRename = new File(wysiwygContent.getAttachment().getAttachmentPath());
+          if (contentToRename.exists() && contentToRename.isFile()) {
+            wysiwygContent.getAttachment().setFilename(ConverterUtil
+                .replaceLanguage(wysiwygContent.getAttachment().getFilename(),
+                    wysiwygContent.getLanguage()));
+            File contentRenamed = new File(wysiwygContent.getAttachment().getAttachmentPath());
             console
-                .printWarning(commonLogPart + " - doc=" + wysiwygContent.getNodeName() + ", lang=" +
-                        wysiwygContent.getLanguage() +
-                        " aborted because " + contentRenamed.getName() +
-                        " already exists! Nothing is renamed and a manual intervention " +
-                        "must be performed."
-                );
-            return;
+                .printMessage(commonLogPart + " - doc=" + wysiwygContent.getNodeName() + ", lang=" +
+                    wysiwygContent.getLanguage() + " - " + contentToRename.getName() +
+                    " renaming to " + contentRenamed.getName());
+            if (contentRenamed.exists()) {
+              console.printWarning(
+                  commonLogPart + " - doc=" + wysiwygContent.getNodeName() + ", lang=" +
+                      wysiwygContent.getLanguage() +
+                      " aborted because " + contentRenamed.getName() +
+                      " already exists! Nothing is renamed and a manual intervention " +
+                      "must be performed.");
+              return;
+            }
+            service.updateAttachment(wysiwygContent.getAttachment(), contentToRename);
+            FileUtils.deleteQuietly(contentToRename);
+            context.addRenamedContent();
           }
-          service.updateAttachment(wysiwygContent.getAttachment(), contentToRename);
-          FileUtils.deleteQuietly(contentToRename);
-          context.addRenamedContent();
         }
       }
+    } finally {
+      console.printMessage(commonLogPart + " - duration of " +
+          DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
     }
   }
 
@@ -267,57 +315,75 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
    */
   private void removeWysiwygContents(String commonLogPart, ForeignIdProcessContext context,
       WysiwygContent wysiwygContentToKeep, List<WysiwygContent> wysiwygContentsToRemove) {
+    long start = System.currentTimeMillis();
     if (wysiwygContentToKeep != null) {
       wysiwygContentsToRemove.remove(wysiwygContentToKeep);
       if (!wysiwygContentsToRemove.isEmpty()) {
         console.printMessage(
             commonLogPart + " - doc=" + wysiwygContentToKeep.getNodeName() + ", lang=" +
-                wysiwygContentToKeep.getLanguage() + " - content kept"
-        );
+                wysiwygContentToKeep.getLanguage() + " - content kept");
         for (WysiwygContent wysiwygContentToRemove : wysiwygContentsToRemove) {
           service.removeContent(wysiwygContentToRemove.getAttachment(),
               wysiwygContentToRemove.getLanguage());
           console.printMessage(
               commonLogPart + " - doc=" + wysiwygContentToRemove.getNodeName() + ", lang=" +
-                  wysiwygContentToRemove.getLanguage() + " - content removed"
-          );
+                  wysiwygContentToRemove.getLanguage() + " - content removed");
           context.remove(wysiwygContentToRemove);
         }
         context.resetIndexation();
       }
     }
+    console.printMessage(commonLogPart + " - removeWysiwygContents method - duration of " +
+        DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
   }
 
   /**
    * Gets the content of the given wysiwyg/language.
    * @param commonLogPart
    * @param wysiwygLangAttachment
-   * @return a String that represents the content in UTF8.
+   * @return a String that represents the content in UTF8, a dummy string if physical file does
+   * not exist.
    */
   private String getContent(String commonLogPart, SimpleDocument wysiwygLangAttachment) {
+    long start = System.currentTimeMillis();
     ByteArrayOutputStream content = new ByteArrayOutputStream();
-    service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
-        wysiwygLangAttachment.getLanguage());
     try {
+      service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
+          wysiwygLangAttachment.getLanguage());
       return content.toString(Charsets.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
       console
           .printError(commonLogPart + " - doc=" + wysiwygLangAttachment.getNodeName() + ", lang=" +
               wysiwygLangAttachment.getLanguage() + " - unsupported encoding", e);
       return UUID.randomUUID().toString();
+    } catch (AttachmentException ae) {
+      console
+          .printError(commonLogPart + " - doc=" + wysiwygLangAttachment.getNodeName() + ", lang=" +
+              wysiwygLangAttachment.getLanguage() + " - inconsistent data, nothing is done", ae);
+      return UUID.randomUUID().toString();
+    } finally {
+      console.printMessage(commonLogPart + " - getContent method - duration of " +
+          DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
     }
   }
 
   /**
    * Indicates if the content of given wysiwyg/language is empty.
+   * @param commonLogPart
    * @param wysiwygLangAttachment
-   * @return true if empty, false otherwise.
+   * @return true if exists and is empty, false otherwise.
    */
-  private boolean isEmptyContent(SimpleDocument wysiwygLangAttachment) {
-    ByteArrayOutputStream content = new ByteArrayOutputStream();
-    service.getBinaryContent(content, wysiwygLangAttachment.getPk(),
-        wysiwygLangAttachment.getLanguage(), 0, 1);
-    return content.size() == 0;
+  private boolean isPhysicalFileExistingWithEmptyContent(String commonLogPart,
+      SimpleDocument wysiwygLangAttachment) {
+    long start = System.currentTimeMillis();
+    try {
+      File contentToVerify = new File(wysiwygLangAttachment.getAttachmentPath());
+      return contentToVerify.isFile() && contentToVerify.length() == 0;
+    } finally {
+      console.printMessage(
+          commonLogPart + " - isPhysicalFileExistingWithEmptyContent method  - duration of " +
+              DurationFormatUtils.formatDurationHMS(System.currentTimeMillis() - start));
+    }
   }
 
   /**
@@ -403,6 +469,7 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
   private class WysiwygContent {
     private final SimpleDocument attachment;
     private String content = null;
+    private File physicalFile = null;
 
     public WysiwygContent(SimpleDocument wysiwygAttachment) {
       attachment = wysiwygAttachment;
@@ -412,11 +479,33 @@ class WysiwygDocumentPurger implements Callable<WysiwygDocumentPurger.Result> {
       return attachment;
     }
 
-    public String getContent(String commonLogPart) {
+    private File getPhysicalFile() {
+      if (physicalFile == null) {
+        physicalFile = new File(getAttachment().getAttachmentPath());
+      }
+      return physicalFile;
+    }
+
+    public String getFileContent(String commonLogPart) {
       if (content == null) {
         content = WysiwygDocumentPurger.this.getContent(commonLogPart, attachment);
       }
       return content;
+    }
+
+    public boolean isContentEqualTo(String commonLogPart, WysiwygContent otherWysiwygContent) {
+      if (super.equals(otherWysiwygContent)) {
+        return true;
+      }
+      boolean result = getPhysicalFile().isFile() && otherWysiwygContent.getPhysicalFile().isFile();
+      if (result) {
+        result = getPhysicalFile().length() == otherWysiwygContent.getPhysicalFile().length();
+      }
+      if (result) {
+        result =
+            getFileContent(commonLogPart).equals(otherWysiwygContent.getFileContent(commonLogPart));
+      }
+      return result;
     }
 
     public String getId() {
