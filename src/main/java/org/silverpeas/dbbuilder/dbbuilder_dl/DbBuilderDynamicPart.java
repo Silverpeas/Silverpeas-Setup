@@ -35,13 +35,7 @@ import java.util.concurrent.Executors;
  */
 public abstract class DbBuilderDynamicPart {
 
-  private static final ExecutorService executor;
-  private static final int threadCount;
-
-  static {
-    threadCount = ConfigurationHolder.getMaxThreadsCount();
-    executor = Executors.newFixedThreadPool(threadCount);
-  }
+  private ExecutorService executor;
 
   private String SILVERPEAS_HOME = null;
   private String SILVERPEAS_DATA = null;
@@ -56,6 +50,9 @@ public abstract class DbBuilderDynamicPart {
    * @return {@link ExecutorService}
    */
   public ExecutorService getThreadExecutor() {
+    if (executor == null) {
+      executor = Executors.newFixedThreadPool(getThreadExecutorPoolCount());
+    }
     return executor;
   }
 
@@ -65,7 +62,7 @@ public abstract class DbBuilderDynamicPart {
    * @return the number of threads of the pool.
    */
   public int getThreadExecutorPoolCount() {
-    return threadCount;
+    return ConfigurationHolder.getMaxThreadsCount();
   }
 
   public void setSILVERPEAS_HOME(String sh) throws Exception {
