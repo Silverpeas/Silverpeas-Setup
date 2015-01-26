@@ -1,0 +1,78 @@
+/*
+    Copyright (C) 2000 - 2015 Silverpeas
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    As a special exception to the terms and conditions of version 3.0 of
+    the GPL, you may redistribute this Program in connection with Free/Libre
+    Open Source Software ("FLOSS") applications as described in Silverpeas's
+    FLOSS exception.  You should have recieved a copy of the text describing
+    the FLOSS exception, and it is also available here:
+    "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
+group = 'org.silverpeas'
+version = '6.0-SNAPSHOT'
+
+apply plugin: 'maven'
+apply plugin: 'groovy'
+
+configurations {
+  all {
+    resolutionStrategy {
+      cacheDynamicVersionsFor 0, 'seconds'
+      cacheChangingModulesFor 0, 'seconds'
+    }
+  }
+  silverpeas {
+    description = 'Silverpeas Modules'
+    transitive = true
+  }
+}
+
+repositories {
+  maven {
+    url 'http://www.silverpeas.org/nexus/content/groups/silverpeas'
+  }
+  mavenLocal()
+}
+
+dependencies {
+  compile gradleApi()
+  // compile 'org.codehaus.groovy:groovy-all:2.3.9'
+  compile 'com.ninja-squad:DbSetup:1.3.0'
+  compile 'org.apache.commons:commons-dbcp2:2.0.1'
+  runtime 'com.h2database:h2:1.4.181'
+  runtime 'org.postgresql:postgresql:9.3-1100-jdbc41'
+  runtime 'net.sourceforge.jtds:jtds:1.3.1'
+}
+
+processTestResources << {
+  def propsPath = "${buildDir}/resources/test/test.properties"
+  FileWriter props = new FileWriter("${propsPath}.tmp")
+  new FileReader(propsPath).transformLine(props) { line ->
+    if (line.contains('${buildDir}')) {
+      line = line.replaceAll('\\$\\{buildDir\\}', buildDir.path)
+    }
+    println "LINE IS ${line}"
+    line
+  }
+  def propsFile = new File(propsPath)
+  def updatedPropsFile = new File("${propsPath}.tmp")
+  updatedPropsFile.setReadable(propsFile.canRead())
+  updatedPropsFile.setWritable(propsFile.canWrite())
+  updatedPropsFile.setExecutable(propsFile.canExecute())
+  propsFile.delete()
+  updatedPropsFile.renameTo(propsFile)
+}
