@@ -48,9 +48,9 @@ class API {
     def matching = path =~ ENV_VAR_PATTERN
     matching.each { token ->
       if (token[1] == 'sys') {
-        path = path.replace(token[0], System.getProperty(token[2]))
+        path = path.replace(token[0], SystemWrapper.getProperty(token[2]))
       } else if (token[1] == 'env') {
-        path = path.replace(token[0], System.getenv(token[2]))
+        path = path.replace(token[0], SystemWrapper.getenv(token[2]))
       }
     }
     return Paths.get(path)

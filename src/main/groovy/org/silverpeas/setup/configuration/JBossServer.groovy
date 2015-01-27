@@ -22,6 +22,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.silverpeas.setup.configuration
+
+import org.silverpeas.setup.api.SystemWrapper
+
 /**
  * It wraps an existing installation of a JBoss application server. It provides functions to
  * interact with the JBoss AS (either Wildfly or JBoss EAP) in order to start/stop it or to
@@ -46,7 +49,7 @@ class JBossServer {
    */
   JBossServer(String jbossHome) {
     this.jbossHome = jbossHome
-    if (System.getProperty('os.name').toLowerCase().indexOf('win') >= 0) {
+    if (SystemWrapper.getProperty('os.name').toLowerCase().indexOf('win') >= 0) {
       this.cli = "${jbossHome}/bin/jboss-cli.bat"
       this.starter = "${jbossHome}/bin/standalone.bat"
     } else {
