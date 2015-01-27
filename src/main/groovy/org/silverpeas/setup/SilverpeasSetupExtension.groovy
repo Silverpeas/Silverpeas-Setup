@@ -23,7 +23,7 @@
  */
 package org.silverpeas.setup
 
-import org.silverpeas.setup.database.DatabaseType
+import org.silverpeas.setup.api.SystemWrapper
 
 /**
  * Extension of the plugin in order to provide to the usual Silverpeas setting up properties.
@@ -34,11 +34,13 @@ class SilverpeasSetupExtension {
   /**
    * The path of the Silverpeas home directory.
    */
-  String silverpeasHome = System.getenv('SILVERPEAS_HOME')
+  String silverpeasHome = SystemWrapper.getenv('SILVERPEAS_HOME')
+
   /**
    * The path of the JBoss home directory.
    */
-  String jbossHome = System.getenv('JBOSS_HOME')
+  String jbossHome = SystemWrapper.getenv('JBOSS_HOME')
+
   /**
    * The path of the Silverpeas and JBoss configuration home directory. It is expected to contain
    * two subdirectories:
@@ -50,27 +52,34 @@ class SilverpeasSetupExtension {
    * <code>SILVERPEAS_HOME</code> under the name <code>configuration</code>
    */
   String configurationHome = "${silverpeasHome}/configuration"
+
   /**
    * The path of the home directory of the database structure building scripts. It is expected to
    * contain two kinds of subdirectories:
    * <ul>
-   *   <li><code>data</code> containing a folder for each supported database system and in which an
-   *   XML setting file provide information on the SQL scripts to migrate for building the database;</li>
-   *   <li>a directory per supported database system into which a folder per Silverpeas components
-   *   gathers the SQL scripts tp build the database; these scripts are located in subdirectories
-   *   representing a given version of the database structure for the belonged component.</li>
+   *   <li><em><code>modules</code></em> in which are provided the XML descriptor of each migration module
+   *   to build or to upgrade the datasources used Silverpeas;</li>
+   *   <li><em><code>db</code></em> in which are located per database type and per module the
+   *   different SQL scripts to create or to upgrade the schema of the main database;</li>
+   *   <li><em><code>scripts</code></em> in which are located per module the different programming
+   *   scripts to work on the migration both the main database or of any of the other datasources
+   *   used by Silverpeas (like JCR for example). Currently, only the Groovy scripts are supported.
+   *   </li>
    * </ul>
    */
-  String databaseHome = "${silverpeasHome}/dbRepository"
+  String migrationHome = "${silverpeasHome}/migrations"
+
   /**
    * The path of the directory containing the JDBC drivers.
    */
   String driversDir
+
   /**
    * The path of the directory containing the application servers-dedicated modules required by
    * Silverpeas. The modules are gathered into a folder per supported application server.
    */
   String modulesDir
+
   /**
    * The path of the directory into which the log should be generated.
    */

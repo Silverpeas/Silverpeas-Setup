@@ -23,13 +23,13 @@
  */
 package org.silverpeas.setup
 
-import org.apache.tools.ant.Project
 import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
 import org.silverpeas.setup.configuration.VariableReplacement
-import org.silverpeas.setup.database.DataSourceProvider
-import org.silverpeas.setup.database.DatabaseType
+import org.silverpeas.setup.migration.DataSourceProvider
+import org.silverpeas.setup.migration.SilverpeasMigrationTask
 
 /**
  * This plugin aims to prepare the configuration and to setup Silverpeas.
@@ -43,9 +43,9 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
 
   @Override
   void apply(Project project) {
-    project.extensions.create('silverconf', SilverpeasSetupExtension)
+    project.extensions.create('silversetup', SilverpeasSetupExtension)
 
-    this.settings = loadConfiguration(project.silverconf.configurationHome)
+    this.settings = loadConfiguration(project.silversetup.configurationHome)
     completeSettingsForProject(project)
     DataSourceProvider.init(settings)
 
@@ -54,6 +54,10 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     }
 
     project.task('configureSilverpeas', type: SilverpeasConfigurationTask) {
+      settings = this.settings
+    }
+
+    project.task('migrate', type:SilverpeasMigrationTask) {
       settings = this.settings
     }
   }
@@ -75,8 +79,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   }
 
   private def completeSettingsForProject(Project project) {
-    settings.SILVERPEAS_HOME = project.silverconf.silverpeasHome
-    settings.DATABSE_HOME = project.silverconf.databaseHome
+    settings.SILVERPEAS_HOME = project.silversetup.silverpeasHome
+    settings.MIGRATION_HOME = project.silversetup.migrationHome
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
         settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME}"
@@ -94,7 +98,11 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.PostgreSQLPersistenceManager'
         break
       case 'H2':
-        settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
+        if (settings.DB_SERVER == ':mem:') {
+          settings.DB_URL = "jdbc:h2:mem:${settings.DB_NAME}"
+        } else {
+          settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
+        }
         settings.DB_DRIVER = 'org.h2.Driver'
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.H2PersistenceManager'
         break

@@ -15,7 +15,7 @@ nbactions.xml
 nb-configuration.xml
 nbactions.xml
 data
-dbRepository
+migrations
 properties
 resources
 silvertrace

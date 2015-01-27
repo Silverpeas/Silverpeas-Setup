@@ -21,39 +21,36 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.setup.configuration
+package org.silverpeas.setup.migration
 
-import org.gradle.api.tasks.StopExecutionException
+import org.apache.commons.dbcp2.cpdsadapter.DriverAdapterCPDS
+import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
+
+import javax.sql.DataSource
 
 /**
- * It parses the specified parameters to replace each variables found in their value by the
- * variable value from the specified properties.
+ * A provider of the DataSource object used to access the database.
  * @author mmoquillon
  */
-class VariableReplacement {
+class DataSourceProvider {
 
-  private static final def VARIABLE_PATTERN = /\$\{(\w+)\}/
+  private static DataSource dataSource
 
-  static final def parseParameters(def parameters, def variables) {
-    parameters.each { key, value ->
-      parameters[key] = parseValue(value, variables)
-    }
-    return parameters
+  static void init(settings) {
+    DriverAdapterCPDS cpds = new DriverAdapterCPDS();
+    cpds.setDriver(settings.DB_DRIVER);
+    cpds.setUrl(settings.DB_URL);
+    cpds.setUser(settings.DB_USER);
+    cpds.setPassword(settings.DB_PASSWORD);
+
+    SharedPoolDataSource tds = new SharedPoolDataSource();
+    tds.setConnectionPoolDataSource(cpds);
+    tds.setMaxTotal(10);
+    tds.setDefaultMaxWaitMillis(50);
+    dataSource = tds
   }
 
-  static final String parseValue(String value, def variables) {
-    def matching = value =~ VARIABLE_PATTERN
-    matching.each { token ->
-      if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {
-        if (variables.containsKey(token[1])) {
-          value = value.replace(token[0], variables[token[1]])
-        } else {
-          println "Error: no such variable ${token[1]}"
-          throw new StopExecutionException()
-        }
-      }
-    }
-    return value
+  static DataSource getDataSource() {
+    return dataSource
   }
-
 }

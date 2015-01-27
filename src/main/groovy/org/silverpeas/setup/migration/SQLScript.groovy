@@ -21,39 +21,38 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.setup.configuration
+package org.silverpeas.setup.migration
 
-import org.gradle.api.tasks.StopExecutionException
+import groovy.sql.Sql
 
 /**
- * It parses the specified parameters to replace each variables found in their value by the
- * variable value from the specified properties.
+ * A SQL script.
  * @author mmoquillon
  */
-class VariableReplacement {
+class SQLScript implements MigrationScript {
 
-  private static final def VARIABLE_PATTERN = /\$\{(\w+)\}/
+  private List<String> statements = []
 
-  static final def parseParameters(def parameters, def variables) {
-    parameters.each { key, value ->
-      parameters[key] = parseValue(value, variables)
-    }
-    return parameters
-  }
-
-  static final String parseValue(String value, def variables) {
-    def matching = value =~ VARIABLE_PATTERN
-    matching.each { token ->
-      if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {
-        if (variables.containsKey(token[1])) {
-          value = value.replace(token[0], variables[token[1]])
-        } else {
-          println "Error: no such variable ${token[1]}"
-          throw new StopExecutionException()
-        }
+  SQLScript(String ... scriptPath) {
+    for (String sqlScript: scriptPath) {
+      String script = new File(sqlScript).getText('UTF-8')
+      script.split(';').each { String aStatement ->
+        statements << aStatement.trim()
       }
     }
-    return value
+
   }
 
+  /**
+   * Runs this script.
+   * @param the Sql instance to use to perform operations against the database.
+   * @param the settings applied in the configuration and in the migration of Silverpeas.
+   * @throws Exception if an error occurs during the execution of this script.
+   */
+  @Override
+  void run(Sql sql, def settings) throws Exception {
+    statements.each {
+      sql.execute(it)
+    }
+  }
 }
