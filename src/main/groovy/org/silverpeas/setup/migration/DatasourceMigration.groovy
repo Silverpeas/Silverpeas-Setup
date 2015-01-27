@@ -85,7 +85,7 @@ class DatasourceMigration {
     String status = 'OK'
     try {
       sql.withTransaction {
-        scripts*.run(sql, settings)
+        scripts*.run(sql)
         int count = sql.executeUpdate(MODULE_INSTALL, [module: this.module, version: this.toVersion])
         if (count != 1) {
           throw new SQLException("Setting up of module to version ${toVersion} not done!")
@@ -103,7 +103,7 @@ class DatasourceMigration {
     String status = 'OK'
     try {
       sql.withTransaction {
-        scripts*.run(sql, settings)
+        scripts*.run(sql)
         int count = sql.executeUpdate(VERSION_UPDATE, [module: this.module, version: this.toVersion])
         if (count != 1) {
           throw new SQLException("Upgrade of module to version ${toVersion} not done!")

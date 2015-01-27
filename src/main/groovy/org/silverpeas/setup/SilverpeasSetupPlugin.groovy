@@ -25,11 +25,15 @@ package org.silverpeas.setup
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.silverpeas.setup.api.API
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
 import org.silverpeas.setup.configuration.VariableReplacement
 import org.silverpeas.setup.migration.DataSourceProvider
 import org.silverpeas.setup.migration.SilverpeasMigrationTask
+
+import javax.naming.InitialContext
+import javax.naming.NameNotFoundException
 
 /**
  * This plugin aims to prepare the configuration and to setup Silverpeas.
@@ -48,6 +52,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     this.settings = loadConfiguration(project.silversetup.configurationHome)
     completeSettingsForProject(project)
     DataSourceProvider.init(settings)
+    API.currentSettings = settings
 
     project.task('configureJBoss', type: JBossConfigurationTask) {
       settings = this.settings
@@ -57,7 +62,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       settings = this.settings
     }
 
-    project.task('migrate', type:SilverpeasMigrationTask) {
+    project.task('migration', type:SilverpeasMigrationTask) {
       settings = this.settings
     }
   }

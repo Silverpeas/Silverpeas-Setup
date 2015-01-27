@@ -46,7 +46,11 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   def settings
 
-  private String dbInitDescriptorPath = "${project.silversetup.migrationHome}/modules/dbbuilder-migration.xml"
+  SilverpeasMigrationTask() {
+    description = 'Migrate in version the datasource schema expected by Silverpeas'
+    group = 'Build'
+    dependsOn = ['configureSilverpeas']
+  }
 
   @TaskAction
   def performMigration() {

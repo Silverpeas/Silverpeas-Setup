@@ -34,8 +34,7 @@ interface MigrationScript {
   /**
    * Runs this script.
    * @param the Sql instance to use to perform operations against the database.
-   * @param the settings applied in the configuration and in the migration of Silverpeas.
    * @throws Exception if an error occurs during the execution of this script.
    */
-  void run(Sql sql, def settings) throws Exception
+  void run(Sql sql) throws Exception
 }

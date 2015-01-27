@@ -3,7 +3,6 @@ package org.silverpeas.setup.migration
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.silverpeas.setup.test.DatabaseSetUp
-import org.silverpeas.setup.test.TestSetUp
 
 import static org.silverpeas.setup.test.Assertion.versionOfModule
 
@@ -30,11 +29,10 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
     project.apply plugin: 'silversetup'
   }
 
-
   void testSilverpeasInstallation() {
     assert versionOfModule('toto') == null
 
-    project.tasks.findByPath('migrate').performMigration()
+    project.tasks.findByPath('migration').performMigration()
 
     assert versionOfModule('toto') == '004'
   }
@@ -45,7 +43,7 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
 
     assert versionOfModule('toto') == '002'
 
-    project.tasks.findByPath('migrate').performMigration()
+    project.tasks.findByPath('migration').performMigration()
 
     assert versionOfModule('toto') == '004'
   }

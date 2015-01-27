@@ -29,12 +29,19 @@ import java.util.regex.Matcher
 
 /**
  * API of functions for the writing of Groovy scripts that will migrate in the installation of
- * Silverpeas.
+ * Silverpeas. It acts as an adapter to access the different objects used to configure and to
+ * migrate Silverpeas.
  * @author mmoquillon
  */
 class API {
 
   private static final def ENV_VAR_PATTERN = /\$\{(env|sys)\.(\w+)\}/
+
+  /**
+   * The current Silverpeas settings from both the customer configuration properties and the
+   * default configuration properties.
+   */
+  static def currentSettings = [:]
 
   /**
    * Gets a Path object from the specified file or directory path. The difference with the
