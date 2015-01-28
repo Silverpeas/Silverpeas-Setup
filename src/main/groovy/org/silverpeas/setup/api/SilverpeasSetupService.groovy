@@ -28,12 +28,11 @@ import java.nio.file.Paths
 import java.util.regex.Matcher
 
 /**
- * API of functions for the writing of Groovy scripts that will migrate in the installation of
- * Silverpeas. It acts as an adapter to access the different objects used to configure and to
- * migrate Silverpeas.
+ * A service providing high-level or added-value functions for both the tasks defined by this
+ * plugin and the Groovy scripts invoked within the execution of those tasks.
  * @author mmoquillon
  */
-class API {
+class SilverpeasSetupService {
 
   private static final def ENV_VAR_PATTERN = /\$\{(env|sys)\.(\w+)\}/
 
@@ -94,10 +93,6 @@ class API {
     propertiesFile.setExecutable(template.canExecute())
     template.delete()
     propertiesFile.renameTo(template)
-  }
-
-  static def getSystemWrapper() {
-    return SystemWrapper
   }
 
 }

@@ -24,7 +24,7 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
-import org.silverpeas.setup.api.API
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 /**
  * A programming script written in Groovy.
@@ -50,12 +50,12 @@ class GroovyScript implements MigrationScript {
   void run(Sql sql) throws Exception {
     GroovyScriptEngine engine =
         new GroovyScriptEngine(scripts.collect { it.parent }.toArray() as String[])
-    Binding binding = new Binding()
-    binding.setVariable('sql', sql)
-    binding.setVariable('settings', API.currentSettings)
-    binding.setVariable('API', API)
+    Binding scriptEnv = new Binding()
+    scriptEnv.setVariable('sql', sql)
+    scriptEnv.setVariable('settings', SilverpeasSetupService.currentSettings)
+    scriptEnv.setVariable('Service', SilverpeasSetupService)
     scripts.each { script ->
-      engine.run(script.path, binding)
+      engine.run(script.path, scriptEnv)
     }
   }
 }

@@ -25,7 +25,7 @@ package org.silverpeas.setup.configuration
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.silverpeas.setup.api.API
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 
 /**
@@ -81,13 +81,13 @@ class SilverpeasConfigurationTask extends DefaultTask {
   }
 
   def processPropertiesFile(propertiesFilePath, parameters) {
-    API.updateProperties(propertiesFilePath, parameters)
+    SilverpeasSetupService.updateProperties(propertiesFilePath, parameters)
   }
 
   def processScriptFile(scriptFile) {
     def scriptEnv = new Binding()
     scriptEnv.setVariable('settings', settings)
-    scriptEnv.setVariable('API', API)
+    scriptEnv.setVariable('Service', SilverpeasSetupService)
     scriptEngine.run(scriptFile.path, scriptEnv)
   }
 }

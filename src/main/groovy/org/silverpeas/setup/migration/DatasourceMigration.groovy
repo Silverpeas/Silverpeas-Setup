@@ -25,6 +25,7 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import groovy.transform.builder.Builder
+import org.silverpeas.setup.api.DataSourceProvider
 
 import java.sql.SQLException
 

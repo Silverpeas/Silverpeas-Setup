@@ -21,7 +21,7 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.setup.migration
+package org.silverpeas.setup.api
 
 import org.apache.commons.dbcp2.cpdsadapter.DriverAdapterCPDS
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource

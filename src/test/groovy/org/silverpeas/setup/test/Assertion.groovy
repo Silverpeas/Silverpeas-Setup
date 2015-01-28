@@ -1,7 +1,7 @@
 package org.silverpeas.setup.test
 
 import groovy.sql.Sql
-import org.silverpeas.setup.migration.DataSourceProvider
+import org.silverpeas.setup.api.DataSourceProvider
 
 import java.sql.SQLException
 
