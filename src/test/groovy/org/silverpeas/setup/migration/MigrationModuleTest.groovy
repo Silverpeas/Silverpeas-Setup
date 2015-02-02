@@ -35,11 +35,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
   void testAFreshInstallation() {
     assert versionOfModule('toto') == null
 
-    MigrationModule module = MigrationModule.builder()
-        .descriptor(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
-        .settings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
-        .status([:])
-        .build()
+    MigrationModule module = new MigrationModule()
+        .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+        .withStatus([:])
+        .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
     assert versionOfModule('toto') == '004'
@@ -50,11 +49,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert versionOfModule('toto') == '002'
     assert numberOfItemsIn('Person') == 0
 
-    MigrationModule module = MigrationModule.builder()
-        .descriptor(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
-        .settings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
-        .status(['toto':'002'])
-        .build()
+    MigrationModule module = new MigrationModule()
+        .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+        .withStatus(['toto':'002'])
+        .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
     assert versionOfModule('toto') == '004'
@@ -66,11 +64,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert versionOfModule('toto') == '003'
     assert numberOfItemsIn('Person') == 0
 
-    MigrationModule module = MigrationModule.builder()
-        .descriptor(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
-        .settings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
-        .status(['toto':'003'])
-        .build()
+    MigrationModule module = new MigrationModule()
+        .withSettings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+        .withStatus(['toto':'003'])
+        .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
     assert versionOfModule('toto') == '004'

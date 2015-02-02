@@ -26,34 +26,55 @@ package org.silverpeas.setup.configuration
 import org.gradle.api.tasks.StopExecutionException
 
 /**
- * It parses the specified parameters to replace each variables found in their value by the
- * variable value from the specified properties.
+ * A replacement of any variable declarations by their value obtained from a map of key-values.
+ * The environment variables and the system properties aren't taken in charge; they won't be then
+ * replaced by their value.
  * @author mmoquillon
  */
 class VariableReplacement {
 
   private static final def VARIABLE_PATTERN = /\$\{(\w+)\}/
 
+  /**
+   * Parses the values of the specified parameters and for each of them, replace any variable
+   * declaration by the variable value from the specified variables. If a variable, present in
+   * the parameter value, isn't among the given variables, then an exception is thrown.
+   * @param parameters a map of key-values whose the key is the parameter name and the value is the
+   * parameter value.
+   * @param variables a map of key-value whose the key is a variable identifier and the value the
+   * variable value.
+   * @return the specified parameters with any variable declaration in their value replaced by
+   * the variable value.
+   */
   static final def parseParameters(def parameters, def variables) {
     parameters.each { key, value ->
-      parameters[key] = parseValue(value, variables)
+      parameters[key] = parseExpression(value, variables)
     }
     return parameters
   }
 
-  static final String parseValue(String value, def variables) {
-    def matching = value =~ VARIABLE_PATTERN
+  /**
+   * Parses any variable declaration in the specified expression and replace them by their value
+   * from the specified variables. If a variable, present in
+   * the parameter value, isn't among the given variables, then an exception is thrown.
+   * @param expression the expression to parse.
+   * @param variables a map of key-value whose the key is a variable identifier and the value the
+   * variable value.
+   * @return the specified expression with any variable declaration replaced by their value.
+   */
+  static final String parseExpression(String expression, def variables) {
+    def matching = expression =~ VARIABLE_PATTERN
     matching.each { token ->
       if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {
         if (variables.containsKey(token[1])) {
-          value = value.replace(token[0], variables[token[1]])
+          expression = expression.replace(token[0], variables[token[1]])
         } else {
           println "Error: no such variable ${token[1]}"
-          throw new StopExecutionException()
+          throw new StopExecutionException("Error: no such variable ${token[1]}")
         }
       }
     }
-    return value
+    return expression
   }
 
 }

@@ -26,6 +26,8 @@ package org.silverpeas.setup.migration
 import groovy.sql.Sql
 import org.silverpeas.setup.api.SilverpeasSetupService
 
+import java.sql.SQLException
+
 /**
  * A programming script written in Groovy.
  * @author mmoquillon
@@ -44,18 +46,22 @@ class GroovyScript implements MigrationScript {
   /**
    * Runs this script.
    * @param the Sql instance to use to perform operations against the database.
-   * @throws Exception if an error occurs during the execution of this script.
+   * @throws SQLException if an error occurs during the execution of this script.
    */
   @Override
-  void run(Sql sql) throws Exception {
+  void run(Sql sql) throws SQLException {
     GroovyScriptEngine engine =
         new GroovyScriptEngine(scripts.collect { it.parent }.toArray() as String[])
     Binding scriptEnv = new Binding()
     scriptEnv.setVariable('sql', sql)
     scriptEnv.setVariable('settings', SilverpeasSetupService.currentSettings)
     scriptEnv.setVariable('Service', SilverpeasSetupService)
-    scripts.each { script ->
-      engine.run(script.path, scriptEnv)
+    try {
+      scripts.each { script ->
+        engine.run(script.path, scriptEnv)
+      }
+    } catch(Exception ex) {
+      throw new SQLException(ex)
     }
   }
 }

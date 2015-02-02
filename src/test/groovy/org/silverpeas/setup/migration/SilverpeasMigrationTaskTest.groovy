@@ -15,8 +15,8 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
   private Project project
 
   @Override
-  void initDatabase() {
-    databaseSetUp = DatabaseSetUp.setUp()
+  DatabaseSetUp initDatabaseSetUp() {
+    return DatabaseSetUp.setUp()
   }
 
   @Override
@@ -31,10 +31,12 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
 
   void testSilverpeasInstallation() {
     assert versionOfModule('toto') == null
+    assert versionOfModule('busCore') == null
 
     project.tasks.findByPath('migration').performMigration()
 
     assert versionOfModule('toto') == '004'
+    assert versionOfModule('busCore') == '032'
   }
 
   void testSilverpeasUpgrade() {
@@ -42,9 +44,11 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
     prepareInitialData('toto', '002')
 
     assert versionOfModule('toto') == '002'
+    assert versionOfModule('busCore') == null
 
     project.tasks.findByPath('migration').performMigration()
 
     assert versionOfModule('toto') == '004'
+    assert versionOfModule('busCore') == '032'
   }
 }

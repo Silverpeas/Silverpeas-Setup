@@ -32,6 +32,7 @@ import javax.jcr.RepositoryException
 import javax.naming.InitialContext
 import javax.naming.NameNotFoundException
 import javax.xml.parsers.SAXParserFactory
+import java.nio.file.Files
 
 /**
  * A factory to create instances of JCR Repository from configuration properties.

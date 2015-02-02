@@ -23,6 +23,8 @@
  */
 package org.silverpeas.setup.migration
 
+import java.sql.SQLException
+
 import static org.silverpeas.setup.migration.MigrationScriptBuilder.ScriptType.groovy
 import static org.silverpeas.setup.migration.MigrationScriptBuilder.ScriptType.sql
 import static org.silverpeas.setup.test.Assertion.numberOfItemsIn
@@ -123,12 +125,15 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromScript("${testSetUp.migrationHome}/db//h2/foo/002/create_table.sql")
         .ofType(sql)
         .build()
-    DatasourceMigration migration = DatasourceMigration.builder()
-        .module('foo')
-        .toVersion('002')
-        .scripts([script])
-        .build()
-    migration.migrate()
+
+    shouldFail(SQLException) {
+      DatasourceMigration migration = DatasourceMigration.builder()
+          .module('foo')
+          .toVersion('002')
+          .scripts([script])
+          .build()
+      migration.migrate()
+    }
 
     assert versionOfModule('foo') == null
   }
@@ -141,13 +146,16 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromScript("${testSetUp.migrationHome}/scripts/foo/up002/update.groovy")
         .ofType(groovy)
         .build()
-    DatasourceMigration migration = DatasourceMigration.builder()
-        .module('foo')
-        .fromVersion('003')
-        .toVersion('004')
-        .scripts([script])
-        .build()
-    migration.migrate()
+
+    shouldFail(SQLException) {
+      DatasourceMigration migration = DatasourceMigration.builder()
+          .module('foo')
+          .fromVersion('003')
+          .toVersion('004')
+          .scripts([script])
+          .build()
+      migration.migrate()
+    }
 
     assert versionOfModule('foo') == '003'
   }

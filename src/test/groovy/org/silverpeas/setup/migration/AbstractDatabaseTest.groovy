@@ -36,15 +36,15 @@ abstract class AbstractDatabaseTest extends GroovyTestCase {
   protected DatabaseSetUp databaseSetUp
   protected TestSetUp testSetUp
 
-  void initDatabase() {
-    databaseSetUp = DatabaseSetUp.setUp(withDatasource: true).createSrPackagesTable()
+  DatabaseSetUp initDatabaseSetUp() {
+    return DatabaseSetUp.setUp(withDatasource: true).createSrPackagesTable()
   }
 
   @Override
   void setUp() {
     super.setUp()
     testSetUp = TestSetUp.setUp()
-    initDatabase()
+    databaseSetUp = initDatabaseSetUp()
   }
 
   @Override

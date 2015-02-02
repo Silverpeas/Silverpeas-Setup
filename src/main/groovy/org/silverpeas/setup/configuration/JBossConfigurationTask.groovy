@@ -60,27 +60,28 @@ class JBossConfigurationTask extends DefaultTask {
     jboss.stop()
   }
 
-  private def setUpDriver() {
-
-  }
-
   private def installAdditionalModules() {
     println 'Additional modules installation'
     project.copy {
-      from "${project.silversetup.modulesDir}/jboss"
+      from "${project.silversetup.configurationHome}/jboss/modules"
       into "${project.silversetup.jbossHome}/modules"
     }
   }
 
   private def generateConfigurationFilesInto(String jbossConfDir) {
-    new File("${project.silversetup.configurationHome}/jboss").listFiles().each { cli ->
+    new File("${project.silversetup.configurationHome}/jboss").listFiles(new FileFilter() {
+      @Override
+      boolean accept(final File aFile) {
+        return aFile.isFile()
+      }
+    }).each { cli ->
       String[] resource = cli.name.split('\\.')
       ResourceType type = ResourceType.valueOf(resource[1])
       println "Prepare configuration of ${type} ${resource[0]} for Silverpeas"
       project.copy {
         from(cli) {
           filter({ line ->
-            return VariableReplacement.parseValue(line, settings)
+            return VariableReplacement.parseExpression(line, settings)
 
           })
         }

@@ -91,6 +91,7 @@ buildscript {
 dependencies {
   compile gradleApi()
   compile 'org.apache.commons:commons-dbcp2:2.0.1'
+  compile 'commons-codec:commons-codec:1.10'
   compile 'javax.jcr:jcr:2.0'
   compile 'org.apache.jackrabbit:jackrabbit-core:2.8.0'
   runtime 'org.mortbay.jetty:jetty-naming:6.1.26'

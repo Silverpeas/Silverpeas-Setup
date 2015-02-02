@@ -23,8 +23,12 @@
  */
 package org.silverpeas.setup.api
 
+import org.gradle.api.tasks.StopExecutionException
+
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.DosFileAttributes
 import java.util.regex.Matcher
 
 /**
@@ -34,7 +38,8 @@ import java.util.regex.Matcher
  */
 class SilverpeasSetupService {
 
-  private static final def ENV_VAR_PATTERN = /\$\{(env|sys)\.(\w+)\}/
+  private static final def VAR_PATTERN = /\$\{(env\.|sys\.)?(\w+)\}/
+  private static final def SCRIPT_PATTERN = /\$\{eval:([:.\w \{\}\$]+)\}/
 
   /**
    * The current Silverpeas settings from both the customer configuration properties and the
@@ -51,15 +56,7 @@ class SilverpeasSetupService {
    * @return the Path instance representing the specified file/directory path.
    */
   static final Path getPath(String path) {
-    def matching = path =~ ENV_VAR_PATTERN
-    matching.each { token ->
-      if (token[1] == 'sys') {
-        path = path.replace(token[0], SystemWrapper.getProperty(token[2]))
-      } else if (token[1] == 'env') {
-        path = path.replace(token[0], SystemWrapper.getenv(token[2]))
-      }
-    }
-    return Paths.get(path)
+    return Paths.get(replaceVariables(path))
   }
 
   /**
@@ -93,6 +90,93 @@ class SilverpeasSetupService {
     propertiesFile.setExecutable(template.canExecute())
     template.delete()
     propertiesFile.renameTo(template)
+  }
+
+  /**
+   * Replaces in the specified expression any variable declaration by their value.
+   *
+   * <p>
+   * A variable is expected to be declared in the expression in the following way:
+   * </p>
+   * <pre><code>${VARIABLE}</code></pre>
+   * <p>with VARIABLE as a variable declaration. According to a well-defined prefix, the replacement
+   * computation can be customized:</p>
+   * <ul>
+   *   <li><em>No prefix</em>: the variable declaration will be replaced by its value from the
+   *   Silverpeas settings; these settings come from both the default and the customer configuration
+   *   properties.</li>
+   *   <li><em>Prefixed by <code>env.</code></em>: the variable is expected to be an environment
+   *   variable.</li>
+   *   <li><em>Prefixed by <code>sys.</code></em>: the variable is expected to be a system property.
+   *   </li>
+   * </ul>
+   * <p>If no value exists for the variable or if a script evaluation fails, then an exception is
+   * thrown.</p>
+   * @param expression the expression in which any variable declarations should be replaced by their
+   * value.
+   * @return the new expression as the result of the variable replacement.
+   */
+  static final String replaceVariables(String expression) {
+    def matching = expression =~ VAR_PATTERN
+    matching.each { token ->
+      switch (token[1]) {
+        case 'sys.':
+          if (!SystemWrapper.getProperty(token[2])) {
+            println "Error: no such system property ${token[2]}"
+            throw new StopExecutionException("Error: no such variable ${token[2]}")
+          }
+          expression = expression.replace(token[0], SystemWrapper.getProperty(token[2]))
+          break
+        case 'env.':
+          if (!SystemWrapper.getenv(token[2])) {
+            println "Error: no such environment variable ${token[2]}"
+            throw new StopExecutionException("Error: no such variable ${token[2]}")
+          }
+          expression = expression.replace(token[0], SystemWrapper.getenv(token[2]))
+          break
+        default:
+          if (!currentSettings[token[2]]) {
+            println "Error: no such variable ${token[2]}"
+            throw new StopExecutionException("Error: no such variable ${token[2]}")
+          }
+          expression = expression.replace(token[0], currentSettings[token[2]])
+          break
+      }
+    }
+    return expression
+  }
+
+  /**
+   * Creates the directory at the specified path if it doesn't already exists. If its parent doesn't
+   * exist they are then created.
+   * It does nothing if the directory already exist.
+   * @param path the path of the directory to create.
+   * @param attributes a map defining the attributes of the directory. Supported keys (attributes):
+   * readable, writable, executable, and hidden. The hidden attribute is only supported under
+   * Windows; in other operating systems any files prefixed by a point is marked as hidden.
+   * @return the path of the created directory.
+   */
+  static final Path createDirectory(String path, def attributes) {
+    Path dirPath = getPath(path)
+    if (!Files.exists(dirPath)) {
+      dirPath = Files.createDirectories(getPath(path))
+      File dir = dirPath.toFile()
+      if (attributes?.containsKey('readable')) {
+        dir.setReadable(attributes.readable)
+      }
+      if (attributes?.containsKey('writable')) {
+        dir.setWritable(attributes.writable)
+      }
+      if (attributes?.containsKey('executable')) {
+        dir.setExecutable(attributes.executable)
+      }
+      if (attributes?.containsKey('hidden')) {
+        if (System.properties['os.name'].toLowerCase().contains('windows')) {
+          Files.setAttribute(dirPath, 'dos:hidden')
+        }
+      }
+    }
+    return dirPath
   }
 
 }

@@ -88,7 +88,7 @@ class DatabaseSetUp {
           sql.execute(statement.trim())
         }
         sql.executeUpdate('INSERT INTO sr_packages(sr_package, sr_version) VALUES (:module, :version)',
-            [module: '00init', version: '002'])
+            [module: 'dbbuilder', version: '002'])
       }
     } catch (SQLException ex) {
       println "Error while creating the table sr_packages: ${ex.message}"

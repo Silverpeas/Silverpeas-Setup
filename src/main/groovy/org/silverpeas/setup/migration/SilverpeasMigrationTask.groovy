@@ -45,6 +45,12 @@ import java.sql.SQLException
  */
 class SilverpeasMigrationTask extends DefaultTask {
 
+  /**
+   * The descriptor of the migration tool itself. It creates the database tables required to manage
+   * the migration of each other modules in Silverpeas.
+   */
+  private static final String MIGRATION_TOOL_DESCRIPTOR = 'dbbuilder-migration.xml'
+
   def settings
 
   SilverpeasMigrationTask() {
@@ -55,20 +61,22 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   @TaskAction
   def performMigration() {
-    loadMigrationModules().each { module ->
-      module.migrate()
-    }
+    loadMigrationModules()*.migrate()
   }
 
   private List<MigrationModule> loadMigrationModules() {
     List<MigrationModule> modules = []
     def status = loadInstalledModuleStatus()
     new File("${project.silversetup.migrationHome}/modules").listFiles().each { descriptor ->
-      modules << MigrationModule.builder()
-          .descriptor(descriptor)
-          .status(status)
-          .settings(settings)
-          .build()
+      MigrationModule module = new MigrationModule()
+          .withStatus(status)
+          .withSettings(settings)
+          .loadMigrationsFrom(descriptor)
+      if (module.isExecutionOrdered()) {
+        modules.add(module.executionOrder(), module)
+      } else {
+        modules << module
+      }
     }
     return modules
   }

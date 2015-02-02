@@ -25,6 +25,8 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 
+import java.sql.SQLException
+
 /**
  * A script to migrate the structure of one or several data sources.
  * @author mmoquillon
@@ -36,5 +38,5 @@ interface MigrationScript {
    * @param the Sql instance to use to perform operations against the database.
    * @throws Exception if an error occurs during the execution of this script.
    */
-  void run(Sql sql) throws Exception
+  void run(Sql sql) throws SQLException
 }

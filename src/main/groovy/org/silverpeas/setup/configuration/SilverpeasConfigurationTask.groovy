@@ -24,6 +24,7 @@
 package org.silverpeas.setup.configuration
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.TaskAction
 import org.silverpeas.setup.api.SilverpeasSetupService
 
@@ -55,8 +56,6 @@ class SilverpeasConfigurationTask extends DefaultTask {
           processXmlSettingsFile(it)
         } else if (it.name.endsWith('.groovy')) {
           processScriptFile(it)
-        } else {
-          throw new UnsupportedOperationException('Configuration file not supported')
         }
       } catch (Exception ex) {
         println "An error occured while processing the configuration file ${it.path}: ${ex.message}"
@@ -67,7 +66,7 @@ class SilverpeasConfigurationTask extends DefaultTask {
   def processXmlSettingsFile(settingsFile) {
     def settingsStatements = new XmlSlurper().parse(settingsFile)
     settingsStatements.fileset.each { fileset ->
-      String dir = VariableReplacement.parseValue(fileset.@root.text(), settings)
+      String dir = VariableReplacement.parseExpression(fileset.@root.text(), settings)
       fileset.configfile.each { configfile ->
         String properties = configfile.@name
         def parameters = [:]

@@ -82,7 +82,7 @@ class DatasourceMigration {
   }
 
   private void performInstallation(Sql sql, def settings) {
-    println "Installation of the module ${module} to version ${toVersion}"
+    println "  Installation of the module ${module} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {
@@ -94,13 +94,14 @@ class DatasourceMigration {
       }
     } catch (Exception ex) {
       status = 'NOK'
-      println "Installation failure! Cause: ${ex.message}"
+      throw ex
+    } finally {
+      println "  Installation of the module ${module} to version ${toVersion}: [${status}]"
     }
-    println "Installation of the module ${module} to version ${toVersion}: [${status}]"
   }
 
   private void performUpgrade(Sql sql, def settings) {
-    println "Upgrade of the module ${module} to version ${toVersion}"
+    println "  Upgrade of the module ${module} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {
@@ -112,8 +113,9 @@ class DatasourceMigration {
       }
     } catch (Exception ex) {
       status = 'NOK'
-      println "Upgrade failure! Cause: ${ex.message}"
+      throw ex
+    } finally {
+      println "  Upgrade of the module ${module} to version ${toVersion}: [${status}]"
     }
-    println "Upgrade of the module ${module} to version ${toVersion}: [${status}]"
   }
 }

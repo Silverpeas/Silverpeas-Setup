@@ -31,6 +31,8 @@ import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
 import org.silverpeas.setup.configuration.VariableReplacement
 import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.migration.SilverpeasMigrationTask
+import org.silverpeas.setup.security.Encryption
+import org.silverpeas.setup.security.EncryptionFactory
 
 /**
  * This plugin aims to prepare the configuration and to setup Silverpeas.
@@ -48,6 +50,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
 
     this.settings = loadConfiguration(project.silversetup.configurationHome)
     completeSettingsForProject(project)
+    encryptAdminPassword()
     DataSourceProvider.init(settings)
     SilverpeasSetupService.currentSettings = settings
 
@@ -83,6 +86,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   private def completeSettingsForProject(Project project) {
     settings.SILVERPEAS_HOME = project.silversetup.silverpeasHome
     settings.MIGRATION_HOME = project.silversetup.migrationHome
+    settings.CONFIGURATION_HOME = project.silversetup.configurationHome
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
         settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME}"
@@ -112,6 +116,11 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         throw new IllegalArgumentException("Unsupported database system: ${settings.DB_SERVERTYPE}")
     }
     settings.DB_SCHEMA = settings.DB_SERVERTYPE.toLowerCase()
+  }
+
+  private def encryptAdminPassword() {
+    Encryption encryption = EncryptionFactory.instance.createDefaultEncryption()
+    settings.SILVERPEAS_ADMIN_PASSWORD = encryption.encrypt(settings.SILVERPEAS_ADMIN_PASSWORD)
   }
 
 }

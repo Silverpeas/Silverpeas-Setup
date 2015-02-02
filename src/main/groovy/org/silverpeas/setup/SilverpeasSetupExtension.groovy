@@ -75,12 +75,6 @@ class SilverpeasSetupExtension {
   String driversDir
 
   /**
-   * The path of the directory containing the application servers-dedicated modules required by
-   * Silverpeas. The modules are gathered into a folder per supported application server.
-   */
-  String modulesDir
-
-  /**
    * The path of the directory into which the log should be generated.
    */
   String logDir = "${silverpeasHome}/log"
