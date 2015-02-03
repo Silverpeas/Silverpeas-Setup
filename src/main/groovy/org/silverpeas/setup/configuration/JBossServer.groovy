@@ -25,6 +25,8 @@ package org.silverpeas.setup.configuration
 
 import org.silverpeas.setup.api.SystemWrapper
 
+import java.nio.file.Paths
+
 /**
  * It wraps an existing installation of a JBoss application server. It provides functions to
  * interact with the JBoss AS (either Wildfly or JBoss EAP) in order to start/stop it or to
@@ -165,6 +167,75 @@ class JBossServer {
   boolean isAlreadyConfigured() {
     return new File("${jbossHome}/standalone/configuration/standalone-full.xml")
         .text.contains('silverpeas')
+  }
+
+  /**
+   * Deploys the artifacts at the specified path into this JBoss server by using the Management API.
+   * If the server isn't running, then it is started before.
+   * @param artifactsPath
+   * @throws RuntimeException if the deployment of the artifact failed.
+   */
+  void deploy(String artifactsPath) throws RuntimeException {
+    if (!isRunning()) {
+      start()
+    }
+    String artifact = Paths.get(artifactsPath).fileName
+    if (!isDeployed(artifact)) {
+      def proc = """${cli} --connect --command="deploy ${artifactsPath}" """.execute()
+      proc.waitFor()
+      if (proc.exitValue() != 0) {
+        throw new RuntimeException(proc.in.text)
+      }
+    } else {
+      println "${artifact} is already deployed in JBoss"
+    }
+  }
+
+  /**
+   * Undeploys the specified artifact from this JBoss server by using the Management API.
+   * If the server isn't running, then it is started before.
+   * @param artifactName
+   * @throws RuntimeException if the deployment of the artifact failed.
+   */
+  void undeploy(String artifact) throws RuntimeException {
+    if (!isRunning()) {
+      start()
+    }
+    if (isDeployed(artifact)) {
+      def proc = """${cli} --connect --command="undeploy ${artifact}" """.execute()
+      proc.waitFor()
+      if (proc.exitValue() != 0) {
+        throw new RuntimeException(proc.in.text)
+      }
+    } else {
+      println "${artifact} isn't deployed in JBoss"
+    }
+  }
+
+  /**
+   * Is the specified artifact is deployed?
+   * @param artifact the artifact to check its deployment status.
+   * @return true if the artifact is deployed, false otherwise.
+   */
+  boolean isDeployed(String artifact) {
+    if (!isRunning()) {
+      start()
+    }
+    def proc = """${cli} --connect /deployment=${artifact}:read-attribute(name=enabled)""".execute()
+    proc.waitFor()
+    return proc.exitValue() == 0 && proc.text.contains('"result" => true')
+  }
+
+  /**
+   * Prints out information about the deployment status of artifacts in this JBoss server. It an
+   * artifact doesn't appear in the output, then it isn't deployed.
+   */
+  void printDeployedArtifacts() {
+    if (!isRunning()) {
+      start()
+    }
+    def proc = """${cli} --connect --command=deployment-info""".execute()
+    proc.waitFor()
   }
 
   /**

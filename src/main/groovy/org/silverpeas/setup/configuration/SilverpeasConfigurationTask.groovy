@@ -24,10 +24,9 @@
 package org.silverpeas.setup.configuration
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.SilverpeasSetupService
-
 
 /**
  * This task aims to configure Silverpeas from the Silverpeas configuration file, from some XML
@@ -58,7 +57,8 @@ class SilverpeasConfigurationTask extends DefaultTask {
           processScriptFile(it)
         }
       } catch (Exception ex) {
-        println "An error occured while processing the configuration file ${it.path}: ${ex.message}"
+        println "Error while processing the configuration file ${it.path}. Cause: ${ex.message}"
+        throw new TaskExecutionException(this, ex)
       }
     }
   }

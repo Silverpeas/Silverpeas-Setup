@@ -25,7 +25,9 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleScriptException
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.DataSourceProvider
 
 import java.sql.SQLException
@@ -61,7 +63,17 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   @TaskAction
   def performMigration() {
-    loadMigrationModules()*.migrate()
+    StringBuilder errors = new StringBuilder()
+    loadMigrationModules().each { module ->
+      try {
+        module.migrate()
+      } catch(Exception ex) {
+        errors.append(ex.message).append('\n')
+      }
+    }
+    if (errors.length() > 0) {
+      throw new TaskExecutionException(this, null)
+    }
   }
 
   private List<MigrationModule> loadMigrationModules() {

@@ -25,6 +25,7 @@ package org.silverpeas.setup.migration
 
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
+import org.gradle.api.tasks.TaskExecutionException
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -85,17 +86,21 @@ class MigrationModule {
    * In the case of an upgrade, it will occur in different steps of migration, each of them
    * representing the passing from one version to the next one up to the available latest version.
    * Each of these migration will be performed within their own SQL transaction.
+   * @throws TaskExecutionException if an error occurs while migrating the datasource for this
+   * module.
    */
-  void migrate() {
+  void migrate() throws TaskExecutionException {
     String status = '[OK]'
     try {
       println "Migration(s) of module ${module}"
       migrations*.migrate(settings)
     } catch (Exception ex) {
-      println "An error occurred during a migration of ${module}: stop it. Cause: ${ex.message}"
+      throw new TaskExecutionException(
+          "An error occurred during a migration of ${module}: stop it. Cause: ${ex.message}")
       status = '[NOK]'
+    } finally {
+      println "Migration(s) of module ${module}: ${status}"
     }
-    println "Migration(s) of module ${module}: ${status}"
   }
 
   /**

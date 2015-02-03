@@ -28,7 +28,6 @@ import org.gradle.api.tasks.StopExecutionException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.attribute.DosFileAttributes
 import java.util.regex.Matcher
 
 /**
@@ -156,10 +155,10 @@ class SilverpeasSetupService {
    * Windows; in other operating systems any files prefixed by a point is marked as hidden.
    * @return the path of the created directory.
    */
-  static final Path createDirectory(String path, def attributes) {
-    Path dirPath = getPath(path)
+  static final Path createDirectory(Path path, def attributes) {
+    Path dirPath = path
     if (!Files.exists(dirPath)) {
-      dirPath = Files.createDirectories(getPath(path))
+      dirPath = Files.createDirectories(path)
       File dir = dirPath.toFile()
       if (attributes?.containsKey('readable')) {
         dir.setReadable(attributes.readable)

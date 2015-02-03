@@ -70,7 +70,7 @@ class SilverpeasSetupExtension {
   String migrationHome = "${silverpeasHome}/migrations"
 
   /**
-   * The path of the directory containing the JDBC drivers.
+   * The path of the directory containing the JDBC drivers supported by Silverpeas.
    */
   String driversDir
 

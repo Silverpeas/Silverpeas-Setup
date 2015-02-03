@@ -25,6 +25,7 @@ package org.silverpeas.setup.configuration
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskExecutionException
 
 /**
  * This task is to configure JBoss/Wildfly in order to be ready to migrate Silverpeas.
@@ -46,6 +47,7 @@ class JBossConfigurationTask extends DefaultTask {
 
   @TaskAction
   def configureJBoss() {
+    installAdditionalModules()
     if (!jboss.isRunning()) {
       println 'JBoss not started, so start it'
       jboss.start()
@@ -53,11 +55,8 @@ class JBossConfigurationTask extends DefaultTask {
 
     String jbossConfFilesDir = "${project.buildDir}/cli"
     setUpJDBCDriver()
-    installAdditionalModules()
     generateConfigurationFilesInto(jbossConfFilesDir)
     processConfigurationFiles(jbossConfFilesDir)
-    println 'Stop JBoss now'
-    jboss.stop()
   }
 
   private def installAdditionalModules() {
@@ -102,9 +101,11 @@ class JBossConfigurationTask extends DefaultTask {
     }
     // H2 is already available by default in JBoss/Wildfly
     if (settings.DB_SERVERTYPE != 'H2') {
-      project.copy {
-        from "${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}"
-        into "${project.silversetup.jbossHome}/standalone/deployments"
+      try {
+        jboss.deploy("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
+      } catch (Exception ex) {
+        println "Error: cannot deploy ${settings.DB_DRIVER_NAME}. Cause: ${ex.message}"
+        throw new TaskExecutionException(this, ex.message)
       }
     }
   }
