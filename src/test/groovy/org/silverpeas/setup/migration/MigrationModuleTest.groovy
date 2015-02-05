@@ -23,6 +23,8 @@
  */
 package org.silverpeas.setup.migration
 
+import org.silverpeas.setup.api.Logger
+
 import static org.silverpeas.setup.test.Assertion.numberOfItemsIn
 import static org.silverpeas.setup.test.Assertion.versionOfModule
 
@@ -38,6 +40,7 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     MigrationModule module = new MigrationModule()
         .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
         .withStatus([:])
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
@@ -52,6 +55,7 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     MigrationModule module = new MigrationModule()
         .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
         .withStatus(['toto':'002'])
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
@@ -67,6 +71,7 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     MigrationModule module = new MigrationModule()
         .withSettings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
         .withStatus(['toto':'003'])
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 

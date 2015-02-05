@@ -23,9 +23,11 @@
  */
 package org.silverpeas.setup.configuration
 
+import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Paths
+import java.util.regex.Matcher
 
 /**
  * It wraps an existing installation of a JBoss application server. It provides functions to
@@ -42,6 +44,8 @@ class JBossServer {
   private String jbossHome
 
   private File redirection = null
+
+  private def logger = Logger.getLogger(getClass().getSimpleName())
 
   /**
    * Constructs a new instance of a JBossServer wrapping the specified JBoss/Wildfly installation.
@@ -86,6 +90,11 @@ class JBossServer {
     return this
   }
 
+  JBossServer useLogger(logger) {
+    this.logger = logger
+    return this
+  }
+
   /**
    * Starts an instance of the JBoss/Wildfly server in a standalone mode (full JEE profile).
    * If an instance of JBoss/Wildfly is already running, then nothing is done.
@@ -107,7 +116,7 @@ class JBossServer {
         sleep(1000);
       }
     } else {
-      println 'A JBoss instance is already started'
+      logger.info 'A JBoss instance is already started'
     }
   }
 
@@ -132,7 +141,7 @@ class JBossServer {
         sleep(1000);
       }
     } else {
-      println 'A JBoss instance is already started'
+      logger.info 'A JBoss instance is already started'
     }
   }
 
@@ -145,7 +154,7 @@ class JBossServer {
       def proc = """${cli} --connect --command=:shutdown""".execute()
       proc.waitFor()
     } else {
-      println 'No JBoss instance running'
+      logger.info 'No JBoss instance running'
     }
   }
 
@@ -165,8 +174,9 @@ class JBossServer {
    * method returns true even if the configuration for Silverpeas isn't complete.
    */
   boolean isAlreadyConfigured() {
-    return new File("${jbossHome}/standalone/configuration/standalone-full.xml")
-        .text.contains('silverpeas')
+    String config = new File("${jbossHome}/standalone/configuration/standalone-full.xml").text
+    return config.contains('java:/datasources/DocumentStore') &&
+        config.contains('java:/datasources/Silverpeas')
   }
 
   /**
@@ -187,7 +197,7 @@ class JBossServer {
         throw new RuntimeException(proc.in.text)
       }
     } else {
-      println "${artifact} is already deployed in JBoss"
+      logger.info "${artifact} is already deployed in JBoss"
     }
   }
 
@@ -208,7 +218,7 @@ class JBossServer {
         throw new RuntimeException(proc.in.text)
       }
     } else {
-      println "${artifact} isn't deployed in JBoss"
+      logger.info "${artifact} isn't deployed in JBoss"
     }
   }
 
@@ -240,31 +250,62 @@ class JBossServer {
 
   /**
    * Configures JBoss by running the JBoss CLI statements in the specified commands file.
+   * <p>
+   * If the command file contains the following line:</p>
+   * <pre><code>#check: SUBSYSTEM_RESOURCE</code></pre>
+   * <p>with SUBSYSTEM_RESOURCE as the path of a resource in a subsystem of JBoss/Wildfly, then
+   * the method will check the specified resource exists before executing the command file;
+   * the command file wil be processed only if the specified resource doesn't already exist in
+   * JBoss/Wildfly. For example:</p>
+   * <pre><code>#check: /subsystem=datasources/data-source=Silverpeas</code></pre>
+   * <p>specified to check the datasource Silverpeas already exists in JBoss/Wildfly.</p>
    * @param commandsFile the commands file to eat.
+   * @param output the file into which outputs of the command file processing will be traced. If null,
+   * the output of the processing will output to the standard output.
    */
   void processCommandFile(File commandsFile, File output) {
     assertJBossIsRunning()
     try {
-      println "${commandsFile.name} processing..."
-      ProcessBuilder command = new ProcessBuilder(cli, '--connect', "--file=${commandsFile.path}")
-          .redirectErrorStream(true)
-      if (output != null) {
-        command.redirectOutput(output)
+      logger.info "${commandsFile.name} processing..."
+
+      if (isAlreadyProcessed(commandsFile)) {
+        logger.info "${commandsFile.name} processing: [ALREADY DONE]"
       } else {
-        command.inheritIO()
-        System.println(command.redirectOutput())
+        ProcessBuilder command = new ProcessBuilder(cli, '--connect', "--file=${commandsFile.path}")
+            .redirectErrorStream(true)
+        if (output != null) {
+          command.redirectOutput(output)
+        } else {
+          command.inheritIO()
+          logger.info command.redirectOutput()
+        }
+        def proc = command.start()
+        proc.waitFor()
+        assertCommandSucceeds(proc)
+        logger.info "${commandsFile.name} processing: [OK]"
       }
-      def proc = command.start()
-      //def proc = """${cli} --file=${commandsFile.path}""".execute()
-      proc.waitFor()
-      assertCommandSucceeds(proc)
-      println "${commandsFile.name} processing: [OK]"
     } catch (InvalidObjectException e) {
-      println "${commandsFile.name} processing: [WARNING]"
-      println e.message
+      logger.info "${commandsFile.name} processing: [WARNING]"
+      logger.warn "Invalid resource. ${e.message}"
     } catch (AssertionError | Exception e) {
-      println "${commandsFile.name} processing: [FAILURE]"
-      println e.message
+      logger.info "${commandsFile.name} processing: [FAILURE]"
+      logger.error e
     }
+  }
+
+  private boolean isAlreadyProcessed(File commandsFile) {
+    boolean processed = false
+    List<String> lines = commandsFile.readLines()
+    for (int i = 0; i < lines.size() && !processed; i++) {
+      Matcher matcher = lines.get(i)  =~ /\s*#check:\s+(.+)/
+      matcher.each { token ->
+        def proc = """${cli} --connect --command="${token[1]}:read-resource" """.execute()
+        proc.waitFor()
+        if (proc.exitValue() == 0 && proc.in.text.contains('"outcome" => "success"')) {
+          processed = true
+        }
+      }
+    }
+    return processed
   }
 }

@@ -93,7 +93,7 @@ class DatasourceMigration {
         }
       }
     } catch (Exception ex) {
-      status = 'NOK'
+      status = 'FAILURE'
       throw ex
     } finally {
       println "  Installation of the module ${module} to version ${toVersion}: [${status}]"
@@ -112,7 +112,7 @@ class DatasourceMigration {
         }
       }
     } catch (Exception ex) {
-      status = 'NOK'
+      status = 'FAILURE'
       throw ex
     } finally {
       println "  Upgrade of the module ${module} to version ${toVersion}: [${status}]"

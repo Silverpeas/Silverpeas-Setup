@@ -24,6 +24,7 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
+import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
@@ -35,12 +36,17 @@ import java.sql.SQLException
 class GroovyScript implements MigrationScript {
 
   private List<File> scripts = []
+  private Logger log
 
   GroovyScript(String... scriptPath) {
     for (String groovyScript : scriptPath) {
       scripts << new File(groovyScript)
     }
+  }
 
+  GroovyScript useLogger(Logger logger) {
+    this.log = logger
+    return this
   }
 
   /**
@@ -54,6 +60,7 @@ class GroovyScript implements MigrationScript {
         new GroovyScriptEngine(scripts.collect { it.parent }.toArray() as String[])
     Binding scriptEnv = new Binding()
     scriptEnv.setVariable('sql', sql)
+    scriptEnv.setVariable('log',  log)
     scriptEnv.setVariable('settings', SilverpeasSetupService.currentSettings)
     scriptEnv.setVariable('Service', SilverpeasSetupService)
     try {

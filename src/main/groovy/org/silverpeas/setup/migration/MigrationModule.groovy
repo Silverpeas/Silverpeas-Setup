@@ -26,6 +26,7 @@ package org.silverpeas.setup.migration
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 import org.gradle.api.tasks.TaskExecutionException
+import org.silverpeas.setup.api.Logger
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -49,6 +50,7 @@ class MigrationModule {
   private List<DatasourceMigration> migrations = []
   def status
   def settings
+  Logger logger
 
   /**
    * The name of this migration module.
@@ -92,14 +94,14 @@ class MigrationModule {
   void migrate() throws TaskExecutionException {
     String status = '[OK]'
     try {
-      println "Migration(s) of module ${module}"
+      logger.info "Migration(s) of module ${module}"
       migrations*.migrate(settings)
     } catch (Exception ex) {
       throw new TaskExecutionException(
           "An error occurred during a migration of ${module}: stop it. Cause: ${ex.message}")
-      status = '[NOK]'
+      status = '[FAILURE]'
     } finally {
-      println "Migration(s) of module ${module}: ${status}"
+      logger.info "Migration(s) of module ${module}: ${status}"
     }
   }
 
@@ -121,6 +123,7 @@ class MigrationModule {
               MigrationScriptBuilder
                   .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), "up00${version}"))
                   .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
+                  .withLogger(logger)
                   .build()
             }
         migrations << DatasourceMigration.builder()
@@ -135,6 +138,7 @@ class MigrationModule {
         MigrationScriptBuilder
             .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), toVersion))
             .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
+            .withLogger(logger)
             .build()
       }
       migrations << DatasourceMigration.builder()

@@ -25,13 +25,13 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleScriptException
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.DataSourceProvider
+import org.silverpeas.setup.api.Logger
 
 import java.sql.SQLException
-
 
 /**
  * This task is for migrating the data sources used as the backend by Silverpeas. A migration is
@@ -47,13 +47,8 @@ import java.sql.SQLException
  */
 class SilverpeasMigrationTask extends DefaultTask {
 
-  /**
-   * The descriptor of the migration tool itself. It creates the database tables required to manage
-   * the migration of each other modules in Silverpeas.
-   */
-  private static final String MIGRATION_TOOL_DESCRIPTOR = 'dbbuilder-migration.xml'
-
   def settings
+  Logger log = Logger.getLogger('Silverpeas Migration')
 
   SilverpeasMigrationTask() {
     description = 'Migrate in version the datasource schema expected by Silverpeas'
@@ -72,7 +67,7 @@ class SilverpeasMigrationTask extends DefaultTask {
       }
     }
     if (errors.length() > 0) {
-      throw new TaskExecutionException(this, null)
+      throw new TaskExecutionException(this, new RuntimeException(errors.toString()))
     }
   }
 
@@ -83,6 +78,7 @@ class SilverpeasMigrationTask extends DefaultTask {
       MigrationModule module = new MigrationModule()
           .withStatus(status)
           .withSettings(settings)
+          .withLogger(log)
           .loadMigrationsFrom(descriptor)
       if (module.isExecutionOrdered()) {
         modules.add(module.executionOrder(), module)
@@ -94,6 +90,8 @@ class SilverpeasMigrationTask extends DefaultTask {
   }
 
   private def loadInstalledModuleStatus() {
+    def level = logging.level
+    logging.captureStandardOutput(LogLevel.ERROR)
     def status = [:]
     Sql sql = new Sql(DataSourceProvider.dataSource)
     try {
@@ -103,6 +101,7 @@ class SilverpeasMigrationTask extends DefaultTask {
     } catch (SQLException ex) {
       // the database isn't set up
     }
+    logging.captureStandardOutput(level)
     return status
   }
 

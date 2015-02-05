@@ -26,6 +26,7 @@ package org.silverpeas.setup.configuration
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
+import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
 
 /**
@@ -36,7 +37,8 @@ import org.silverpeas.setup.api.SilverpeasSetupService
 class SilverpeasConfigurationTask extends DefaultTask {
 
   def settings
-  private def scriptEngine
+  Logger log = Logger.getLogger(this.name)
+  def scriptEngine
 
   SilverpeasConfigurationTask() {
     description = 'Configure Silverpeas'
@@ -57,8 +59,8 @@ class SilverpeasConfigurationTask extends DefaultTask {
           processScriptFile(it)
         }
       } catch (Exception ex) {
-        println "Error while processing the configuration file ${it.path}. Cause: ${ex.message}"
-        throw new TaskExecutionException(this, ex)
+        throw new TaskExecutionException(this,
+            new RuntimeException("Error while processing the configuration file ${it.path}", ex))
       }
     }
   }
@@ -68,13 +70,22 @@ class SilverpeasConfigurationTask extends DefaultTask {
     settingsStatements.fileset.each { fileset ->
       String dir = VariableReplacement.parseExpression(fileset.@root.text(), settings)
       fileset.configfile.each { configfile ->
+        String status = '[OK]'
         String properties = configfile.@name
+        log.info "${properties} processing..."
         def parameters = [:]
         configfile.parameter.each {
           parameters[it.@key.text()] = it.text()
         }
-        parameters = VariableReplacement.parseParameters(parameters, settings)
-        processPropertiesFile("${dir}/${properties}", parameters)
+        try {
+          parameters = VariableReplacement.parseParameters(parameters, settings)
+          processPropertiesFile("${dir}/${properties}", parameters)
+        } catch (Exception ex) {
+          status = '[FAILURE]'
+          throw ex
+        } finally {
+          log.info "${properties} processing: ${status}"
+        }
       }
     }
   }
@@ -83,10 +94,20 @@ class SilverpeasConfigurationTask extends DefaultTask {
     SilverpeasSetupService.updateProperties(propertiesFilePath, parameters)
   }
 
-  def processScriptFile(scriptFile) {
+  def processScriptFile(File scriptFile) {
     def scriptEnv = new Binding()
     scriptEnv.setVariable('settings', settings)
+    scriptEnv.setVariable('log', log)
     scriptEnv.setVariable('Service', SilverpeasSetupService)
-    scriptEngine.run(scriptFile.path, scriptEnv)
+    String status = '[OK]'
+    log.info "${scriptFile.name} processing..."
+    try {
+      scriptEngine.run(scriptFile.path, scriptEnv)
+    } catch (Exception ex) {
+      status = '[FAILURE]'
+      throw ex
+    } finally {
+      log.info "${scriptFile.name} processing: ${status}"
+    }
   }
 }

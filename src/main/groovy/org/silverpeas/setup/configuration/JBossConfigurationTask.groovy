@@ -26,6 +26,9 @@ package org.silverpeas.setup.configuration
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
+import org.silverpeas.setup.api.Logger
+
+import java.util.regex.Matcher
 
 /**
  * This task is to configure JBoss/Wildfly in order to be ready to migrate Silverpeas.
@@ -33,23 +36,23 @@ import org.gradle.api.tasks.TaskExecutionException
  */
 class JBossConfigurationTask extends DefaultTask {
   def settings
+  Logger log = Logger.getLogger(this.name)
   def jboss = new JBossServer("${project.silversetup.jbossHome}")
       .redirectOutputTo(new File("${project.silversetup.logDir}/output.log"))
+      .useLogger(log)
 
   JBossConfigurationTask() {
     description = 'Configure JBoss/Wildfly for Silverpeas'
     group = 'Build'
     dependsOn = ['assemble']
-    outputs.upToDateWhen {
-      return jboss.isAlreadyConfigured()
-    }
   }
 
   @TaskAction
   def configureJBoss() {
+    setUpJVMOptions()
     installAdditionalModules()
     if (!jboss.isRunning()) {
-      println 'JBoss not started, so start it'
+      log.info 'JBoss not started, so start it'
       jboss.start()
     }
 
@@ -57,10 +60,40 @@ class JBossConfigurationTask extends DefaultTask {
     setUpJDBCDriver()
     generateConfigurationFilesInto(jbossConfFilesDir)
     processConfigurationFiles(jbossConfFilesDir)
+
+  }
+
+  private def setUpJVMOptions() {
+    log.info 'JVM options setting'
+    if (jboss.isRunning()) {
+      jboss.stop()
+    }
+    new File("${project.silversetup.jbossHome}/bin").listFiles(new FilenameFilter() {
+      @Override
+      boolean accept(final File dir, final String name) {
+        return name.endsWith('.conf') || name.endsWith('.conf.bat')
+      }
+    }).each { conf ->
+      conf.withReader {
+        it.transformLine(new FileWriter("${conf.path}.tmp")) { line ->
+          Matcher matcher = line =~ /\s*JAVA_OPTS="-Xm.+/
+          if (matcher.matches()) {
+            line = "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}\""
+          }
+          line
+        }
+      }
+      File modifiedConf = new File("${conf.path}.tmp")
+      modifiedConf.setReadable(conf.canRead())
+      modifiedConf.setWritable(conf.canWrite())
+      modifiedConf.setExecutable(conf.canExecute())
+      conf.delete()
+      modifiedConf.renameTo(conf)
+    }
   }
 
   private def installAdditionalModules() {
-    println 'Additional modules installation'
+    log.info 'Additional modules installation'
     project.copy {
       from "${project.silversetup.configurationHome}/jboss/modules"
       into "${project.silversetup.jbossHome}/modules"
@@ -76,7 +109,7 @@ class JBossConfigurationTask extends DefaultTask {
     }).each { cli ->
       String[] resource = cli.name.split('\\.')
       ResourceType type = ResourceType.valueOf(resource[1])
-      println "Prepare configuration of ${type} ${resource[0]} for Silverpeas"
+      log.info "Prepare configuration of ${type} ${resource[0]} for Silverpeas"
       project.copy {
         from(cli) {
           filter({ line ->
@@ -90,7 +123,7 @@ class JBossConfigurationTask extends DefaultTask {
   }
 
   private def setUpJDBCDriver() {
-    println "Install database driver for ${settings.DB_SERVERTYPE}"
+    log.info "Install database driver for ${settings.DB_SERVERTYPE}"
     new File(project.silversetup.driversDir).listFiles().each { driver ->
       if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
           (driver.name.startsWith('jtds') && settings.DB_SERVERTYPE == 'MSSQL') ||
@@ -104,7 +137,7 @@ class JBossConfigurationTask extends DefaultTask {
       try {
         jboss.deploy("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
       } catch (Exception ex) {
-        println "Error: cannot deploy ${settings.DB_DRIVER_NAME}. Cause: ${ex.message}"
+        log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
         throw new TaskExecutionException(this, ex.message)
       }
     }
@@ -114,10 +147,11 @@ class JBossConfigurationTask extends DefaultTask {
     new File(jbossConfFilesDir).listFiles().each { cli ->
       String[] resource = cli.name.split('\\.')
       ResourceType type = ResourceType.valueOf(resource[1])
-      println "Configure ${type} ${resource[0]} for Silverpeas"
+      log.info " -> Configure ${type} ${resource[0]} for Silverpeas"
       jboss.processCommandFile(new File("${jbossConfFilesDir}/${cli.name}"),
-          new File("${project.silversetup.logDir}/configuration-jboss.log"))
-      println()
+          new File("${project.silversetup.logDir}/jboss-cli-output.log"))
+      logger.debug(new File("${project.silversetup.logDir}/jboss-cli-output.log").text)
+      log.info('\n')
     }
   }
 

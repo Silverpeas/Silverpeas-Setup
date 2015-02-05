@@ -23,6 +23,8 @@
  */
 package org.silverpeas.setup.test
 
+import org.silverpeas.setup.api.Logger
+
 /**
  * Set up the test environment.
  * @author mmoquillon

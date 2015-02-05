@@ -39,4 +39,5 @@ interface MigrationScript {
    * @throws Exception if an error occurs during the execution of this script.
    */
   void run(Sql sql) throws SQLException
+
 }

@@ -23,6 +23,8 @@
  */
 package org.silverpeas.setup.migration
 
+import org.silverpeas.setup.api.Logger
+
 import java.sql.SQLException
 
 import static org.silverpeas.setup.migration.MigrationScriptBuilder.ScriptType.groovy
@@ -42,6 +44,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     MigrationScript script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/002/create_table.sql")
         .ofType(sql)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -60,6 +63,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     MigrationScript script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up002/update.sql")
         .ofType(sql)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -80,6 +84,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     MigrationScript script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -101,10 +106,12 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     MigrationScript sqlScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up003/create_table.sql")
         .ofType(sql)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     MigrationScript groovyScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -124,6 +131,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     MigrationScript script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db//h2/foo/002/create_table.sql")
         .ofType(sql)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
 
     shouldFail(SQLException) {
@@ -145,6 +153,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     MigrationScript script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/foo/up002/update.groovy")
         .ofType(groovy)
+        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
 
     shouldFail(SQLException) {

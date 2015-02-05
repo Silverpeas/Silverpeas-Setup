@@ -25,6 +25,8 @@ package org.silverpeas.setup
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.logging.LogLevel
+import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
@@ -53,6 +55,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     encryptAdminPassword()
     DataSourceProvider.init(settings)
     SilverpeasSetupService.currentSettings = settings
+
+    //project.gradle.useLogger(new TaskEventLogging())
 
     project.task('configureJBoss', type: JBossConfigurationTask) {
       settings = this.settings

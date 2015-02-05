@@ -178,4 +178,13 @@ class SilverpeasSetupService {
     return dirPath
   }
 
+  /**
+   * Gets a logger for the specified namespace. This logger will output any traces into a log file
+   * @param namespace the namespace under which any traces will be written.
+   * @return the logger.
+   */
+  static final Logger getLogger(String namespace) {
+    return Logger.getLogger(namespace)
+  }
+
 }
