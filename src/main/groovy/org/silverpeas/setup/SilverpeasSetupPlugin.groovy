@@ -25,13 +25,14 @@ package org.silverpeas.setup
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.logging.LogLevel
+import org.gradle.api.ProjectState
+import org.gradle.api.invocation.Gradle
+import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
 import org.silverpeas.setup.configuration.VariableReplacement
-import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.migration.SilverpeasMigrationTask
 import org.silverpeas.setup.security.Encryption
 import org.silverpeas.setup.security.EncryptionFactory
@@ -49,6 +50,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   @Override
   void apply(Project project) {
     project.extensions.create('silversetup', SilverpeasSetupExtension)
+    project.silversetup.extensions.create('logging', SilverpeasLoggingProperties)
 
     this.settings = loadConfiguration(project.silversetup.configurationHome)
     completeSettingsForProject(project)
@@ -56,7 +58,11 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     DataSourceProvider.init(settings)
     SilverpeasSetupService.currentSettings = settings
 
-    //project.gradle.useLogger(new TaskEventLogging())
+    project.afterEvaluate { Project currentProject, ProjectState state ->
+      if (currentProject.silversetup.logging.useLogger) {
+        initLogging(currentProject)
+      }
+    }
 
     project.task('configureJBoss', type: JBossConfigurationTask) {
       settings = this.settings
@@ -127,4 +133,17 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     settings.SILVERPEAS_ADMIN_PASSWORD = encryption.encrypt(settings.SILVERPEAS_ADMIN_PASSWORD)
   }
 
+  private def initLogging(Project project) {
+    String timestamp = new Date().format('yyyyMMdd_HHmmss')
+    File logDir = new File(project.silversetup.logging.logDir)
+    if (!logDir.exists()) {
+      logDir.mkdirs()
+    }
+    File logFile = new File("build-${timestamp}.log", logDir)
+    Logger.init(logFile, project.silversetup.logging.defaultLevel)
+
+    /* customize the traces writing both on the standard output and on the log file. */
+    project.gradle.useLogger(new TaskEventLogging()
+        .withTasks(project.silversetup.logging.scriptTasks))
+  }
 }

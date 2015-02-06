@@ -23,6 +23,7 @@
  */
 package org.silverpeas.setup
 
+import org.gradle.api.logging.LogLevel
 import org.silverpeas.setup.api.SystemWrapper
 
 /**
@@ -74,10 +75,6 @@ class SilverpeasSetupExtension {
    */
   String driversDir
 
-  /**
-   * The path of the directory into which the log should be generated.
-   */
-  String logDir = "${silverpeasHome}/log"
 
   /**
    * Constructs a new silverpeas configuration extension. It checks the environment variables

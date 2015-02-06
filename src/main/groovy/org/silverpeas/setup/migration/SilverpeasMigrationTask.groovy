@@ -48,7 +48,7 @@ import java.sql.SQLException
 class SilverpeasMigrationTask extends DefaultTask {
 
   def settings
-  Logger log = Logger.getLogger('Silverpeas Migration')
+  Logger log = Logger.getLogger(this.name)
 
   SilverpeasMigrationTask() {
     description = 'Migrate in version the datasource schema expected by Silverpeas'

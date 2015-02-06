@@ -23,6 +23,9 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
 
     project = ProjectBuilder.builder().build()
     project.apply plugin: 'silversetup'
+
+    project.silversetup.logging.logDir = "${project.buildDir}/log"
+    project.silversetup.logging.useLogger = false
   }
 
   void testSilverpeasConfiguration() {

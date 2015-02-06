@@ -36,10 +36,8 @@ import java.util.regex.Matcher
  */
 class JBossConfigurationTask extends DefaultTask {
   def settings
+  def jboss
   Logger log = Logger.getLogger(this.name)
-  def jboss = new JBossServer("${project.silversetup.jbossHome}")
-      .redirectOutputTo(new File("${project.silversetup.logDir}/output.log"))
-      .useLogger(log)
 
   JBossConfigurationTask() {
     description = 'Configure JBoss/Wildfly for Silverpeas'
@@ -49,6 +47,9 @@ class JBossConfigurationTask extends DefaultTask {
 
   @TaskAction
   def configureJBoss() {
+    jboss = new JBossServer("${project.silversetup.jbossHome}")
+        .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
+        .useLogger(log)
     setUpJVMOptions()
     installAdditionalModules()
     if (!jboss.isRunning()) {
@@ -149,8 +150,8 @@ class JBossConfigurationTask extends DefaultTask {
       ResourceType type = ResourceType.valueOf(resource[1])
       log.info " -> Configure ${type} ${resource[0]} for Silverpeas"
       jboss.processCommandFile(new File("${jbossConfFilesDir}/${cli.name}"),
-          new File("${project.silversetup.logDir}/jboss-cli-output.log"))
-      logger.debug(new File("${project.silversetup.logDir}/jboss-cli-output.log").text)
+          new File("${project.silversetup.logging.logDir}/jboss-cli-output.log"))
+      logger.debug(new File("${project.silversetup.logging.logDir}/jboss-cli-output.log").text)
       log.info('\n')
     }
   }

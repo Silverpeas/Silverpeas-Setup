@@ -37,8 +37,8 @@ import org.silverpeas.setup.api.SilverpeasSetupService
 class SilverpeasConfigurationTask extends DefaultTask {
 
   def settings
-  Logger log = Logger.getLogger(this.name)
   def scriptEngine
+  Logger log = Logger.getLogger(this.name)
 
   SilverpeasConfigurationTask() {
     description = 'Configure Silverpeas'
