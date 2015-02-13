@@ -171,7 +171,7 @@ class SilverpeasSetupService {
       }
       if (attributes?.containsKey('hidden')) {
         if (System.properties['os.name'].toLowerCase().contains('windows')) {
-          Files.setAttribute(dirPath, 'dos:hidden')
+          Files.setAttribute(dirPath, 'dos:hidden', attributes.hidden)
         }
       }
     }

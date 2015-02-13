@@ -27,6 +27,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 
 /**
@@ -48,66 +49,23 @@ class SilverpeasConfigurationTask extends DefaultTask {
 
   @TaskAction
   def configureSilverpeas() {
-    scriptEngine = new GroovyScriptEngine(["${project.silversetup.configurationHome}/silverpeas"]
-        as String[])
-
-    new File("${project.silversetup.configurationHome}/silverpeas").listFiles().each {
+    File configurationDir = new File("${project.silversetup.configurationHome}/silverpeas")
+    scriptEngine = new GroovyScriptEngine([configurationDir.toURI().toString()] as String[])
+    configurationDir.listFiles(new FileFilter() {
+      @Override
+      boolean accept(final File child) {
+        return child.isFile()
+      }
+    }).each { configurationFile ->
       try {
-        if (it.name.endsWith('.xml')) {
-          processXmlSettingsFile(it)
-        } else if (it.name.endsWith('.groovy')) {
-          processScriptFile(it)
-        }
+        Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path)
+            .withLogger(log)
+            .build()
+        script.run([log: log, settings: settings, service: SilverpeasSetupService])
       } catch (Exception ex) {
-        throw new TaskExecutionException(this,
-            new RuntimeException("Error while processing the configuration file ${it.path}", ex))
+        log.error("Error while processing the configuration file ${configurationFile.path}", ex)
+        throw new TaskExecutionException(this, ex)
       }
-    }
-  }
-
-  def processXmlSettingsFile(settingsFile) {
-    def settingsStatements = new XmlSlurper().parse(settingsFile)
-    settingsStatements.fileset.each { fileset ->
-      String dir = VariableReplacement.parseExpression(fileset.@root.text(), settings)
-      fileset.configfile.each { configfile ->
-        String status = '[OK]'
-        String properties = configfile.@name
-        log.info "${properties} processing..."
-        def parameters = [:]
-        configfile.parameter.each {
-          parameters[it.@key.text()] = it.text()
-        }
-        try {
-          parameters = VariableReplacement.parseParameters(parameters, settings)
-          processPropertiesFile("${dir}/${properties}", parameters)
-        } catch (Exception ex) {
-          status = '[FAILURE]'
-          throw ex
-        } finally {
-          log.info "${properties} processing: ${status}"
-        }
-      }
-    }
-  }
-
-  def processPropertiesFile(propertiesFilePath, parameters) {
-    SilverpeasSetupService.updateProperties(propertiesFilePath, parameters)
-  }
-
-  def processScriptFile(File scriptFile) {
-    def scriptEnv = new Binding()
-    scriptEnv.setVariable('settings', settings)
-    scriptEnv.setVariable('log', log)
-    scriptEnv.setVariable('Service', SilverpeasSetupService)
-    String status = '[OK]'
-    log.info "${scriptFile.name} processing..."
-    try {
-      scriptEngine.run(scriptFile.path, scriptEnv)
-    } catch (Exception ex) {
-      status = '[FAILURE]'
-      throw ex
-    } finally {
-      log.info "${scriptFile.name} processing: ${status}"
     }
   }
 }

@@ -24,6 +24,7 @@
 package org.silverpeas.setup.configuration
 
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Paths
@@ -64,7 +65,7 @@ class JBossServer {
     }
   }
 
-  private void assertJBossIsRunning() {
+  private void assertJBossIsRunning()  {
     if (!isRunning()) {
       throw new AssertionError('JBoss not running')
     }
@@ -90,6 +91,11 @@ class JBossServer {
     return this
   }
 
+  /**
+   * The logger to use with this JBossService instance to output any traces about its actions.
+   * @param logger the logger to use.
+   * @return itself.
+   */
   JBossServer useLogger(logger) {
     this.logger = logger
     return this
@@ -100,7 +106,7 @@ class JBossServer {
    * If an instance of JBoss/Wildfly is already running, then nothing is done.
    */
   void start() {
-    if (!isRunning()) {
+    if (!isStartingOrRunning()) {
       ProcessBuilder process =
           new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0')
               .directory(new File(jbossHome))
@@ -112,9 +118,7 @@ class JBossServer {
         System.println(process.redirectOutput())
       }
       process.start()
-      while (!isRunning()) {
-        sleep(1000);
-      }
+      waitUntilRunning()
     } else {
       logger.info 'A JBoss instance is already started'
     }
@@ -125,7 +129,7 @@ class JBossServer {
    * If an instance of JBoss/Wildfly is already running, then nothing is done.
    */
   void debug() {
-    if (!isRunning()) {
+    if (!isStartingOrRunning()) {
       ProcessBuilder process =
           new ProcessBuilder(starter, '-debug', '-c', 'standalone-full.xml', '-b', '0.0.0.0')
               .directory(new File(jbossHome))
@@ -137,9 +141,7 @@ class JBossServer {
         System.println(process.redirectOutput())
       }
       process.start()
-      while (!isRunning()) {
-        sleep(1000);
-      }
+      waitUntilRunning()
     } else {
       logger.info 'A JBoss instance is already started'
     }
@@ -150,7 +152,7 @@ class JBossServer {
    * is done.
    */
   void stop() {
-    if (isRunning()) {
+    if (isStartingOrRunning()) {
       def proc = """${cli} --connect --command=:shutdown""".execute()
       proc.waitFor()
     } else {
@@ -163,9 +165,63 @@ class JBossServer {
    * @return true if an instance of JBoss/Wildfly is running, false otherwise.
    */
   boolean isRunning() {
+    return status() == 'running'
+  }
+
+  /**
+   * Is a JBoss/Wildfly instance being starting?
+   * @return true if an instance of JBoss/Wildfly is being starting, false otherwise.
+   */
+  boolean isStarting() {
+    return status() == 'starting'
+  }
+
+  /**
+   * Is a JBoss/Wildfly instance running or being starting?
+   * @return true if an instance of JBoss/Wildfly is either running or being starting,
+   * false otherwise.
+   */
+  boolean isStartingOrRunning() {
+    String status = status()
+    return status == 'starting' || status == 'running'
+  }
+
+  /**
+   * Is a JBoss/Wildfly instance stopped?
+   * @return true if an instance of JBoss/Wildfly is stopped, false otherwise.
+   */
+  boolean isStopped() {
+    return status() == 'stopped'
+  }
+
+  /**
+   * Waits for the JBoss/Wildfly is running. Be caution, this method can never returns if it is
+   * invoked while no JBoss/Wildfly instance is started.
+   */
+  void waitUntilRunning() {
+    logger.formatInfo(' %s', '.')
+    while(!isRunning()) {
+      Thread.sleep(1000)
+      logger.formatInfo('%s', '.')
+    }
+  }
+
+  /**
+   * Gets the status of this JBoss/Wildfly instance: running, starting, stopped, ...
+   * @return the status of the JBoss/Wildfly instance wrapped by this object as a String value.
+   */
+  String status() {
+    StringBuilder output = new StringBuilder()
     def proc = """${cli} --connect --command=:read-attribute(name=server-state)""".execute()
-    proc.waitFor()
-    return proc.exitValue() == 0
+    proc.waitForProcessOutput(output, output)
+    String status = 'stopped'
+    if (proc.exitValue() == 0) {
+      Matcher matcher = output.toString() =~ /"result" => "(\w+)"/
+      matcher.each { token ->
+        status = token[1]
+      }
+    }
+    return status
   }
 
   /**
@@ -231,9 +287,10 @@ class JBossServer {
     if (!isRunning()) {
       start()
     }
-    def proc = """${cli} --connect /deployment=${artifact}:read-attribute(name=enabled)""".execute()
-    proc.waitFor()
-    return proc.exitValue() == 0 && proc.text.contains('"result" => true')
+    StringBuilder output = new StringBuilder()
+    def proc = """${cli} --connect --command=:read-children-names(child-type=deployment)""".execute()
+    proc.waitForProcessOutput(output, output)
+    return output.contains('"outcome" => "success"') && output.contains(artifact)
   }
 
   /**
@@ -260,28 +317,27 @@ class JBossServer {
    * <pre><code>#check: /subsystem=datasources/data-source=Silverpeas</code></pre>
    * <p>specified to check the datasource Silverpeas already exists in JBoss/Wildfly.</p>
    * @param commandsFile the commands file to eat.
-   * @param output the file into which outputs of the command file processing will be traced. If null,
-   * the output of the processing will output to the standard output.
+   * @throws Exception if an error occurs while processing the specified commands file.
    */
-  void processCommandFile(File commandsFile, File output) {
+  void processCommandFile(File commandsFile) throws Exception {
     assertJBossIsRunning()
     try {
       logger.info "${commandsFile.name} processing..."
 
-      if (isAlreadyProcessed(commandsFile)) {
-        logger.info "${commandsFile.name} processing: [ALREADY DONE]"
+      if (shouldBeProcessed(commandsFile)) {
+        logger.info "${commandsFile.name} processing: [DONE]"
       } else {
-        ProcessBuilder command = new ProcessBuilder(cli, '--connect', "--file=${commandsFile.path}")
-            .redirectErrorStream(true)
-        if (output != null) {
-          command.redirectOutput(output)
-        } else {
-          command.inheritIO()
-          logger.info command.redirectOutput()
-        }
-        def proc = command.start()
+        def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
         proc.waitFor()
         assertCommandSucceeds(proc)
+        if (status() == 'starting') {
+          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
+          // case of a reload, wait for the instance is running
+          while(!isRunning()) {
+            sleep(1000)
+          }
+          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
+        }
         logger.info "${commandsFile.name} processing: [OK]"
       }
     } catch (InvalidObjectException e) {
@@ -289,23 +345,43 @@ class JBossServer {
       logger.warn "Invalid resource. ${e.message}"
     } catch (AssertionError | Exception e) {
       logger.info "${commandsFile.name} processing: [FAILURE]"
-      logger.error e
+      throw e
     }
   }
 
-  private boolean isAlreadyProcessed(File commandsFile) {
+  private boolean shouldBeProcessed(File commandsFile) {
     boolean processed = false
     List<String> lines = commandsFile.readLines()
     for (int i = 0; i < lines.size() && !processed; i++) {
-      Matcher matcher = lines.get(i)  =~ /\s*#check:\s+(.+)/
+      // the commands file should be processed if and only if some given properties are set
+      Matcher matcher = lines.get(i) =~ /\s*#isDefined:\s+(.+)/
+      boolean matched = false
       matcher.each { token ->
+        matched = true
+        processed = true
+        token[1].split('( )+').each { property ->
+          if (!SilverpeasSetupService.currentSettings[property]) {
+            processed = false
+          }
+        }
+      }
+      if (matched && !processed) {
+        break
+      }
+
+      // the commands file should be processed if and only if the resource referred by the file
+      // isn't already defined in JBoss/Wildfly
+      matcher = lines.get(i)  =~ /\s*#check:\s+(.+)/
+      matcher.each { token ->
+        StringBuilder output = new StringBuilder()
         def proc = """${cli} --connect --command="${token[1]}:read-resource" """.execute()
-        proc.waitFor()
-        if (proc.exitValue() == 0 && proc.in.text.contains('"outcome" => "success"')) {
+        proc.waitForProcessOutput(output, output)
+        if (proc.exitValue() == 0 && output.contains('"outcome" => "success"')) {
           processed = true
         }
       }
     }
     return processed
   }
+
 }

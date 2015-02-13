@@ -19,7 +19,6 @@ class Logger {
   private static def file = System.out
   private static LogLevel defaultLevel = LogLevel.INFO
   private LogLevel level = defaultLevel
-  private static Logger currentLogger
   private String namespace
 
   /**
@@ -62,80 +61,126 @@ class Logger {
   }
 
   /**
-   * Writes out the specified message as an INFORMATION level.
+   * Writes out in a new line the specified message as an INFORMATION level.
    * @param msg the message to output.
    * @return itself.
    */
   Logger info(String msg) {
+    return formatInfo("\n${msgHeading()} %s", msg)
+  }
+
+  /**
+   * Writes out as an INFORMATION level a raw message in the specified format and with the given
+   * arguments.
+   * @param format the format of the message to output.
+   * @param args the different arguments to put in the message format.
+   * @return itself.
+   */
+  Logger formatInfo(String format, Object... args) {
     if (this.level <= LogLevel.INFO) {
-      file << "[${namespace}] ${msg}\n"
+      formatMsg(format, args)
     }
     return this
   }
 
   /**
-   * Writes out the specified message as an DEBUG level.
+   * Writes out in a new line the specified message as an DEBUG level.
    * @param msg the message to output.
    * @return itself.
    */
   Logger debug(String msg) {
+    return formatDebug("\n${msgHeading()} %s", msg)
+  }
+
+  /**
+   * Writes out as a DEBUG level a raw message in the specified format and with the given arguments.
+   * @param format the format of the message to output.
+   * @param args the different arguments to put in the message format.
+   * @return itself.
+   */
+  Logger formatDebug(String format, Object... args) {
     if (this.level <= LogLevel.DEBUG) {
-      file << "[${namespace}] ${msg}\n"
+      formatMsg(format, args)
     }
     return this
   }
 
   /**
-   * Writes out the specified message as an WARNING level.
+   * Writes out in a new line the specified message as a WARNING level.
    * @param msg the message to output.
    * @return itself.
    */
   Logger warn(String msg) {
+    return formatWarn("\n${msgHeading()} %s", msg)
+  }
+
+  /**
+   * Writes out as a WARNING level a raw message in the specified format and with the given
+   * arguments.
+   * @param format the format of the message to output.
+   * @param args the different arguments to put in the message format.
+   * @return itself.
+   */
+  Logger formatWarn(String format, Object... args) {
     if (this.level <= LogLevel.WARN) {
-      file << "[${namespace}] ${msg}\n"
+      formatMsg(format, args)
     }
     return this
   }
 
   /**
-   * Writes out the specified message as an ERROR level.
+   * Writes out in a new line the specified message as an ERROR level.
    * @param msg the message to output.
    * @return itself.
    */
   Logger error(String msg) {
-    if (this.level <= LogLevel.ERROR) {
-      file << "[${namespace}] ${msg}\n"
-    }
-    return this
+    return formatError("\n${msgHeading()} %s", msg)
   }
 
   /**
-   * Writes out the specified cause as an ERROR level.
+   * Writes out in new lines the specified cause as an ERROR level.
    * @param cause the exception as the cause of the error.
    * @return itself.
    */
   Logger error(Throwable cause) {
-    if (this.level <= LogLevel.ERROR) {
-      StringWriter stackTrace = new StringWriter()
-      cause.printStackTrace(new PrintWriter(stackTrace))
-      file << "[${namespace}] ${cause.getMessage()}\n${stackTrace}\n"
-    }
-    return this
+    StringWriter stackTrace = new StringWriter()
+    cause.printStackTrace(new PrintWriter(stackTrace))
+    return formatError("\n${msgHeading()} %s\n%s", cause.getMessage(), stackTrace.toString())
   }
 
   /**
-   * Writes out the specified message as an ERROR level.
+   * Writes out in new lines the specified message as an ERROR level.
    * @param msg the message to output.
    * @param cause the exception as the cause of the error.
    * @return itself.
    */
   Logger error(String msg, Throwable cause) {
+    StringWriter stackTrace = new StringWriter()
+    cause.printStackTrace(new PrintWriter(stackTrace))
+    return formatError("\n${msgHeading()} %s\n%s\n%s", msg, cause.getMessage(), stackTrace.toString())
+  }
+
+  /**
+   * WWrites out as an ERROR level a raw message in the specified format and with the given
+   * arguments.
+   * @param format the format of the message to output.
+   * @param args the different arguments to put in the message format.
+   * @return itself.
+   */
+  Logger formatError(String format, Object... args) {
     if (this.level <= LogLevel.ERROR) {
-      StringWriter stackTrace = new StringWriter()
-      cause.printStackTrace(new PrintWriter(stackTrace))
-      file << "[${namespace}] ${msq}\n${cause.getMessage()}\n${stackTrace}\n"
+      formatMsg(format, args)
     }
     return this
+  }
+
+  private String msgHeading() {
+    return "[${namespace}]"
+  }
+
+  private void formatMsg(String format, Object... args) {
+    Formatter formatter = new Formatter()
+    file << formatter.format(format, args).toString()
   }
 
   private Logger(String namespace) {

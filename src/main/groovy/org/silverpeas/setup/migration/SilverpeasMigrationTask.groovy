@@ -58,16 +58,13 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   @TaskAction
   def performMigration() {
-    StringBuilder errors = new StringBuilder()
     loadMigrationModules().each { module ->
       try {
         module.migrate()
       } catch(Exception ex) {
-        errors.append(ex.message).append('\n')
+        log.error(ex)
+        throw new TaskExecutionException(this, ex)
       }
-    }
-    if (errors.length() > 0) {
-      throw new TaskExecutionException(this, new RuntimeException(errors.toString()))
     }
   }
 

@@ -27,6 +27,7 @@ import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -91,15 +92,14 @@ class MigrationModule {
    * @throws TaskExecutionException if an error occurs while migrating the datasource for this
    * module.
    */
-  void migrate() throws TaskExecutionException {
+  void migrate() throws Exception {
     String status = '[OK]'
     try {
       logger.info "Migration(s) of module ${module}"
       migrations*.migrate(settings)
     } catch (Exception ex) {
-      throw new TaskExecutionException(
-          "An error occurred during a migration of ${module}: stop it. Cause: ${ex.message}")
       status = '[FAILURE]'
+      throw ex
     } finally {
       logger.info "Migration(s) of module ${module}: ${status}"
     }
@@ -118,7 +118,7 @@ class MigrationModule {
     String toVersion = migrationDescription.current.@version.text()
     if (actualVersion) {
       for (int version = (actualVersion as int); version < (toVersion as int); version++) {
-        List<MigrationScript> scripts =
+        List<Script> scripts =
             migrationDescription.upgrade.find {it.@fromVersion == "00${version}"}?.script.collect {
               MigrationScriptBuilder
                   .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), "up00${version}"))
@@ -131,10 +131,11 @@ class MigrationModule {
             .fromVersion("00${version}")
             .toVersion("00${version + 1}")
             .scripts(scripts)
+            .logger(logger)
             .build()
       }
     } else {
-      List<MigrationScript> scripts = migrationDescription.current.script.collect {
+      List<Script> scripts = migrationDescription.current.script.collect {
         MigrationScriptBuilder
             .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), toVersion))
             .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
@@ -145,6 +146,7 @@ class MigrationModule {
           .module(module)
           .toVersion(toVersion)
           .scripts(scripts)
+          .logger(logger)
           .build()
     }
     return this

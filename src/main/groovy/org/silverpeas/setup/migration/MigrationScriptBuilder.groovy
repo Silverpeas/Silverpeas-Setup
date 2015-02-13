@@ -24,6 +24,7 @@
 package org.silverpeas.setup.migration
 
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
 
 /**
  * A builder of a script instance according to its type.
@@ -76,14 +77,14 @@ class MigrationScriptBuilder {
    * Builds a script object.
    * @return an object representing a script in the migration process.
    */
-  MigrationScript build() {
-    MigrationScript script
+  Script build() {
+    Script script
     switch (scriptType) {
       case ScriptType.sql:
         script = new SQLScript(scriptPath)
         break
       case ScriptType.groovy:
-        script = new GroovyScript(scriptPath).useLogger(logger)
+        script = new MigrationGroovyScript(scriptPath).useLogger(logger)
         break
       default:
         throw new IllegalArgumentException("Unknow script type: ${scriptType}")

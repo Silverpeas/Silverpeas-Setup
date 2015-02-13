@@ -23,6 +23,7 @@
  */
 package org.silverpeas.setup
 
+import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.ProjectState

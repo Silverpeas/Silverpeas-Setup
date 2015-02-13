@@ -24,6 +24,7 @@
 package org.silverpeas.setup.migration
 
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
 
 import java.sql.SQLException
 
@@ -41,7 +42,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
   void testMigrationForAFreshInstallation() {
     assert versionOfModule('toto') == null
 
-    MigrationScript script = MigrationScriptBuilder
+    Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/002/create_table.sql")
         .ofType(sql)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
@@ -50,6 +51,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .module('toto')
         .toVersion('002')
         .scripts([script])
+        .logger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -60,7 +62,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     prepareInitialData('toto', '002')
     assert versionOfModule('toto') == '002'
 
-    MigrationScript script = MigrationScriptBuilder
+    Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up002/update.sql")
         .ofType(sql)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
@@ -70,6 +72,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('002')
         .toVersion('003')
         .scripts([script])
+        .logger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -81,7 +84,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule('toto') == '003'
     assert numberOfItemsIn('Person') == 0
 
-    MigrationScript script = MigrationScriptBuilder
+    Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
@@ -91,6 +94,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([script])
+        .logger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -103,12 +107,12 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule('toto') == '003'
     assert numberOfItemsIn('Person') == 0
 
-    MigrationScript sqlScript = MigrationScriptBuilder
+    Script sqlScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up003/create_table.sql")
         .ofType(sql)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
-    MigrationScript groovyScript = MigrationScriptBuilder
+    Script groovyScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
@@ -118,6 +122,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([sqlScript, groovyScript])
+        .logger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -128,7 +133,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
   void testAnInstallationFailure() {
     assert versionOfModule('foo') == null
 
-    MigrationScript script = MigrationScriptBuilder
+    Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db//h2/foo/002/create_table.sql")
         .ofType(sql)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
@@ -139,6 +144,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .module('foo')
           .toVersion('002')
           .scripts([script])
+          .logger(Logger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
     }
@@ -150,7 +156,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     prepareInitialData('foo', '003')
     assert versionOfModule('foo') == '003'
 
-    MigrationScript script = MigrationScriptBuilder
+    Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/foo/up002/update.groovy")
         .ofType(groovy)
         .withLogger(Logger.getLogger(getClass().getSimpleName()))
@@ -162,6 +168,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .fromVersion('003')
           .toVersion('004')
           .scripts([script])
+          .logger(Logger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
     }

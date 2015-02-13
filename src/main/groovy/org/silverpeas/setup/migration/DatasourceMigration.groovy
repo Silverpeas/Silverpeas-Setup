@@ -25,7 +25,9 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import groovy.transform.builder.Builder
+import jdk.jfr.events.ExceptionThrownEvent
 import org.silverpeas.setup.api.DataSourceProvider
+import org.silverpeas.setup.api.Logger
 
 import java.sql.SQLException
 
@@ -47,6 +49,7 @@ class DatasourceMigration {
   String module
   String fromVersion
   String toVersion
+  Logger logger
   def scripts = []
 
   private DatasourceMigration() {
@@ -61,7 +64,7 @@ class DatasourceMigration {
    * process).
    * @param settings the settings applied in the migration of Silverpeas.
    */
-  def migrate(settings) {
+  def migrate(settings) throws Exception {
     Sql sql = new Sql(DataSourceProvider.dataSource)
     def settingsToApply = (settings ? settings:[:])
     if (isAnInstallation()) {
@@ -81,12 +84,12 @@ class DatasourceMigration {
     return fromVersion != null && (fromVersion as int) < (toVersion as int)
   }
 
-  private void performInstallation(Sql sql, def settings) {
-    println "  Installation of the module ${module} to version ${toVersion}"
+  private void performInstallation(Sql sql, def settings) throws Exception {
+    logger.info "  Installation of the module ${module} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {
-        scripts*.run(sql)
+        scripts*.run([sql: sql, settings: settings])
         int count = sql.executeUpdate(MODULE_INSTALL, [module: this.module, version: this.toVersion])
         if (count != 1) {
           throw new SQLException("Setting up of module to version ${toVersion} not done!")
@@ -96,16 +99,16 @@ class DatasourceMigration {
       status = 'FAILURE'
       throw ex
     } finally {
-      println "  Installation of the module ${module} to version ${toVersion}: [${status}]"
+      logger.info "  Installation of the module ${module} to version ${toVersion}: [${status}]"
     }
   }
 
-  private void performUpgrade(Sql sql, def settings) {
-    println "  Upgrade of the module ${module} to version ${toVersion}"
+  private void performUpgrade(Sql sql, def settings) throws Exception {
+    logger.info "  Upgrade of the module ${module} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {
-        scripts*.run(sql)
+        scripts*.run([sql: sql, settings: settings])
         int count = sql.executeUpdate(VERSION_UPDATE, [module: this.module, version: this.toVersion])
         if (count != 1) {
           throw new SQLException("Upgrade of module to version ${toVersion} not done!")
@@ -115,7 +118,7 @@ class DatasourceMigration {
       status = 'FAILURE'
       throw ex
     } finally {
-      println "  Upgrade of the module ${module} to version ${toVersion}: [${status}]"
+      logger.info "  Upgrade of the module ${module} to version ${toVersion}: [${status}]"
     }
   }
 }

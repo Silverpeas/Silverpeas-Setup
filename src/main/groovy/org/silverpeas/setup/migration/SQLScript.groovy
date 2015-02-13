@@ -24,6 +24,8 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
+import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
 
 import java.sql.SQLException
 
@@ -33,27 +35,36 @@ import static org.silverpeas.setup.api.SilverpeasSetupService.replaceVariables
  * A SQL script.
  * @author mmoquillon
  */
-class SQLScript implements MigrationScript {
+class SQLScript implements Script {
 
   private List<String> statements = []
 
-  SQLScript(String ... scriptPath) {
-    for (String sqlScript: scriptPath) {
-      String script = new File(sqlScript).getText('UTF-8')
+  SQLScript(String scriptPath) {
+    String script = new File(scriptPath).getText('UTF-8')
       script.split(';').each { String aStatement ->
-        statements << replaceVariables(aStatement.trim())
+        if (!aStatement.trim().isEmpty()) {
+          statements << replaceVariables(aStatement.trim())
+        }
       }
-    }
-
   }
 
   /**
+   * Uses the specified logger to trace this script execution.
+   * @param logger a logger.
+   * @return itself.
+   */
+  @Override
+  SQLScript useLogger(final Logger logger) {
+    return this
+  }
+/**
    * Runs this script.
-   * @param the Sql instance to use to perform operations against the database.
+ * @param args the Sql instance to use to perform operations against the database.
    * @throws SQLException if an error occurs during the execution of this script.
    */
   @Override
-  void run(Sql sql) throws SQLException {
+  void run(def args) throws SQLException {
+    Sql sql = args.sql
     sql.withBatch { batch ->
       statements.each {
         batch.addBatch(it)

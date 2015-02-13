@@ -23,21 +23,32 @@
  */
 package org.silverpeas.setup.migration
 
-import groovy.sql.Sql
+import org.silverpeas.setup.api.GroovyScript
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
 
 /**
- * A script to migrate the structure of one or several data sources.
+ * A programming script written in Groovy.
  * @author mmoquillon
  */
-interface MigrationScript {
+class MigrationGroovyScript extends GroovyScript {
+
+  MigrationGroovyScript(String scriptPath) {
+    super(scriptPath)
+  }
 
   /**
    * Runs this script.
    * @param the Sql instance to use to perform operations against the database.
-   * @throws Exception if an error occurs during the execution of this script.
+   * @throws SQLException if an error occurs during the execution of this script.
    */
-  void run(Sql sql) throws SQLException
-
+  @Override
+  void run(def args) throws SQLException {
+    try {
+      super.run([sql: args.sql, log: log, settings: args.settings, service: SilverpeasSetupService])
+    } catch(Exception ex) {
+      throw new SQLException(ex)
+    }
+  }
 }

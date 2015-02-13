@@ -27,6 +27,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.util.regex.Matcher
 
@@ -36,7 +38,7 @@ import java.util.regex.Matcher
  */
 class JBossConfigurationTask extends DefaultTask {
   def settings
-  def jboss
+  JBossServer jboss
   Logger log = Logger.getLogger(this.name)
 
   JBossConfigurationTask() {
@@ -47,21 +49,23 @@ class JBossConfigurationTask extends DefaultTask {
 
   @TaskAction
   def configureJBoss() {
-    jboss = new JBossServer("${project.silversetup.jbossHome}")
-        .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
-        .useLogger(log)
-    setUpJVMOptions()
-    installAdditionalModules()
-    if (!jboss.isRunning()) {
-      log.info 'JBoss not started, so start it'
-      jboss.start()
+    try {
+      jboss = new JBossServer("${project.silversetup.jbossHome}")
+          .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
+          .useLogger(log)
+      setUpJVMOptions()
+      installAdditionalModules()
+      if (!jboss.isRunning()) {
+        log.info 'JBoss not started, so start it'
+        jboss.start()
+      }
+
+      setUpJDBCDriver()
+      processConfigurationFiles()
+    } catch(Exception ex) {
+      log.error 'Error while configuring JBoss/Wildfly', ex
+      throw new TaskExecutionException(this, ex)
     }
-
-    String jbossConfFilesDir = "${project.buildDir}/cli"
-    setUpJDBCDriver()
-    generateConfigurationFilesInto(jbossConfFilesDir)
-    processConfigurationFiles(jbossConfFilesDir)
-
   }
 
   private def setUpJVMOptions() {
@@ -75,11 +79,29 @@ class JBossConfigurationTask extends DefaultTask {
         return name.endsWith('.conf') || name.endsWith('.conf.bat')
       }
     }).each { conf ->
+      String jvmOpts; def regexp
+      if (conf.name.endsWith('.bat')) {
+        jvmOpts = "set \"JAVA_OPTS=-Xmx${settings.JVM_RAM_MAX} ${settings.JVM_OPTS}"
+        regexp = /\s*set\s+"JAVA_OPTS=-Xm.+/
+      } else {
+        jvmOpts = "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}"
+        regexp = /\s*JAVA_OPTS="-Xm.+/
+      }
+      if (settings.PROXY_HOST && settings.PROXY_PORT) {
+        jvmOpts += " -Dhttp.proxyHost=${settings.PROXY_HOST} -Dhttp.proxyPort=${settings.PROXY_PORT}"
+        if (settings.NONPROXY_HOST) {
+          jvmOpts += " -Dhttp.nonProxyHosts=${settings.NONPROXY_HOST}"
+        }
+        if (settings.PROXY_USER && settings.PROXY_PASSWORD) {
+          jvmOpts += " -Dhttp.proxyUser=${settings.PROXY_USER} -Dhttp.proxyPassword=${settings.PROXY_PASSWORD}"
+        }
+      }
+      jvmOpts += '"'
       conf.withReader {
         it.transformLine(new FileWriter("${conf.path}.tmp")) { line ->
-          Matcher matcher = line =~ /\s*JAVA_OPTS="-Xm.+/
+          Matcher matcher = line =~ regexp
           if (matcher.matches()) {
-            line = "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}\""
+            line = jvmOpts
           }
           line
         }
@@ -101,29 +123,7 @@ class JBossConfigurationTask extends DefaultTask {
     }
   }
 
-  private def generateConfigurationFilesInto(String jbossConfDir) {
-    new File("${project.silversetup.configurationHome}/jboss").listFiles(new FileFilter() {
-      @Override
-      boolean accept(final File aFile) {
-        return aFile.isFile()
-      }
-    }).each { cli ->
-      String[] resource = cli.name.split('\\.')
-      ResourceType type = ResourceType.valueOf(resource[1])
-      log.info "Prepare configuration of ${type} ${resource[0]} for Silverpeas"
-      project.copy {
-        from(cli) {
-          filter({ line ->
-            return VariableReplacement.parseExpression(line, settings)
-
-          })
-        }
-        into jbossConfDir
-      }
-    }
-  }
-
-  private def setUpJDBCDriver() {
+  private def setUpJDBCDriver() throws Exception {
     log.info "Install database driver for ${settings.DB_SERVERTYPE}"
     new File(project.silversetup.driversDir).listFiles().each { driver ->
       if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
@@ -139,38 +139,34 @@ class JBossConfigurationTask extends DefaultTask {
         jboss.deploy("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
       } catch (Exception ex) {
         log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
-        throw new TaskExecutionException(this, ex.message)
+        throw ex
       }
     }
   }
 
-  private void processConfigurationFiles(jbossConfFilesDir) {
-    new File(jbossConfFilesDir).listFiles().each { cli ->
-      String[] resource = cli.name.split('\\.')
-      ResourceType type = ResourceType.valueOf(resource[1])
-      log.info " -> Configure ${type} ${resource[0]} for Silverpeas"
-      jboss.processCommandFile(new File("${jbossConfFilesDir}/${cli.name}"),
-          new File("${project.silversetup.logging.logDir}/jboss-cli-output.log"))
-      logger.debug(new File("${project.silversetup.logging.logDir}/jboss-cli-output.log").text)
-      log.info('\n')
+  private void processConfigurationFiles() throws Exception {
+    if (jboss.isStarting()) {
+      jboss.waitUntilRunning()
     }
-  }
-
-  private enum ResourceType {
-    ra('resource adapter'),
-    ds('database'),
-    dl('deployment location'),
-    sys('subsystem')
-
-    private String type;
-
-    protected ResourceType(String type) {
-      this.type = type;
-    }
-
-    @Override
-    String toString() {
-      return type;
+    File configurationDir = new File("${project.silversetup.configurationHome}/jboss")
+    configurationDir.listFiles(new FileFilter() {
+      @Override
+      boolean accept(final File child) {
+        return child.isFile()
+      }
+    }).each { confFile ->
+      String[] resource = confFile.name.split('\\.')
+      JBossResourceType type = JBossResourceType.valueOf(resource[1])
+      log.info "Configure ${type} ${resource[0]} for Silverpeas"
+      try {
+        Script script = ConfigurationScriptBuilder.fromScript(confFile.path)
+            .withLogger(log)
+            .build()
+        script.run([jboss: jboss, settings: settings, log: log, service: SilverpeasSetupService])
+      } catch(Exception ex) {
+        log.error("Error while running script ${confFile.name}", ex)
+        throw ex
+      }
     }
   }
 }
