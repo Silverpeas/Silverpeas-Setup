@@ -53,13 +53,11 @@ class JBossConfigurationTask extends DefaultTask {
       jboss = new JBossServer("${project.silversetup.jbossHome}")
           .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
           .useLogger(log)
+      if (jboss.isStartingOrRunning()) {
+        jboss.stop()
+      }
       setUpJVMOptions()
       installAdditionalModules()
-      if (!jboss.isRunning()) {
-        log.info 'JBoss not started, so start it'
-        jboss.start()
-      }
-
       setUpJDBCDriver()
       processConfigurationFiles()
     } catch(Exception ex) {
@@ -70,9 +68,6 @@ class JBossConfigurationTask extends DefaultTask {
 
   private def setUpJVMOptions() {
     log.info 'JVM options setting'
-    if (jboss.isRunning()) {
-      jboss.stop()
-    }
     new File("${project.silversetup.jbossHome}/bin").listFiles(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
@@ -145,9 +140,6 @@ class JBossConfigurationTask extends DefaultTask {
   }
 
   private void processConfigurationFiles() throws Exception {
-    if (jboss.isStarting()) {
-      jboss.waitUntilRunning()
-    }
     File configurationDir = new File("${project.silversetup.configurationHome}/jboss")
     configurationDir.listFiles(new FileFilter() {
       @Override

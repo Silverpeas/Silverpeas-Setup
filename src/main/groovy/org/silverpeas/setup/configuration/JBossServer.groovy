@@ -82,6 +82,43 @@ class JBossServer {
   }
 
   /**
+   * Waits for the JBoss/Wildfly is running. Be caution, this method can never returns if it is
+   * invoked while no JBoss/Wildfly instance is started.
+   */
+  private void waitUntilRunning() {
+    logger.formatInfo(' %s', '.')
+    while(!isRunning()) {
+      Thread.sleep(1000)
+      logger.formatInfo('%s', '.')
+    }
+  }
+
+  /**
+   * Ensures the JBoss/Wildfly instance is running before performing the specified action.
+   * @param action the action to run against a running JBoss/Wildfly instance.
+   * @return the result value of the closure if any.
+   */
+  private def doWhenRunning(Closure action) {
+    switch (status()) {
+      case 'stopped':
+        logger.info 'JBoss not started, so start it'
+        start()
+        break
+      case 'starting':
+        logger.info 'JBoss is starting, so wait for it is running'
+        waitUntilRunning()
+        break
+      case 'reload-required':
+        logger.info 'JBoss asks for reload, so reloads it'
+        def proc = """${cli} --connect --command=:reload""".execute()
+        proc.waitFor()
+        waitUntilRunning()
+        break
+    }
+    action.call()
+  }
+
+  /**
    * Asks for the redirection of JBoss/Wildfly outputs to the specified log file.
    * @param log the file into which the JBoss/Wildfly will be redirected.
    * @return itself.
@@ -195,18 +232,6 @@ class JBossServer {
   }
 
   /**
-   * Waits for the JBoss/Wildfly is running. Be caution, this method can never returns if it is
-   * invoked while no JBoss/Wildfly instance is started.
-   */
-  void waitUntilRunning() {
-    logger.formatInfo(' %s', '.')
-    while(!isRunning()) {
-      Thread.sleep(1000)
-      logger.formatInfo('%s', '.')
-    }
-  }
-
-  /**
    * Gets the status of this JBoss/Wildfly instance: running, starting, stopped, ...
    * @return the status of the JBoss/Wildfly instance wrapped by this object as a String value.
    */
@@ -232,7 +257,7 @@ class JBossServer {
   boolean isAlreadyConfigured() {
     String config = new File("${jbossHome}/standalone/configuration/standalone-full.xml").text
     return config.contains('java:/datasources/DocumentStore') &&
-        config.contains('java:/datasources/Silverpeas')
+        config.contains('java:/datasources/silverpeas')
   }
 
   /**
@@ -242,18 +267,17 @@ class JBossServer {
    * @throws RuntimeException if the deployment of the artifact failed.
    */
   void deploy(String artifactsPath) throws RuntimeException {
-    if (!isRunning()) {
-      start()
-    }
-    String artifact = Paths.get(artifactsPath).fileName
-    if (!isDeployed(artifact)) {
-      def proc = """${cli} --connect --command="deploy ${artifactsPath}" """.execute()
-      proc.waitFor()
-      if (proc.exitValue() != 0) {
-        throw new RuntimeException(proc.in.text)
+    doWhenRunning {
+      String artifact = Paths.get(artifactsPath).fileName
+      if (!isDeployed(artifact)) {
+        def proc = """${cli} --connect --command="deploy ${artifactsPath}" """.execute()
+        proc.waitFor()
+        if (proc.exitValue() != 0 || !isDeployed(artifact)) {
+          throw new RuntimeException(proc.in.text)
+        }
+      } else {
+        logger.info "${artifact} is already deployed in JBoss"
       }
-    } else {
-      logger.info "${artifact} is already deployed in JBoss"
     }
   }
 
@@ -264,17 +288,16 @@ class JBossServer {
    * @throws RuntimeException if the deployment of the artifact failed.
    */
   void undeploy(String artifact) throws RuntimeException {
-    if (!isRunning()) {
-      start()
-    }
-    if (isDeployed(artifact)) {
-      def proc = """${cli} --connect --command="undeploy ${artifact}" """.execute()
-      proc.waitFor()
-      if (proc.exitValue() != 0) {
-        throw new RuntimeException(proc.in.text)
+    doWhenRunning {
+      if (isDeployed(artifact)) {
+        def proc = """${cli} --connect --command="undeploy ${artifact}" """.execute()
+        proc.waitFor()
+        if (proc.exitValue() != 0 || isDeployed(artifact)) {
+          throw new RuntimeException(proc.in.text)
+        }
+      } else {
+        logger.info "${artifact} isn't deployed in JBoss"
       }
-    } else {
-      logger.info "${artifact} isn't deployed in JBoss"
     }
   }
 
@@ -284,29 +307,31 @@ class JBossServer {
    * @return true if the artifact is deployed, false otherwise.
    */
   boolean isDeployed(String artifact) {
-    if (!isRunning()) {
-      start()
+    return doWhenRunning {
+      StringBuilder output = new StringBuilder()
+      def proc = """${
+        cli
+      } --connect --command=:read-children-names(child-type=deployment)""".execute()
+      proc.waitForProcessOutput(output, output)
+      return output.contains('"outcome" => "success"') && output.contains(artifact)
     }
-    StringBuilder output = new StringBuilder()
-    def proc = """${cli} --connect --command=:read-children-names(child-type=deployment)""".execute()
-    proc.waitForProcessOutput(output, output)
-    return output.contains('"outcome" => "success"') && output.contains(artifact)
   }
 
   /**
    * Prints out information about the deployment status of artifacts in this JBoss server. It an
    * artifact doesn't appear in the output, then it isn't deployed.
+   * If the server isn't running, then it is started before.
    */
   void printDeployedArtifacts() {
-    if (!isRunning()) {
-      start()
+    doWhenRunning {
+      def proc = """${cli} --connect --command=deployment-info""".execute()
+      proc.waitFor()
     }
-    def proc = """${cli} --connect --command=deployment-info""".execute()
-    proc.waitFor()
   }
 
   /**
    * Configures JBoss by running the JBoss CLI statements in the specified commands file.
+   * If the server isn't running, then it is started before.
    * <p>
    * If the command file contains the following line:</p>
    * <pre><code>#check: SUBSYSTEM_RESOURCE</code></pre>
@@ -320,32 +345,33 @@ class JBossServer {
    * @throws Exception if an error occurs while processing the specified commands file.
    */
   void processCommandFile(File commandsFile) throws Exception {
-    assertJBossIsRunning()
-    try {
-      logger.info "${commandsFile.name} processing..."
+    doWhenRunning {
+      try {
+        logger.info "${commandsFile.name} processing..."
 
-      if (shouldBeProcessed(commandsFile)) {
-        logger.info "${commandsFile.name} processing: [DONE]"
-      } else {
-        def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
-        proc.waitFor()
-        assertCommandSucceeds(proc)
-        if (status() == 'starting') {
-          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
-          // case of a reload, wait for the instance is running
-          while(!isRunning()) {
-            sleep(1000)
+        if (shouldBeProcessed(commandsFile)) {
+          logger.info "${commandsFile.name} processing: [DONE]"
+        } else {
+          def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
+          proc.waitFor()
+          assertCommandSucceeds(proc)
+          if (status() == 'starting') {
+            logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
+            // case of a reload, wait for the instance is running
+            while (!isRunning()) {
+              sleep(1000)
+            }
+            logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
           }
-          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
+          logger.info "${commandsFile.name} processing: [OK]"
         }
-        logger.info "${commandsFile.name} processing: [OK]"
+      } catch (InvalidObjectException e) {
+        logger.info "${commandsFile.name} processing: [WARNING]"
+        logger.warn "Invalid resource. ${e.message}"
+      } catch (AssertionError | Exception e) {
+        logger.info "${commandsFile.name} processing: [FAILURE]"
+        throw e
       }
-    } catch (InvalidObjectException e) {
-      logger.info "${commandsFile.name} processing: [WARNING]"
-      logger.warn "Invalid resource. ${e.message}"
-    } catch (AssertionError | Exception e) {
-      logger.info "${commandsFile.name} processing: [FAILURE]"
-      throw e
     }
   }
 
