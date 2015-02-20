@@ -138,7 +138,7 @@ class SilverpeasSetupService {
             println "Error: no such variable ${token[2]}"
             throw new StopExecutionException("Error: no such variable ${token[2]}")
           }
-          expression = expression.replace(token[0], currentSettings[token[2]])
+          expression = replaceVariables(expression.replace(token[0], currentSettings[token[2]]))
           break
       }
     }

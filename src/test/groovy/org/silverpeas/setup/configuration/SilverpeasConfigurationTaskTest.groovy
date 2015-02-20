@@ -29,66 +29,123 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
   }
 
   void testSilverpeasConfiguration() {
-    thePropertiesFileAreCorrectlyConfigured()
-    theWorkflowEngineIsCorrectlyConfiguredByGroovyScript()
-  }
-
-  void thePropertiesFileAreCorrectlyConfigured() {
-    Properties autDomainSQLBefore = loadPropertiesFrom('authentication/autDomainSQL.properties')
-    Properties systemSettingsBefore = loadPropertiesFrom('systemSettings.properties')
-    Properties schedulerSettingsBefore = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
+    TestContext context = new TestContext().before()
 
     project.tasks.findByPath('configureSilverpeas').configureSilverpeas()
 
-    Properties autDomainSQLAfter = loadPropertiesFrom('authentication/autDomainSQL.properties')
-    Properties systemSettingsAfter = loadPropertiesFrom('systemSettings.properties')
-    Properties schedulerSettingsAfter = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
+    context.after()
 
-    assert autDomainSQLAfter['fallbackType'] == 'always' &&
-        autDomainSQLAfter['fallbackType'] == autDomainSQLBefore['fallbackType']
-    assert autDomainSQLAfter['autServer0.SQLJDBCUrl'] == 'jdbc:h2:mem:test' &&
-        autDomainSQLAfter['autServer0.SQLJDBCUrl'] != autDomainSQLBefore['autServer0.SQLJDBCUrl']
-    assert autDomainSQLAfter['autServer0.SQLAccessLogin'] == 'sa' &&
-        autDomainSQLAfter['autServer0.SQLAccessLogin'] != autDomainSQLBefore['autServer0.SQLAccessLogin']
-    assert autDomainSQLAfter['autServer0.SQLAccessPasswd'] == '' &&
-        autDomainSQLAfter['autServer0.SQLAccessPasswd'] != autDomainSQLBefore['autServer0.SQLAccessPasswd']
-    assert autDomainSQLAfter['autServer0.SQLDriverClass'] == 'org.h2.Driver' &&
-        autDomainSQLAfter['autServer0.SQLDriverClass'] != autDomainSQLBefore['autServer0.SQLDriverClass']
-
-    assert systemSettingsAfter['http.proxyHost'] == 'tartempion.net' &&
-        systemSettingsAfter['http.proxyHost'] != systemSettingsBefore['http.proxyHost']
-    assert systemSettingsAfter['http.proxyPort'] == '1234' &&
-        systemSettingsAfter['http.proxyPort'] != systemSettingsBefore['http.proxyPort']
-    assert systemSettingsAfter['http.nonProxyHosts'] == '127.0.0.1|localhost' &&
-        systemSettingsAfter['http.nonProxyHosts'] != systemSettingsBefore['http.nonProxyHosts']
-
-    assert schedulerSettingsAfter['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *' &&
-        systemSettingsAfter['timeoutSchedule'] != schedulerSettingsBefore['timeoutSchedule']
+    assertThePropertiesFileAreCorrectlyConfigured(context)
+    assertTheCustomerWorkflowIsCorrectlyConfigured(context)
+    assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(context)
   }
 
-  void theWorkflowEngineIsCorrectlyConfiguredByGroovyScript() {
+  void assertTheCustomerWorkflowIsCorrectlyConfigured(TestContext context) {
+    def before = context.xmlconf.before
+    def after = context.xmlconf.after
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'achats'}
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
+        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'achats'}
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value
 
-    project.tasks.findByPath('configureSilverpeas').configureSilverpeas()
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+        .consequences.consequence.find { it.@value == 'achats'}
+        .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value == 'kmelia42'
 
-    def databaseConf = new XmlSlurper(false, false)
-        .parse(getClass().getResourceAsStream('/resources/instanceManager/database.xml'))
-    databaseConf.@engine == 'h2'
-    databaseConf.database.@engine == 'h2'
-    databaseConf.database.mapping.@href.text() ==
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'achats'}
+          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value !=
+        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'achats'}
+          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value
+
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'achats'}
+          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
+
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'MO'}
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
+        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'MO'}
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value
+
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'MO'}
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value == 'kmelia42'
+
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'MO'}
+          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value !=
+        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+        .consequences.consequence.find { it.@value == 'MO'}
+        .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value
+
+    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.find { it.@value == 'MO'}
+          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
+
+    assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
+        before.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}.consequences.consequence
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value
+
+    assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}.consequences.consequence
+          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value == 'kmelia42'
+
+    assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}.consequences.consequence
+          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value !=
+        before.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value
+
+    assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}
+          .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
+  }
+
+  void assertThePropertiesFileAreCorrectlyConfigured(TestContext context) {
+    def before = context.settings.before
+    def after = context.settings.after
+
+    assert after.autDomainSQL['fallbackType'] == 'always' &&
+        after.autDomainSQL['fallbackType'] == before.autDomainSQL['fallbackType']
+    assert after.autDomainSQL['autServer0.SQLJDBCUrl'] == 'jdbc:h2:mem:test' &&
+        after.autDomainSQL['autServer0.SQLJDBCUrl'] != before.autDomainSQL['autServer0.SQLJDBCUrl']
+    assert after.autDomainSQL['autServer0.SQLAccessLogin'] == 'sa' &&
+        after.autDomainSQL['autServer0.SQLAccessLogin'] != before.autDomainSQL['autServer0.SQLAccessLogin']
+    assert after.autDomainSQL['autServer0.SQLAccessPasswd'] == '' &&
+        after.autDomainSQL['autServer0.SQLAccessPasswd'] != before.autDomainSQL['autServer0.SQLAccessPasswd']
+    assert after.autDomainSQL['autServer0.SQLDriverClass'] == 'org.h2.Driver' &&
+        after.autDomainSQL['autServer0.SQLDriverClass'] != before.autDomainSQL['autServer0.SQLDriverClass']
+
+    assert after.system['http.proxyHost'] == 'tartempion.net' &&
+        after.system['http.proxyHost'] != before.system['http.proxyHost']
+    assert after.system['http.proxyPort'] == '1234' &&
+        after.system['http.proxyPort'] != before.system['http.proxyPort']
+    assert after.system['http.nonProxyHosts'] == '127.0.0.1|localhost' &&
+        after.system['http.nonProxyHosts'] != before.system['http.nonProxyHosts']
+
+    assert after.scheduler['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *' &&
+        after.scheduler['timeoutSchedule'] != before.scheduler['timeoutSchedule']
+  }
+
+  void assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(TestContext context) {
+    // the JDO Castor doesn't support H2, so the engine is set up by default to postgresql
+    def before = context.xmlconf.before
+    def after = context.xmlconf.after
+
+    assert after.workflowDatabaseConf.@engine == 'postgresql' &&
+        after.workflowDatabaseConf.@engine.text() != before.workflowDatabaseConf.@engine.text()
+    assert after.workflowDatabaseConf.database.@engine == 'postgresql' &&
+        after.workflowDatabaseConf.database.@engine.text() != before.workflowDatabaseConf.database.@engine.text()
+    assert after.workflowDatabaseConf.database.mapping.@href.text() ==
         "file:///${System.getProperty('SILVERPEAS_HOME')}/resources/instanceManager/mapping.xml"
 
-    def fastDatabaseConf = new XmlSlurper(false, false)
-        .parse(getClass().getResourceAsStream('/resources/instanceManager/fast_database.xml'))
-    fastDatabaseConf.@engine == 'h2'
-    fastDatabaseConf.database.@engine == 'h2'
-    fastDatabaseConf.database.mapping.@href.text() ==
+    assert after.workflowFastDatabaseConf.@engine == 'postgresql' &&
+        after.workflowFastDatabaseConf.@engine.text() != before.workflowFastDatabaseConf.@engine.text()
+    assert after.workflowFastDatabaseConf.mapping.@href.text() ==
         "file:///${System.getProperty('SILVERPEAS_HOME')}/resources/instanceManager/fast_mapping.xml"
-  }
-
-  private Properties loadPropertiesFrom(String relativePath) {
-    Properties properties = new Properties()
-    properties.load(getClass().getResourceAsStream("/properties/org/silverpeas/${relativePath}"))
-    return properties
   }
 
 }
