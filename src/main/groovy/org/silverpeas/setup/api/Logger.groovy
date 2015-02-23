@@ -2,6 +2,8 @@ package org.silverpeas.setup.api
 
 import org.gradle.api.logging.LogLevel
 
+import java.sql.SQLException
+
 /**
  * The logger to be used in the plugin execution context to trace processing information into a
  * log file.
@@ -145,7 +147,14 @@ class Logger {
   Logger error(Throwable cause) {
     StringWriter stackTrace = new StringWriter()
     cause.printStackTrace(new PrintWriter(stackTrace))
-    return formatError("\n${msgHeading()} %s\n%s", cause.getMessage(), stackTrace.toString())
+    formatError("\n${msgHeading()} %s\n%s", cause.getMessage(), stackTrace.toString())
+    if (cause instanceof SQLException) {
+      SQLException ex = (SQLException) cause
+      if (ex.nextException != null) {
+        error(ex.nextException)
+      }
+    }
+    return this
   }
 
   /**
