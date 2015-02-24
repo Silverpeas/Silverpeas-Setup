@@ -168,7 +168,7 @@ class JBossServer {
   void debug() {
     if (!isStartingOrRunning()) {
       ProcessBuilder process =
-          new ProcessBuilder(starter, '-debug', '-c', 'standalone-full.xml', '-b', '0.0.0.0')
+          new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', '5005')
               .directory(new File(jbossHome))
               .redirectErrorStream(true)
       if (redirection != null) {
