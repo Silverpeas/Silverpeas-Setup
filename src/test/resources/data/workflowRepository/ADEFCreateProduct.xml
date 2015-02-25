@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<processModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="ADEFCreateProduct" xsi:noNamespaceSchemaLocation="C:/Silverpeas/KMEdition/Bus/workflowEngine/Others/modelManager/processModel.xsd">
+	<label lang="default" role="default">Demande de création d'ou fournisseur ou prestataire</label>
+	<roles>
+		<role name="Demandeurs">
+			<label lang="default" role="default">Demandeur</label>
+		</role>
+		<role name="ServiceAchats">
+			<label lang="default" role="default">Service Achats</label>
+		</role>
+		<role name="supervisor">
+			<label lang="default" role="default">Superviseur</label>
+		</role>
+	</roles>
+	<presentation>
+		<title lang="default" role="Demandeurs">${action.Creer.date} - Ma demande</title>
+		<title lang="default" role="ServiceAchats">${action.Creer.date} - Demande de ${action.Creer.actor}</title>
+		<columns role="Demandeurs">
+			<column item="etablissement"/>
+			<column item="nomProduit"/>
+		</columns>
+		<columns role="ServiceAchats">
+			<column item="etablissement"/>
+			<column item="nomProduit"/>
+		</columns>
+	</presentation>
+	<participants>
+		<participant name="Demandeur" role="Demandeurs"/>
+	</participants>
+	<states>
+		<state name="EnAttenteCreationProduit" timeoutNotifyAdmin="true">
+			<label lang="default" role="default">En attente de traitement service Achats</label>
+			<workingUsers>
+				<userInRole name="ServiceAchats"/>
+			</workingUsers>
+			<interestedUsers>
+				<relatedUser participant="Demandeur" role="Demandeurs"/>
+			</interestedUsers>
+			<allowedActions>
+				<allow action="Valider"/>
+				<allow action="Refuser"/>
+			</allowedActions>
+		</state>
+		<state name="Cree" timeoutNotifyAdmin="true">
+			<label lang="default" role="default">Produit créé par le Service Achats</label>
+			<workingUsers>
+				<userInRole name="ServiceAchats"/>
+			</workingUsers>
+			<interestedUsers>
+				<relatedUser participant="Demandeur" role="Demandeurs"/>
+			</interestedUsers>
+			<allowedActions>
+				<allow action="Archiver"/>
+			</allowedActions>
+      <timeOutActions>
+        <timeOutAction action="Archiver" delay="31d" order="1"/>
+      </timeOutActions>
+		</state>
+
+		<state name="Refusee" timeoutAction="Supprimer" timeoutInterval="31d" timeoutNotifyAdmin="false">
+			<label lang="default" role="default">Demande de création refusée par Achats/MO</label>
+			<interestedUsers>
+				<relatedUser participant="Demandeur" role="Demandeurs"/>
+				<userInRole name="ServiceAchats"/>
+			</interestedUsers>
+      <timeOutActions>
+        <timeOutAction action="Supprimer" delay="31d" order="1"/>
+      </timeOutActions>
+		</state>
+	</states>
+    
+	<actions>
+		<action form="formCreation" kind="create" name="Creer">
+			<label lang="default" role="default">Demander la création d'un produit</label>
+			<allowedUsers>
+				<userInRole name="Demandeurs"/>
+			</allowedUsers>
+			<consequences>
+				<consequence>
+					<kill>false</kill>
+					<set state="EnAttenteCreationProduit"/>
+					<notify message="Une demande de création d'un produit réalisée par ${action.Creer.actor} nécessite votre validation. &lt;br&gt;Etablissement demandeur: ${folder.etablissement}.">
+						<userInRole name="ServiceAchats"/>
+					</notify>
+				</consequence>
+			</consequences>
+		</action>
+		<action form="formRefus" kind="update" name="Refuser">
+			<label lang="default" role="default">Refuser la demande</label>
+			<allowedUsers>
+				<userInRole name="ServiceAchats"/>
+			</allowedUsers>
+			<consequences>
+				<consequence>
+					<kill>false</kill>
+					<set state="Refusee"/>
+					<notify message="Votre demande de création du produit ${folder.nomProduit} a été refusée par le service Achats pour le motif suivant : ${folder.motifRefus}">
+						<relatedUser participant="Demandeur" role="Demandeurs"/>
+					</notify>
+				</consequence>
+			</consequences>
+		</action>
+		<action form="" kind="update" name="Valider">
+			<label lang="default" role="default">Produit créé</label>
+			<allowedUsers>
+				<userInRole name="ServiceAchats"/>
+			</allowedUsers>
+			<consequences>
+				<consequence>
+					<kill>false</kill>
+					<set state="Cree"/>
+					<notify message="Votre demande de création du produit ${folder.nomProduit} a été effectuée par le service Achats. &lt;br&gt;Etablissement demandeur: ${folder.etablissement}.">
+						<relatedUser participant="Demandeur" role="Demandeurs"/>
+					</notify>
+				</consequence>
+			</consequences>
+		</action>
+		<action form="" kind="delete" name="Archiver">
+			<label lang="default" role="default">Archiver</label>
+			<allowedUsers>
+				<userInRole name="ServiceAchats"/>
+			</allowedUsers>
+			<consequences>
+				<consequence>
+					<kill>true</kill>
+					<triggers>
+						<trigger className="com.silverpeas.adef.workflows.product.Archive" name="Archive">
+							<param name="targetComponentId" value="kmelia136"/>
+							<param name="targetTopicId" value="59"/>
+							<param name="pubTitle" value="Demande de création du produit ${folder.nomProduit} par ${action.Creer.actor}"/>
+							<param name="pubDescription" value="Produit créé le ${action.Valider.date}"/>
+							<param name="xmlFormName" value="adefArchivesProduits"/>
+							<param name="addPDFHistory" value="false"/>
+						</trigger>
+					</triggers>
+				</consequence>
+			</consequences>
+		</action>
+		<action form="" kind="delete" name="Supprimer">
+			<consequences>
+				<consequence>
+					<kill>true</kill>
+					<triggers/>
+				</consequence>
+			</consequences>
+		</action>
+	</actions>
+	<dataFolder>
+		<item computed="false" name="etablissement">
+			<label lang="default" role="default">Etablissement demandeur</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="fournisseur">
+			<label lang="default" role="default">Nom du fournisseur</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="nomProduit">
+			<label lang="default" role="default">Nom du produit</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="natureProduit">
+			<label lang="default" role="default">Nature du produit</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="codeProduit">
+			<label lang="default" role="default">Référence (code) du produit</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="conditionnementProduit">
+			<label lang="default" role="default">Conditionnement du produit</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="prixHT">
+			<label lang="default" role="default">Prix HT</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="tva">
+			<label lang="default" role="default">TVA</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="condMinVente">
+			<label lang="default" role="default">Conditionnement minimum de vente</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="ficheTechnique">
+			<label lang="default" role="default">Joindre la fiche technique</label>
+			<type>file</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="devis">
+			<label lang="default" role="default">Joindre le devis</label>
+			<type>file</type>
+			<readonly>false</readonly>
+		</item>
+		<item computed="false" name="justificatif">
+			<label lang="default" role="default">Justificatif de la demande</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+
+		<!-- Données supplémentaires du formulaire -->
+		<!-- Refus d'une demande -->
+		<item name="motifRefus">
+			<label lang="default" role="default">Motifs du refus</label>
+			<type>text</type>
+			<readonly>false</readonly>
+		</item>
+		
+	</dataFolder>
+	<forms>
+		<form name="presentationForm">
+			<title lang="default" role="default">Demande de produits</title>
+			<input displayerName="simpletext" mandatory="false" readonly="false" value="${action.Creer.date}">
+				<label>Date</label>
+			</input>
+			<input displayerName="simpletext" mandatory="false" readonly="false" value="${action.Creer.actor}">
+				<label>Demandeur</label>
+			</input>
+			<input displayerName="simpletext" item="etablissement" mandatory="false" readonly="false"/>
+			<input displayerName="simpletext" item="fournisseur" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="nomProduit" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="natureProduit" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="codeProduit" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="conditionnementProduit" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="prixHT" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="tva" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="condMinVente" mandatory="false" readonly="true"/>
+			<input item="ficheTechnique" readonly="true"/>
+			<input item="devis" readonly="true"/>
+			<input displayerName="simpletext" item="justificatif" mandatory="false" readonly="true"/>
+			<input displayerName="simpletext" item="motifRefus" mandatory="false" readonly="true"/>
+		</form>
+		<form HTMLFileName="adefCreateProduct.html" name="formCreation">
+			<title lang="default" role="default">Demande d'achat d'un produit</title>
+			<input displayerName="text" item="etablissement" mandatory="true" readonly="false"/>
+			<input displayerName="text" item="fournisseur" mandatory="true" readonly="false"/>
+			<input displayerName="text" item="nomProduit" mandatory="true" readonly="false"/>
+			<input displayerName="text" item="natureProduit" mandatory="false" readonly="false"/>
+			<input displayerName="text" item="codeProduit" mandatory="true" readonly="false"/>
+			<input displayerName="text" item="conditionnementProduit" mandatory="false" readonly="false"/>
+			<input displayerName="text" item="prixHT" mandatory="false" readonly="false"/>
+			<input displayerName="text" item="tva" mandatory="false" readonly="false"/>
+			<input displayerName="text" item="condMinVente" mandatory="false" readonly="false"/>
+			<input displayerName="file" item="ficheTechnique"/>
+			<input displayerName="file" item="devis"/>
+			<input displayerName="textarea" item="justificatif" mandatory="true" readonly="false"/>
+		</form>
+		<form name="formRefus">
+			<title lang="default" role="default">Refus de la demande</title>
+			<input displayerName="textarea" item="motifRefus" mandatory="true" readonly="false"/>
+		</form>
+    <!-- Formulaire permettant l'impression -->
+    <form HTMLFileName="/weblib/processManager/adef/adefPrintProduct.html" name="printForm"/> 
+	</forms>
+</processModel>

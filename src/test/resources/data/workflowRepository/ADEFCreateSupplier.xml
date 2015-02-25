@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<processModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="ADEFCreateSupplier" xsi:noNamespaceSchemaLocation="C:/Silverpeas/KMEdition/Bus/workflowEngine/Others/modelManager/processModel.xsd">
+  <label lang="default" role="default">Demande de création d'un fournisseur ou prestataire</label>
+  <roles>
+      <role name="Demandeurs">
+          <label lang="default" role="default">Demandeur</label>
+      </role>
+      <role name="ServiceAchats">
+          <label lang="default" role="default">Service Achats</label>
+      </role>
+      <role name="ServiceMO">
+          <label lang="default" role="default">Service MO</label>
+      </role>
+      <role name="ServiceCompta">
+          <label lang="default" role="default">Service comptabilité</label>
+      </role>
+	    <role name="supervisor">
+          <label lang="default" role="default">Superviseur</label>
+      </role>
+  </roles>
+  <presentation>
+    <title lang="default" role="Demandeurs">${action.Creer.date} - Ma demande</title>
+    <title lang="default" role="ServiceAchats">${action.Creer.date} - Demande de ${action.Creer.actor}</title>
+    <title lang="default" role="ServiceMO">${action.Creer.date} - Demande de ${action.Creer.actor}</title>
+    <title lang="default" role="ServiceCompta">${action.Creer.date} - Demande de ${action.Creer.actor}</title>
+    <columns role="Demandeurs">
+		  <column item="etablissement"/>
+      <column item="fournisseur"/>
+    </columns>
+    <columns role="supervisor">
+		  <column item="etablissement"/>
+      <column item="fournisseur"/>
+    </columns>
+    <columns role="ServiceCompta">
+  		<column item="etablissement"/>
+      <column item="fournisseur"/>
+    </columns>
+    <columns role="ServiceAchats">
+  		<column item="etablissement"/>
+      <column item="fournisseur"/>
+    </columns>
+    <columns role="ServiceMO">
+  		<column item="etablissement"/>
+      <column item="fournisseur"/>
+    </columns>
+  </presentation>
+  <participants>
+      <participant name="Demandeur" role="Demandeurs"/>
+  </participants>
+  <states>
+		<state name="EnAttenteAcceptationServiceMO" timeoutNotifyAdmin="true">
+      <label lang="default" role="default">En attente d'acceptation par le service MO</label>
+      <workingUsers>
+          <userInRole name="ServiceMO"/>
+      </workingUsers>
+      <interestedUsers>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="ValiderMO"/>
+          <allow action="RefuserMO"/>
+      </allowedActions>
+    </state>
+		<state name="EnAttenteAcceptationServiceAchats" timeoutNotifyAdmin="true">
+      <label lang="default" role="default">En attente d'acceptation par le service Achats</label>
+      <workingUsers>
+          <userInRole name="ServiceAchats"/>
+      </workingUsers>
+      <interestedUsers>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="ValiderAchats"/>
+          <allow action="RefuserAchats"/>
+      </allowedActions>
+    </state>
+
+		<state name="EnAttenteCreationFournisseurCEGIDAchats" timeoutNotifyAdmin="true">
+      <label lang="default" role="default">En attente de traitement Comptabilité</label>
+      <workingUsers>
+          <userInRole name="ServiceCompta"/>
+      </workingUsers>
+      <interestedUsers>
+          <userInRole name="ServiceAchats"/>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="ValiderNouveauFournisseurCEGID"/>
+      </allowedActions>
+    </state>
+
+    <state name="EnAttenteCreationFournisseurCEGIDMO" timeoutNotifyAdmin="true">
+      <label lang="default" role="default">En attente de traitement Comptabilité</label>
+      <workingUsers>
+          <userInRole name="ServiceCompta"/>
+      </workingUsers>
+      <interestedUsers>
+          <userInRole name="ServiceMO"/>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="ValiderNouveauFournisseurCEGID"/>
+      </allowedActions>
+    </state>
+
+
+		<state name="EnAttenteEDServiceMO" timeoutNotifyAdmin="true">
+      <label lang="default" role="default">En attente de création MO</label>
+      <workingUsers>
+          <userInRole name="ServiceMO"/>
+      </workingUsers>
+      <interestedUsers>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+          <userInRole name="ServiceCompta"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="ValiderFournisseurMO"/>
+      </allowedActions>
+    </state>
+
+		<state name="EnAttenteEDServiceAchats" timeoutNotifyAdmin="true">
+      <label lang="default" role="default">En attente de création Achats</label>
+      <workingUsers>
+          <userInRole name="ServiceAchats"/>
+      </workingUsers>
+      <interestedUsers>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+          <userInRole name="ServiceCompta"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="ValiderFournisseurAchats"/>
+      </allowedActions>
+    </state>
+
+    <state name="CreeAchats" timeoutAction="Archiver" timeoutInterval="31d" timeoutNotifyAdmin="false">
+      <label lang="default" role="default">Fournisseur/Prestataire créé</label>
+      <workingUsers>
+          <userInRole name="ServiceAchats"/>
+      </workingUsers>
+      <interestedUsers role="Demandeurs,ServiceCompta,ServiceAchats">
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+          <userInRole name="ServiceCompta"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="Archiver"/>
+      </allowedActions>
+      <timeOutActions>
+        <timeOutAction action="Archiver" delay="31d" order="1"/>
+      </timeOutActions>
+    </state>
+
+    <state name="CreeMO" timeoutAction="Archiver" timeoutInterval="1d" timeoutNotifyAdmin="false">
+      <label lang="default" role="default">Fournisseur/Prestataire créé</label>
+      <workingUsers>
+          <userInRole name="ServiceMO"/>
+      </workingUsers>
+      <interestedUsers role="Demandeurs,ServiceCompta,ServiceAchats">
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+          <userInRole name="ServiceCompta"/>
+      </interestedUsers>
+      <allowedActions>
+          <allow action="Archiver"/>
+      </allowedActions>
+      <timeOutActions>
+        <timeOutAction action="Archiver" delay="1d" order="1"/>
+      </timeOutActions>
+    </state>
+
+    <state name="Refusee" timeoutAction="Supprimer" timeoutInterval="31d" timeoutNotifyAdmin="false">
+      <label lang="default" role="default">Demande de création refusée par Achats/MO</label>
+      <workingUsers>
+      </workingUsers>
+      <interestedUsers>
+          <relatedUser participant="Demandeur" role="Demandeurs"/>
+          <userInRole name="ServiceAchats"/>
+          <userInRole name="ServiceMO"/>
+      </interestedUsers>
+      <timeOutActions>
+        <timeOutAction action="Supprimer" delay="31d" order="1"/>
+      </timeOutActions>
+    </state>
+  </states>
+    
+  <actions>
+    <action form="formCreation" kind="create" name="Creer">
+      <label lang="default" role="default">Demander la création d'un fournisseur ou prestataire</label>
+      <allowedUsers>
+          <userInRole name="Demandeurs"/>
+      </allowedUsers>
+      <consequences>
+	      <consequence item="services" operator="=" value="achats">
+              <kill>false</kill>
+              <set state="EnAttenteAcceptationServiceAchats"/>
+              <notify message="Une demande de création d'un fournisseur / prestataire réalisée par ${action.Creer.actor} nécessite votre validation.&lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+                  <userInRole name="ServiceAchats"/>
+              </notify>
+          </consequence>
+	      <consequence item="services" operator="=" value="MO">
+              <kill>false</kill>
+              <set state="EnAttenteAcceptationServiceMO"/>
+              <notify message="Une demande de création d'un fournisseur / prestataire réalisée par ${action.Creer.actor} nécessite votre validation.&lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+                  <userInRole name="ServiceMO"/>
+              </notify>
+          </consequence>
+          <!--
+          <consequence>
+              <kill>false</kill>
+              <set state="EnAttenteDeValidationParSuperieur"/>
+              <notify message="Une demande de connexion Internet vient de vous être adressée.">
+                  <relatedUser folderItem="superieur" role="Superieur"/>
+              </notify>
+          </consequence>
+          -->
+      </consequences>
+    </action>
+    <action form="formRefus" kind="update" name="RefuserMO">
+      <label lang="default" role="default">Refuser la demande</label>
+  		<allowedUsers>
+          <userInRole name="ServiceMO"/>
+      </allowedUsers>
+      <consequences>
+        <consequence>
+          <kill>false</kill>
+          <set state="Refusee"/>
+          <notify message="Votre demande de création du fournisseur ${folder.fournisseur} a été refusée par le service MO pour le motif suivant : ${folder.motifRefus}. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+            <relatedUser participant="Demandeur" role="Demandeurs"/>
+          </notify>
+          <triggers/>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="formRefus" kind="update" name="RefuserAchats">
+      <label lang="default" role="default">Refuser la demande</label>
+  		<allowedUsers>
+        <userInRole name="ServiceAchats"/>
+      </allowedUsers>
+      <consequences>
+        <consequence>
+          <kill>false</kill>
+          <set state="Refusee"/>
+          <notify message="Votre demande de création du fournisseur ${folder.fournisseur} a été refusée par le service Achats pour le motif suivant : ${folder.motifRefus}. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+            <relatedUser participant="Demandeur" role="Demandeurs"/>
+          </notify>
+          <triggers/>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="" kind="update" name="ValiderMO">
+      <label lang="default" role="default">Accepter la demande</label>
+  		<allowedUsers>
+        <userInRole name="ServiceMO"/>
+      </allowedUsers>
+      <consequences>
+        <consequence>
+          <kill>false</kill>
+          <set state="EnAttenteCreationFournisseurCEGIDMO"/>
+          <notify message="Votre demande de création du fournisseur ${folder.fournisseur} a été acceptée par le service MO. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+            <relatedUser participant="Demandeur" role="Demandeurs"/>
+          </notify>
+          <notify message="Une demande de création du fournisseur ${folder.fournisseur} a été transmise par le service MO. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+            <userInRole name="ServiceCompta"/>
+          </notify>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="" kind="update" name="ValiderAchats">
+      <label lang="default" role="default">Accepter la demande</label>
+    	<allowedUsers>
+        <userInRole name="ServiceAchats"/>
+      </allowedUsers>
+      <consequences>
+        <consequence>
+            <kill>false</kill>
+            <set state="EnAttenteCreationFournisseurCEGIDAchats"/>
+            <notify message="Votre demande de création du fournisseur ${folder.fournisseur} a été acceptée par le service Achats. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+                <relatedUser participant="Demandeur" role="Demandeurs"/>
+            </notify>
+            <notify message="Une demande de création du fournisseur ${folder.fournisseur} a été transmise par le service Achats. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+                <userInRole name="ServiceCompta"/>
+            </notify>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="formCEGID" kind="update" name="ValiderNouveauFournisseurCEGID">
+      <label lang="default" role="default">Saisir code fournisseur CEGID</label>
+      <allowedUsers>
+        <userInRole name="ServiceCompta"/>
+      </allowedUsers>
+      <consequences>
+	      <consequence item="services" operator="=" value="achats">
+          <kill>false</kill>
+          <set state="EnAttenteEDServiceAchats"/>
+          <notify message="La demande réalisée par ${action.Creer.actor}, etablissement demandeur : ${folder.etablissement}, a été traitée par le service comptable et vous a été renvoyée pour création du fournisseur..">
+              <userInRole name="ServiceAchats"/>
+          </notify>
+        </consequence>
+	      <consequence item="services" operator="=" value="MO">
+          <kill>false</kill>
+          <set state="EnAttenteEDServiceMO"/>
+          <notify message="La demande réalisée par ${action.Creer.actor}, etablissement demandeur : ${folder.etablissement}, a été traitée par le service comptable et vous a été renvoyée pour création du fournisseur..">
+              <userInRole name="ServiceMO"/>
+          </notify>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="formED" kind="update" name="ValiderFournisseurMO">
+      <label lang="default" role="default">Fournisseur créé</label>
+      <allowedUsers>
+        <userInRole name="ServiceMO"/>
+      </allowedUsers>
+      <consequences>
+        <consequence>
+          <kill>false</kill>
+          <set state="CreeMO"/>
+          <notify message="Le fournisseur/prestataire ${folder.fournisseur} a été créé. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+            <relatedUser participant="Demandeur" role="Demandeurs"/>
+          </notify>
+          <triggers/>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="formED" kind="update" name="ValiderFournisseurAchats">
+      <label lang="default" role="default">Fournisseur créé</label>
+      <allowedUsers>
+        <userInRole name="ServiceAchats"/>
+      </allowedUsers>
+      <consequences>
+        <consequence>
+          <kill>false</kill>
+          <set state="CreeAchats"/>
+          <notify message="Le fournisseur/prestataire ${folder.fournisseur} a été créé. &lt;br&gt;Etablissement demandeur : ${folder.etablissement}">
+            <relatedUser participant="Demandeur" role="Demandeurs"/>
+          </notify>
+          <triggers/>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="" kind="delete" name="Archiver">
+      <label lang="default" role="default">Archiver</label>
+      <allowedUsers>
+        <userInRole name="ServiceAchats"/>
+        <userInRole name="ServiceMO"/>
+      </allowedUsers>
+      <consequences>
+		    <consequence item="services" operator="=" value="achats">
+          <kill>true</kill>
+          <triggers>
+    				<trigger className="com.silverpeas.adef.workflows.supplier.Archive" name="Archive">
+    					<param name="targetComponentId" value="kmelia136"/>
+    					<param name="targetTopicId" value="61"/>
+    					<param name="pubTitle" value="Demande de création du fournisseur ${folder.fournisseur} par ${action.Creer.actor}"/>
+    					<param name="pubDescription" value="Fournisseur/Prestataire créé le ${action.ValiderFournisseurAchats.date}"/>
+    					<param name="xmlFormName" value="adefArchivesFournisseurs"/>
+    					<param name="addPDFHistory" value="false"/>
+    				</trigger>
+    			</triggers>
+        </consequence>
+  			<consequence item="services" operator="=" value="MO">
+          <kill>true</kill>
+          <triggers>
+  					<trigger className="com.silverpeas.adef.workflows.supplier.Archive" name="Archive">
+  						<param name="targetComponentId" value="kmelia136"/>
+  						<param name="targetTopicId" value="62"/>
+              <param name="pubTitle" value="Demande de création du fournisseur ${folder.fournisseur} par ${action.Creer.actor}"/>
+  						<param name="pubDescription" value="Fournisseur/Prestataire créé le ${action.ValiderFournisseurMO.date}"/>
+  						<param name="xmlFormName" value="adefArchivesFournisseurs"/>
+  						<param name="addPDFHistory" value="false"/>
+  					</trigger>
+  				</triggers>
+        </consequence>
+      </consequences>
+    </action>
+    <action form="" kind="delete" name="Supprimer">
+      <consequences>
+        <consequence>
+          <kill>true</kill>
+          <triggers/>
+        </consequence>
+      </consequences>
+    </action>
+  </actions>
+  <dataFolder>
+		<item computed="false" name="etablissement">
+      <label lang="default" role="default">Etablissement demandeur</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="fournisseur">
+      <label lang="default" role="default">Nom du fournisseur</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="adresse">
+      <label lang="default" role="default">Adresse</label>
+      <type>text</type>
+      <readonly>false</readonly>
+      <param name="rows" value="3"/>
+      <param name="cols" value="48"/>
+    </item>
+    <item computed="false" name="telephone">
+      <label lang="default" role="default">N° de téléphone</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="fax">
+      <label lang="default" role="default">N° de fax</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="email">
+      <label lang="default" role="default">Adresse email</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="siret">
+      <label lang="default" role="default">N° de SIRET</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="modeCommercial">
+      <label lang="default" role="default">Délai et mode de règlement</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="rib">
+      <label lang="default" role="default">RIB</label>
+      <type>file</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="contact">
+      <label lang="default" role="default">Nom du contact</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="adresseContact">
+      <label lang="default" role="default">Adresse du contact</label>
+      <type>text</type>
+      <readonly>false</readonly>
+      <param name="rows" value="3"/>
+    </item>
+    <item computed="false" name="telContact">
+      <label lang="default" role="default">Téléphone du contact</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="faxContact">
+      <label lang="default" role="default">Fax du contact</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="emailContact">
+      <label lang="default" role="default">Adresse mail du contact</label>
+      <type>text</type>
+      <readonly>false</readonly>
+    </item>
+    <item computed="false" name="objet">
+      <label lang="default" role="default">Type de produits ou de prestations commercialisés</label>
+      <type>text</type>
+      <readonly>false</readonly>
+      <param name="rows" value="3"/>
+    </item>
+    <item computed="false" name="remarques">
+      <label lang="default" role="default">Motif de la demande</label>
+      <type>text</type>
+      <readonly>false</readonly>
+      <param name="rows" value="3"/>
+    </item>
+		<item name="services">
+			<label role="default">Demande relevant du</label>
+			<type>text</type>
+			<readonly>false</readonly>
+			<param name="keys" value="achats##MO"/>
+			<param name="values" value="Service Achats##Service MO"/>
+		</item>
+		<!-- Données supplémentaires du formulaire -->
+		<!-- Refus d'une demande -->
+		<item name="motifRefus">
+      <label lang="default" role="default">Motifs du refus</label>
+      <type>text</type>
+      <readonly>false</readonly>
+		</item>
+		<!-- code fournisseur provenant du logiciel métier CEGID Business Place -->
+		<item name="codeFournisseurCEGID">
+      <label lang="default" role="default">Code fournisseur issu du logiciel métier CEGID Business Place</label>
+      <type>text</type>
+      <readonly>false</readonly>
+		</item>
+  </dataFolder>
+
+  <forms>
+    <form name="presentationForm">
+      <title lang="default" role="default">Demande de création d'un fournisseur / prestataire</title>
+			<input displayerName="simpletext" mandatory="false" readonly="false" value="${action.Creer.date}">
+				<label>Date</label>
+			</input>
+			<input displayerName="simpletext" mandatory="false" readonly="false" value="${action.Creer.actor}">
+				<label>Demandeur</label>
+			</input>
+			<input displayerName="simpletext" item="etablissement" mandatory="false" readonly="false"/>
+			<input displayerName="simpletext" item="fournisseur" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="codeFournisseurCEGID" mandatory="false" readonly="false"/>
+			<input displayerName="simpletext" item="adresse" mandatory="false" readonly="false"/>
+			<input displayerName="simpletext" item="telephone" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="fax" mandatory="false" readonly="false"/>
+			<input displayerName="simpletext" item="email" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="siret" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="modeCommercial" mandatory="false" readonly="false"/>
+      <input item="rib" readonly="true"/>
+      <input displayerName="simpletext" item="contact" mandatory="true" readonly="false"/>
+      <input displayerName="simpletext" item="adresseContact" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="telContact" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="faxContact" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="emailContact" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="objet" mandatory="true" readonly="false"/>
+      <input displayerName="simpletext" item="remarques" mandatory="false" readonly="false"/>
+			<input displayerName="simpletext" item="services" mandatory="false" readonly="false"/>
+      <input displayerName="simpletext" item="motifRefus" mandatory="false" readonly="false"/>
+    </form>
+    <form HTMLFileName="adefCreateSupplier.html" name="formCreation">
+      <title lang="default" role="default">Demande de creation d'un founisseur/prestataire</title>
+			<input displayerName="text" item="etablissement" mandatory="true" readonly="false"/>
+			<input displayerName="text" item="fournisseur" mandatory="true" readonly="false"/>
+      <input displayerName="textarea" item="adresse" mandatory="true" readonly="false"/>
+      <input displayerName="text" item="telephone" mandatory="true" readonly="false"/>
+      <input displayerName="text" item="fax" mandatory="false" readonly="false"/>
+      <input displayerName="text" item="email" mandatory="false" readonly="false"/>
+      <input displayerName="text" item="siret" mandatory="false" readonly="false"/>
+      <input displayerName="text" item="modeCommercial" mandatory="false" readonly="false"/>
+      <input displayerName="file" item="rib"/>
+      <input displayerName="text" item="contact" mandatory="true" readonly="false"/>
+      <input displayerName="textarea" item="adresseContact" mandatory="false" readonly="false"/>
+      <input displayerName="text" item="telContact" mandatory="false" readonly="false"/>
+      <input displayerName="text" item="faxContact" mandatory="false" readonly="false"/>
+      <input displayerName="text" item="emailContact" mandatory="false" readonly="false"/>
+      <input displayerName="textarea" item="objet" mandatory="true" readonly="false"/>
+      <input displayerName="textarea" item="remarques" mandatory="true" readonly="false"/>
+      <input displayerName="radio" item="services" mandatory="true" readonly="false"/>
+    </form>
+    <form name="formRefus">
+        <title lang="default" role="default">Refus de la demande</title>
+        <input displayerName="textarea" item="motifRefus" mandatory="false" readonly="false"/>
+    </form>
+    <form name="formCEGID">
+        <title lang="default" role="default">Saisir code fournisseur à partir de logiciel CEGID Business Place</title>
+        <input displayerName="simpletext" item="fournisseur" mandatory="false" readonly="false"/>
+        <input displayerName="text" item="codeFournisseurCEGID" mandatory="false" readonly="false"/>
+    </form>
+    <form name="formED">
+        <title lang="default" role="default">Valider la fin de la création</title>
+        <input displayerName="simpletext" item="fournisseur" mandatory="false" readonly="false"/>
+    </form>
+  </forms>
+</processModel>

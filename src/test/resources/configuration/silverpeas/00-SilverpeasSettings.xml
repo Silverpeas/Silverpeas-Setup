@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<silverpeas-settings product="Silverpeas">
+
+  <!-- PROPERTIES CONFIGURATION -->
+  <fileset root="${SILVERPEAS_HOME}/properties/org/silverpeas/">
+    <configfile name="systemSettings.properties">
+      <parameter key="http.proxyHost">${PROXY_HOST}</parameter>
+      <parameter key="http.proxyPort">${PROXY_PORT}</parameter>
+      <parameter key="http.nonProxyHosts">${NONPROXY_HOST}</parameter>
+    </configfile>
+
+    <configfile name="authentication/autDomainSQL.properties">
+      <parameter key="fallbackType">${FALLBACK_TYPE}</parameter>
+      <parameter key="autServer0.SQLJDBCUrl">${DB_URL}</parameter>
+      <parameter key="autServer0.SQLAccessLogin">${DB_USER}</parameter>
+      <parameter key="autServer0.SQLAccessPasswd">${DB_PASSWORD}</parameter>
+      <parameter key="autServer0.SQLDriverClass">${DB_DRIVER}</parameter>
+    </configfile>
+
+    <configfile name="workflow/engine/schedulerSettings.properties">
+      <parameter key="timeoutSchedule">* 0,4,8,12,16,20 * * *</parameter>
+    </configfile>
+
+  </fileset>
+
+</silverpeas-settings>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<silverpeas-settings product="Silverpeas">
+
+  <fileset root="${SILVERPEAS_DATA_HOME}/workflowRepository/">
+    <xmlfile name="ADEFCreateSupplier.xml">
+      <parameter key="/processModel/actions/action[@name='Archiver']/consequences/consequence[@value='achats']/triggers/trigger/param[@name='targetComponentId']/@value">kmelia42</parameter>
+      <parameter key="/processModel/actions/action[@name='Archiver']/consequences/consequence[@value='achats']/triggers/trigger/param[@name='targetTopicId']/@value">100</parameter>
+      <parameter key="/processModel/actions/action[@name='Archiver']/consequences/consequence[@value='MO']/triggers/trigger/param[@name='targetComponentId']/@value">kmelia42</parameter>
+      <parameter key="/processModel/actions/action[@name='Archiver']/consequences/consequence[@value='MO']/triggers/trigger/param[@name='targetTopicId']/@value">100</parameter>
+    </xmlfile>
+    <xmlfile name="ADEFCreateProduct.xml">
+      <parameter key="/processModel/actions/action[@name='Archiver']/consequences/consequence/triggers/trigger/param[@name='targetComponentId']/@value">kmelia42</parameter>
+      <parameter key="/processModel/actions/action[@name='Archiver']/consequences/consequence/triggers/trigger/param[@name='targetTopicId']/@value">100</parameter>
+    </xmlfile>
+  </fileset>
+
+</silverpeas-settings>
