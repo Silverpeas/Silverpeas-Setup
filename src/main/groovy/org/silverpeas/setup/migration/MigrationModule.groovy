@@ -44,7 +44,7 @@ import java.nio.file.Paths
 @Builder(builderStrategy=SimpleStrategy, prefix='with')
 class MigrationModule {
 
-  private static final int UNORDERED = -1
+  private static final int UNORDERED = Integer.MAX_VALUE
 
   private String module
   private Integer order
@@ -78,7 +78,7 @@ class MigrationModule {
    * otherwise.
    */
   boolean isExecutionOrdered() {
-    return order > UNORDERED
+    return order != UNORDERED
   }
 
   /**

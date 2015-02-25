@@ -61,7 +61,7 @@ class SilverpeasMigrationTask extends DefaultTask {
     loadMigrationModules().each { module ->
       try {
         module.migrate()
-      } catch(Exception ex) {
+      } catch (Exception ex) {
         log.error(ex)
         throw new TaskExecutionException(this, ex)
       }
@@ -77,13 +77,11 @@ class SilverpeasMigrationTask extends DefaultTask {
           .withSettings(settings)
           .withLogger(log)
           .loadMigrationsFrom(descriptor)
-      if (module.isExecutionOrdered()) {
-        modules.add(module.executionOrder(), module)
-      } else {
-        modules << module
-      }
+      modules << module
     }
-    return modules
+    return modules.sort { module1, module2 ->
+      module1.executionOrder() <=> module2.executionOrder()
+    }
   }
 
   private def loadInstalledModuleStatus() {
