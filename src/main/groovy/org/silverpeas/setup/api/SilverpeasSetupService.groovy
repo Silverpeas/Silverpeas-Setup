@@ -55,7 +55,7 @@ class SilverpeasSetupService {
    * @return the Path instance representing the specified file/directory path.
    */
   static final Path getPath(String path) {
-    return Paths.get(replaceVariables(path))
+    return Paths.get(expanseVariables(path))
   }
 
   /**
@@ -92,7 +92,7 @@ class SilverpeasSetupService {
   }
 
   /**
-   * Replaces in the specified expression any variable declaration by their value.
+   * Expanses any variable declaration by their value in the specified expression.
    *
    * <p>
    * A variable is expected to be declared in the expression in the following way:
@@ -115,30 +115,30 @@ class SilverpeasSetupService {
    * value.
    * @return the new expression as the result of the variable replacement.
    */
-  static final String replaceVariables(String expression) {
+  static final String expanseVariables(String expression) {
     def matching = expression =~ VAR_PATTERN
     matching.each { token ->
       switch (token[1]) {
         case 'sys.':
           if (!SystemWrapper.getProperty(token[2])) {
             println "Error: no such system property ${token[2]}"
-            throw new StopExecutionException("Error: no such variable ${token[2]}")
+            throw new StopExecutionException("Error: no such system property ${token[2]}")
           }
           expression = expression.replace(token[0], SystemWrapper.getProperty(token[2]))
           break
         case 'env.':
           if (!SystemWrapper.getenv(token[2])) {
             println "Error: no such environment variable ${token[2]}"
-            throw new StopExecutionException("Error: no such variable ${token[2]}")
+            throw new StopExecutionException("Error: no such environment variable ${token[2]}")
           }
           expression = expression.replace(token[0], SystemWrapper.getenv(token[2]))
           break
         default:
-          if (!currentSettings[token[2]]) {
+          if (currentSettings[token[2]] ==  null) {
             println "Error: no such variable ${token[2]}"
             throw new StopExecutionException("Error: no such variable ${token[2]}")
           }
-          expression = replaceVariables(expression.replace(token[0], currentSettings[token[2]]))
+          expression = expanseVariables(expression.replace(token[0], currentSettings[token[2]]))
           break
       }
     }

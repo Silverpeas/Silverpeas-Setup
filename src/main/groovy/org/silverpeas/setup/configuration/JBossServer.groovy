@@ -164,11 +164,13 @@ class JBossServer {
   /**
    * Starts in debug an instance of the JBoss/Wildfly server in a standalone mode (full JEE profile).
    * If an instance of JBoss/Wildfly is already running, then nothing is done.
+   * @param port the debugging port. If lesser or equal to 1000, the default port 5005 will be used.
    */
-  void debug() {
+  void debug(int port) {
     if (!isStartingOrRunning()) {
+      String p = (port <= 1000 ? '5005':String.valueOf(port))
       ProcessBuilder process =
-          new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', '5005')
+          new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
               .directory(new File(jbossHome))
               .redirectErrorStream(true)
       if (redirection != null) {
@@ -179,6 +181,7 @@ class JBossServer {
       }
       process.start()
       waitUntilRunning()
+      println 'Silverpeas Debugging Port is 5005'
     } else {
       logger.info 'A JBoss instance is already started'
     }

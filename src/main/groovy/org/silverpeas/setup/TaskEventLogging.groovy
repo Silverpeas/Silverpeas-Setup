@@ -41,6 +41,7 @@ class TaskEventLogging implements TaskExecutionListener {
             "JBOSS HOME:       ${task.project.silversetup.jbossHome}",
             "JCR HOME:         ${SilverpeasSetupService.getPath(SilverpeasSetupService.currentSettings.JCR_HOME).toString()}",
             "JAVA HOME:        ${System.getenv('JAVA_HOME')}",
+            "DATABASE:         ${SilverpeasSetupService.currentSettings.DB_SERVERTYPE.toLowerCase()}",
             "OPERATING SYSTEM: ${System.getProperty('os.name')}")
       }
       Logger log = Logger.getLogger(task.name)

@@ -6,7 +6,6 @@ import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.w3c.dom.Document
 import org.w3c.dom.Node
-import org.w3c.dom.NodeList
 
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.Transformer
@@ -57,53 +56,61 @@ class XmlSettingsScript implements Script {
   void run(def args) throws RuntimeException {
     def settingsStatements = new XmlSlurper().parse(script)
     settingsStatements.fileset.each { GPathResult fileset ->
-      String dir = SilverpeasSetupService.replaceVariables(fileset.@root.text())
+      String dir = SilverpeasSetupService.expanseVariables(fileset.@root.text())
       fileset.children().each { GPathResult file ->
         String status = '[OK]'
         String filename = file.@name
-        log.info "${dir}/${filename} processing..."
+        String settingFile = "${pathToLog(dir, args.settings.SILVERPEAS_HOME)}/${filename}"
+        log.info "${settingFile} processing..."
         try {
           switch (file.name()) {
             case 'configfile':
-              updateConfigurationFile("${dir}/${filename}", file.parameter, args.settings)
+              updateConfigurationFile("${dir}/${filename}", file.parameter)
               break
             case 'xmlfile':
-              updateXmlFile("${dir}/${filename}", file.parameter, args.settings)
+              updateXmlFile("${dir}/${filename}", file.parameter)
           }
         } catch (Exception ex) {
           status = '[FAILURE]'
           throw new RuntimeException(ex)
         } finally {
-          log.info "${dir}/${filename} processing: ${status}"
+          log.info "${settingFile} processing: ${status}"
         }
       }
     }
   }
 
-  private void updateConfigurationFile(String configurationFilePath, GPathResult parameters, def settings) {
+  private void updateConfigurationFile(String configurationFilePath, GPathResult parameters) {
     def properties = [:]
     parameters.each { GPathResult parameter ->
-      properties[parameter.@key.text()] = parameter.text()
+      properties[parameter.@key.text()] = SilverpeasSetupService.expanseVariables(parameter.text())
     }
-    properties = VariableReplacement.parseParameters(properties, settings)
     SilverpeasSetupService.updateProperties(configurationFilePath, properties)
   }
 
-  private void updateXmlFile(String xmlFilePath, GPathResult parameters, def settings) {
+  private void updateXmlFile(String xmlFilePath, GPathResult parameters) {
     Document xml = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File(xmlFilePath))
     XPath xpath = XPathFactory.newInstance().newXPath()
     parameters.each { GPathResult parameter ->
       def nodes = xpath.evaluate(parameter.@key.text(), xml, XPathConstants.NODESET)
       nodes.each { Node node ->
         if (node.nodeType == Node.ATTRIBUTE_NODE) {
-          node.nodeValue = parameter.text()
+          node.nodeValue = SilverpeasSetupService.expanseVariables(parameter.text())
         } else if (node.nodeType == Node.ELEMENT_NODE) {
-          node.textContent = parameter.text()
+          node.textContent = SilverpeasSetupService.expanseVariables(parameter.text())
         }
       }
     }
 
     Transformer transformer = TransformerFactory.newInstance().newTransformer()
     transformer.transform(new DOMSource(xml), new StreamResult(new File(xmlFilePath)))
+  }
+
+  private String pathToLog(String filePath, String silverpeasHomePath) {
+    String relativeFilePath = filePath
+    if (relativeFilePath.startsWith(silverpeasHomePath)) {
+      relativeFilePath = filePath.substring(silverpeasHomePath.length() + 1)
+    }
+    return relativeFilePath
   }
 }

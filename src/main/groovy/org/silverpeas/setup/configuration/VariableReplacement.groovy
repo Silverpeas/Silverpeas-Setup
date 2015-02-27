@@ -28,7 +28,9 @@ import org.gradle.api.tasks.StopExecutionException
 /**
  * A replacement of any variable declarations by their value obtained from a map of key-values.
  * The environment variables and the system properties aren't taken in charge; they won't be then
- * replaced by their value.
+ * replaced by their value. If you need to expanse also the environment variables and the system
+ * properties, use then the
+ * {@code org.silverpeas.setup.api.SilverpeasSetupService#expanseVariables(String)} method.
  * @author mmoquillon
  */
 class VariableReplacement {

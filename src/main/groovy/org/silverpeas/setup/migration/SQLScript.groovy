@@ -29,7 +29,7 @@ import org.silverpeas.setup.api.Script
 
 import java.sql.SQLException
 
-import static org.silverpeas.setup.api.SilverpeasSetupService.replaceVariables
+import static org.silverpeas.setup.api.SilverpeasSetupService.expanseVariables
 
 /**
  * A SQL script.
@@ -43,7 +43,7 @@ class SQLScript implements Script {
     String script = new File(scriptPath).getText('UTF-8')
       script.split(';').each { String aStatement ->
         if (!aStatement.trim().isEmpty()) {
-          statements << replaceVariables(aStatement.trim())
+          statements << expanseVariables(aStatement.trim())
         }
       }
   }

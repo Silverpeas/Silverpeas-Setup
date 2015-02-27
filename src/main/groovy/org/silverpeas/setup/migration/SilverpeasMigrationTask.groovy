@@ -31,6 +31,8 @@ import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
 
+import java.sql.DatabaseMetaData
+import java.sql.ResultSet
 import java.sql.SQLException
 
 /**
@@ -90,14 +92,30 @@ class SilverpeasMigrationTask extends DefaultTask {
     def status = [:]
     Sql sql = new Sql(DataSourceProvider.dataSource)
     try {
-      sql.eachRow('SELECT sr_package, sr_version FROM sr_packages') { row ->
-        status[row.sr_package] = row.sr_version
+      DatabaseMetaData metaData = sql.getDataSource().getConnection().getMetaData()
+      ResultSet tables = metaData.getTables(null, null, 'sr_packages', ['TABLE'] as String[])
+      if (!tables.next()) {
+        tables = metaData.getTables(null, null, 'SR_PACKAGES', ['TABLE'] as String[])
+        if (tables.next()) {
+          fetchModuleStatusFromDb(sql, status)
+        } else {
+          log.info 'This is a fresh installation'
+        }
+      } else {
+        fetchModuleStatusFromDb(sql, status)
       }
     } catch (SQLException ex) {
       // the database isn't set up
     }
     logging.captureStandardOutput(level)
     return status
+  }
+
+  private def fetchModuleStatusFromDb(Sql sql, def status) {
+    log.info 'This is an upgrade'
+    sql.eachRow('SELECT sr_package, sr_version FROM sr_packages') { row ->
+      status[row.sr_package] = row.sr_version
+    }
   }
 
 }
