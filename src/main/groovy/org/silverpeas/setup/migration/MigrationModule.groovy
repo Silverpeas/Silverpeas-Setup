@@ -133,6 +133,9 @@ class MigrationModule {
                   .withLogger(logger)
                   .build()
             }
+        if (scripts.empty) {
+          throw new RuntimeException('Missing upgrade statements from version ' + versionIn3Digits)
+        }
         migrations << DatasourceMigration.builder()
             .module(module)
             .fromVersion(versionIn3Digits)
