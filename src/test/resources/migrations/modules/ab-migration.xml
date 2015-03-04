@@ -25,7 +25,8 @@
 
 -->
 
-<migration module="ab">
+<migration module="ab"
+           xmlns="http://www.silverpeas.org/schema/migration">
 
   <current version="001">
     <script name="create_table.sql" type="sql"/>

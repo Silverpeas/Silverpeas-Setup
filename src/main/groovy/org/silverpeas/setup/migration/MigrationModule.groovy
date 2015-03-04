@@ -23,12 +23,16 @@
  */
 package org.silverpeas.setup.migration
 
+import com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
 
+import javax.xml.XMLConstants
+import javax.xml.transform.Source
+import javax.xml.transform.stream.StreamSource
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -111,31 +115,34 @@ class MigrationModule {
    * @return itself, initialized by the specified descriptor.
    */
   MigrationModule loadMigrationsFrom(File descriptor) {
-    def migrationDescription = new XmlSlurper().parse(descriptor)
-    module = migrationDescription.@module.text()
-    order = migrationDescription.@order?.text() ? migrationDescription.@order.text() as int : UNORDERED
+    logger.info "Load migration descriptor ${descriptor.name}"
+    validateDescriptor(descriptor)
+    def migrationDescriptor = new XmlSlurper().parse(descriptor)
+    module = migrationDescriptor.@module.text()
+    order = migrationDescriptor.@order?.text() ? migrationDescriptor.@order.text() as int : UNORDERED
     String actualVersion = status[module]
-    String toVersion = migrationDescription.current.@version.text()
+    String toVersion = migrationDescriptor.current.@version.text()
     if (actualVersion) {
       for (int version = (actualVersion as int); version < (toVersion as int); version++) {
+        String versionIn3Digits = String.format("%03d", version)
         List<Script> scripts =
-            migrationDescription.upgrade.find {it.@fromVersion == "00${version}"}?.script.collect {
+            migrationDescriptor.upgrade.find {it.@fromVersion == versionIn3Digits}?.script.collect {
               MigrationScriptBuilder
-                  .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), "up00${version}"))
+                  .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), "up${versionIn3Digits}"))
                   .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
                   .withLogger(logger)
                   .build()
             }
         migrations << DatasourceMigration.builder()
             .module(module)
-            .fromVersion("00${version}")
-            .toVersion("00${version + 1}")
+            .fromVersion(versionIn3Digits)
+            .toVersion(String.format("%03d", version + 1))
             .scripts(scripts)
             .logger(logger)
             .build()
       }
     } else {
-      List<Script> scripts = migrationDescription.current.script.collect {
+      List<Script> scripts = migrationDescriptor.current.script.collect {
         MigrationScriptBuilder
             .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), toVersion))
             .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
@@ -171,5 +178,13 @@ class MigrationModule {
       throw new FileNotFoundException("The script at ${scriptPath.toString()} doesn't exist!")
     }
     return scriptPath.toString()
+  }
+
+  private void validateDescriptor(File descriptor) {
+    def xsd = new StreamSource(getClass().getResourceAsStream('/migration.xsd'))
+    def factory = XMLSchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+    def schema = factory.newSchema([xsd] as Source[])
+    def validator = schema.newValidator()
+    validator.validate(new StreamSource(new FileReader(descriptor)))
   }
 }

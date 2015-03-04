@@ -24,6 +24,7 @@
 package org.silverpeas.setup.migration
 
 import org.silverpeas.setup.api.Logger
+import org.xml.sax.SAXParseException
 
 import static org.silverpeas.setup.test.Assertion.numberOfItemsIn
 import static org.silverpeas.setup.test.Assertion.versionOfModule
@@ -77,6 +78,16 @@ class MigrationModuleTest extends AbstractDatabaseTest{
 
     assert versionOfModule('toto') == '004'
     assert numberOfItemsIn('Person') == 1
+  }
+
+  void testAMalformedMigrationDescriptor() {
+    shouldFail(SAXParseException) {
+      new MigrationModule()
+          .withSettings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+          .withStatus(['toto':'003'])
+          .withLogger(Logger.getLogger(getClass().getSimpleName()))
+          .loadMigrationsFrom(new File("${testSetUp.migrationHome}/malformed-migration.xml"))
+    }
   }
 
 }
