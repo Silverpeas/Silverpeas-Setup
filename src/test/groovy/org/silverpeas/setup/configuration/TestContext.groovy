@@ -12,12 +12,14 @@ class TestContext {
       before: [
           autDomainSQL: null,
           system: null,
-          scheduler: null
+          scheduler: null,
+          castorSettings: null
       ],
       after : [
           autDomainSQL: null,
           system: null,
-          scheduler: null
+          scheduler: null,
+          castorSettings: null
       ]
   ]
 
@@ -43,6 +45,7 @@ class TestContext {
     settings.before.autDomainSQL = loadPropertiesFrom('authentication/autDomainSQL.properties')
     settings.before.system = loadPropertiesFrom('systemSettings.properties')
     settings.before.scheduler = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
+    settings.before.castorSettings = loadPropertiesFrom('workflow/castorSettings.properties')
 
     xmlconf.before.adefCreateSupplier = loadXmlFileFrom('/data/workflowRepository/ADEFCreateSupplier.xml')
     xmlconf.before.adefCreateProduct = loadXmlFileFrom('/data/workflowRepository/ADEFCreateProduct.xml')
@@ -55,6 +58,7 @@ class TestContext {
     settings.after.autDomainSQL = loadPropertiesFrom('authentication/autDomainSQL.properties')
     settings.after.system = loadPropertiesFrom('systemSettings.properties')
     settings.after.scheduler = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
+    settings.after.castorSettings = loadPropertiesFrom('workflow/castorSettings.properties')
 
     xmlconf.after.adefCreateSupplier = loadXmlFileFrom('/data/workflowRepository/ADEFCreateSupplier.xml')
     xmlconf.after.adefCreateProduct = loadXmlFileFrom('/data/workflowRepository/ADEFCreateProduct.xml')

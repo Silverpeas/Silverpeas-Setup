@@ -128,6 +128,9 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
 
     assert after.scheduler['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *' &&
         after.scheduler['timeoutSchedule'] != before.scheduler['timeoutSchedule']
+
+    assert after.castorSettings['CastorJDODatabaseFileURL'] != before.castorSettings['CastorJDODatabaseFileURL'] &&
+        !after.castorSettings['CastorJDODatabaseFileURL'].empty
   }
 
   void assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(TestContext context) {

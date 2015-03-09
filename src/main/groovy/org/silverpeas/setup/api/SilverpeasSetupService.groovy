@@ -71,7 +71,7 @@ class SilverpeasSetupService {
       properties.each() { key, value ->
         if (line.contains(key)) {
           existingProperties << key
-          line = line.replaceFirst('=.*',"=  ${Matcher.quoteReplacement(value)}")
+          line = line.replaceFirst('=.*',"=  ${Matcher.quoteReplacement(value).trim()}")
         }
       }
       line
@@ -79,7 +79,7 @@ class SilverpeasSetupService {
     new FileWriter(propertiesFilePath + '.tmp', true).withWriter { writer ->
       writer.println()
       properties.findAll({ key, value -> !existingProperties.contains(key) }).each { key, value ->
-        writer.println("${key} = ${value}")
+        writer.println("${key} = ${value.trim()}")
       }
     }
     def template = new File(propertiesFilePath)
