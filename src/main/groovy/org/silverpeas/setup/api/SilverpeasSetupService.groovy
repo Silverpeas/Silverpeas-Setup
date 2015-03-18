@@ -142,7 +142,7 @@ class SilverpeasSetupService {
           break
       }
     }
-    return expression
+    return normalizePath(expression)
   }
 
   /**
@@ -185,6 +185,10 @@ class SilverpeasSetupService {
    */
   static final Logger getLogger(String namespace) {
     return Logger.getLogger(namespace)
+  }
+
+  private static final String normalizePath(String path) {
+    return path.replaceAll('\\\\', '/');
   }
 
 }

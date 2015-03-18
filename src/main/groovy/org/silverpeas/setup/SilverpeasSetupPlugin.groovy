@@ -95,9 +95,9 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   }
 
   private def completeSettingsForProject(Project project) {
-    settings.SILVERPEAS_HOME = project.silversetup.silverpeasHome
-    settings.MIGRATION_HOME = project.silversetup.migrationHome
-    settings.CONFIGURATION_HOME = project.silversetup.configurationHome
+    settings.SILVERPEAS_HOME = normalizePath(project.silversetup.silverpeasHome)
+    settings.MIGRATION_HOME = normalizePath(project.silversetup.migrationHome)
+    settings.CONFIGURATION_HOME = normalizePath(project.silversetup.configurationHome)
     settings.DB_DATASOURCE_JNDI = 'java:/datasources/silverpeas'
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
@@ -147,5 +147,9 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     /* customize the traces writing both on the standard output and on the log file. */
     project.gradle.useLogger(new TaskEventLogging()
         .withTasks(project.silversetup.logging.scriptTasks))
+  }
+
+  private String normalizePath(String path) {
+    return path.replaceAll('\\\\', '/')
   }
 }
