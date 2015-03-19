@@ -9,6 +9,7 @@ import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.TaskState
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
+import org.silverpeas.setup.configuration.JBossServer
 
 /**
  * A logger hooking to events from the task execution in order to customize the output of the
@@ -16,7 +17,9 @@ import org.silverpeas.setup.api.SilverpeasSetupService
  * further traces will refer.
  * @author mmoquillon
  */
-class TaskEventLogging implements TaskExecutionListener {
+class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
+
+  private static final String DEFAULT_LOG_NAMESPACE = 'Silverpeas Setup'
 
   /**
    * The name of the tasks to consider in the custom output. By default, the tasks configureJBoss,
@@ -25,17 +28,19 @@ class TaskEventLogging implements TaskExecutionListener {
   List<String> tasks = ['configureJBoss', 'configureSilverpeas', 'migration']
 
   private buildStarted = false
+  private List<String> executedTasks = []
 
   public TaskEventLogging withTasks(tasks) {
     this.tasks.addAll(tasks)
     return this
   }
 
+  @Override
   public void beforeExecute(Task task) {
     if (tasks.contains(task.name)) {
       if (!buildStarted) {
         buildStarted = true
-        Logger.getLogger('Silverpeas Setup').formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n',
+        Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n',
             "SILVERPEAS SETUP: ${task.project.version}",
             "SILVERPEAS HOME:  ${task.project.silversetup.silverpeasHome}",
             "JBOSS HOME:       ${task.project.silversetup.jbossHome}",
@@ -46,13 +51,18 @@ class TaskEventLogging implements TaskExecutionListener {
       }
       Logger log = Logger.getLogger(task.name)
       String taskTitle = unformat(task.name)
-      log.info "${taskTitle}...\n"
-      println "${taskTitle}..."
+      if (!task.didWork) {
+        log.info "${taskTitle}..."
+        print "${taskTitle}... "
+      } else {
+        executedTasks << task.name
+      }
     }
   }
 
+  @Override
   public void afterExecute(Task task, TaskState state) {
-    if (tasks.contains(task.name)) {
+    if (tasks.contains(task.name) && !executedTasks.contains(task.name)) {
       Logger log = Logger.getLogger(task.name)
       String taskTitle = unformat(task.name)
       String status = '[OK]'
@@ -61,8 +71,17 @@ class TaskEventLogging implements TaskExecutionListener {
         log.error state.failure
       }
       log.info "${taskTitle}: ${status}\n"
-      println "${taskTitle}: ${status}"
+      println "${status}"
     }
+  }
+
+  @Override
+  void buildFinished(final BuildResult result) {
+    JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome)
+    String status = "JBoss is ${jboss.status()}"
+    Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
+    println "INFO: ${status}"
+    result.rethrowFailure()
   }
 
   private String unformat(String name) {
