@@ -29,6 +29,7 @@ import org.silverpeas.migration.jcr.service.ConverterUtil;
 import org.silverpeas.migration.jcr.service.model.SimpleAttachmentBuilder;
 import org.silverpeas.migration.jcr.service.model.SimpleDocument;
 import org.silverpeas.test.jcr.JcrTest;
+import org.silverpeas.util.ConfigurationHolder;
 import org.silverpeas.util.Console;
 import org.silverpeas.util.StringUtil;
 import org.silverpeas.util.file.FileUtil;
@@ -237,7 +238,8 @@ public class WysiwygPurgerTest {
         /*
         The test
          */
-        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService(), 1);
+        ConfigurationHolder.setMaxThreadsCount(1);
+        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService());
         purger.setConsole(new Console().setEchoAsDotEnabled(false));
         purger.purgeDocuments();
 
@@ -472,7 +474,8 @@ public class WysiwygPurgerTest {
         /*
         The test
          */
-        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService(), 1);
+        ConfigurationHolder.setMaxThreadsCount(1);
+        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService());
         purger.setConsole(new Console().setEchoAsDotEnabled(false));
         purger.purgeDocuments();
 
@@ -569,7 +572,8 @@ public class WysiwygPurgerTest {
         /*
         The test
          */
-        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService(), 1);
+        ConfigurationHolder.setMaxThreadsCount(1);
+        WysiwygPurger purger = new WysiwygPurger(getSimpleDocumentService());
         purger.setConsole(new Console().setEchoAsDotEnabled(false));
         purger.purgeDocuments();
 

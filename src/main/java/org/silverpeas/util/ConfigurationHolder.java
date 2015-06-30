@@ -20,6 +20,10 @@
  */
 package org.silverpeas.util;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.silverpeas.util.file.FileUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -27,10 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.silverpeas.util.file.FileUtil;
 
 /**
  * This class holds all of the settings and parameters for the different applications used in the
@@ -169,9 +169,16 @@ public class ConfigurationHolder {
   }
 
   /**
+   * Sets the maximum number of threads the executors of parallelized configuration tasks are
+   * permitted to allocate with their threads pool.
+   */
+  public static void setMaxThreadsCount(int maxThreadCounts) {
+    System.setProperty(THREADS_KEY, String.valueOf(maxThreadCounts));
+  }
+
+  /**
    * Gets the maximum number of threads the executors of parallelized configuration tasks are
    * permitted to allocate with their threads pool.
-   *
    * @return the number of threads to use in pools.
    */
   public static int getMaxThreadsCount() {

@@ -48,7 +48,6 @@ import java.util.concurrent.Future;
  */
 public class WysiwygPurger extends DbBuilderDynamicPart {
 
-  private final ExecutorService executor;
   private final SimpleDocumentService service;
 
   /**
@@ -56,17 +55,15 @@ public class WysiwygPurger extends DbBuilderDynamicPart {
    * A thread pool of 10 threads is handled.
    */
   public WysiwygPurger() {
-    executor = Executors.newFixedThreadPool(10);
     this.service = new SimpleDocumentService();
   }
 
   /**
    * Hidden constructor used by tests.
    * @param service
-   * @param fixedThreadPool
+   *
    */
-  WysiwygPurger(SimpleDocumentService service, int fixedThreadPool) {
-    executor = Executors.newFixedThreadPool(fixedThreadPool);
+  WysiwygPurger(SimpleDocumentService service) {
     this.service = service;
   }
 
@@ -82,7 +79,7 @@ public class WysiwygPurger extends DbBuilderDynamicPart {
     long totalNumberOfPurgedFiles = 0L;
     long totalNumberOfRenamedFiles = 0L;
     List<WysiwygDocumentPurger> mergers = buildWysiwygDocumentPurgers();
-    List<Future<WysiwygDocumentPurger.Result>> results = executor.invokeAll(mergers);
+    List<Future<WysiwygDocumentPurger.Result>> results = getThreadExecutor().invokeAll(mergers);
     try {
       for (Future<WysiwygDocumentPurger.Result> result : results) {
         totalNumberOfPurgedFiles += result.get().getNbWysiwygContentPurged();
@@ -96,7 +93,7 @@ public class WysiwygPurger extends DbBuilderDynamicPart {
           ex);
       throw ex;
     } finally {
-      executor.shutdown();
+      getThreadExecutor().shutdown();
     }
     getConsole().printMessage("Nb of purged wysiwyg contents : " + totalNumberOfPurgedFiles);
     getConsole()
