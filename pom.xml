@@ -9,7 +9,7 @@
   <groupId>com.silverpeas.builder</groupId>
   <artifactId>configuration</artifactId>
   <packaging>jar</packaging>
-  <version>5.14.4-SNAPSHOT</version>
+  <version>5.14.4</version>
   <name>Silverpeas Configuration Tools - ${project.version}</name>
 
   <scm>
@@ -17,7 +17,7 @@
     <developerConnection>scm:git:git@github.com:Silverpeas/Silverpeas-setup.git
     </developerConnection>
     <url>https://github.com/Silverpeas/Silverpeas-setup</url>
-    <tag>configuration-5.14</tag>
+    <tag>configuration-5.14.4</tag>
   </scm>
 
   <repositories>
