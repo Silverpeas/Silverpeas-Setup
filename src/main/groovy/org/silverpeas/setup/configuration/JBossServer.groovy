@@ -28,6 +28,11 @@ import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Paths
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
 
 /**
@@ -84,14 +89,25 @@ class JBossServer {
   }
 
   /**
-   * Waits for the JBoss/Wildfly is running. Be caution, this method can never returns if it is
-   * invoked while no JBoss/Wildfly instance is started.
+   * Waits for the JBoss/Wildfly is running. If the server requires to be reloaded, then a reload
+   * is performed silently before checking it is running. Be caution, this method can never returns
+   * in some peculiar state of the server.
    */
   private void waitUntilRunning() {
     logger.formatInfo(' %s', '.')
-    while(!isRunning()) {
+    String status = this.status()
+    long start = System.currentTimeMillis();
+    while(status != 'running') {
+      if (status == 'reload-required') {
+        this.reload()
+      }
       Thread.sleep(1000)
+      if (System.currentTimeMillis() - start > 6000) {
+        logger.error "JBoss doesn't respond. Stop all"
+        throw new TimeoutException("JBoss doesn't respond. Stop all")
+      }
       logger.formatInfo('%s', '.')
+      status = this.status()
     }
   }
 
@@ -152,6 +168,25 @@ class JBossServer {
   }
 
   /**
+   * Gets the name and the version of the JBoss/Wildfly application server referred by the
+   * JBOSS_HOME environment variable.
+   * @return the server name and version.tail -f
+   */
+  String about() {
+    def proc = """${cli} --connect --commands=:read-attribute(name=product-name),:read-attribute(name=product-version)""".execute()
+    proc.waitFor()
+    String about = ''
+    if (proc.exitValue() == 0) {
+      String output = proc.in.text
+      Matcher matcher = output =~ /"result" => "(.+)"/
+        matcher.each { token ->
+          about += token[1] + ' '
+        }
+    }
+    return (about.empty ? 'Unsupported or unknown application server' : about.trim())
+  }
+
+  /**
    * Starts an instance of the JBoss/Wildfly server in a standalone mode (full JEE profile).
    * If an instance of JBoss/Wildfly is already running, then nothing is done.
    * If the debug mode is forced, then it starts in debug.
@@ -189,7 +224,7 @@ class JBossServer {
     if (!isStartingOrRunning()) {
       String p = (port <= 1000 ? '5005':String.valueOf(port))
       ProcessBuilder process =
-          new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
+          new ProcessBuilder(wstarter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
               .directory(new File(jbossHome))
               .redirectErrorStream(true)
       if (redirection != null) {
@@ -217,6 +252,15 @@ class JBossServer {
     } else {
       logger.info 'No JBoss instance running'
     }
+  }
+
+  /**
+   * Reloads the configuration. Usually any changes in the system settings require a reload of
+   * the server. If no JBoss/Wildfly instance is running, nothing is done.
+   */
+  void reload() {
+    def proc = """${cli} --connect --command=:reload""".execute()
+    proc.waitFor()
   }
 
   /**
@@ -263,7 +307,7 @@ class JBossServer {
     proc.waitForProcessOutput(output, output)
     String status = 'stopped'
     if (proc.exitValue() == 0) {
-      Matcher matcher = output.toString() =~ /"result" => "(\w+)"/
+      Matcher matcher = output.toString() =~ /"result" => "(.+)"/
       matcher.each { token ->
         status = token[1]
       }
@@ -292,10 +336,10 @@ class JBossServer {
     doWhenRunning {
       String artifact = Paths.get(artifactsPath).fileName
       if (!isDeployed(artifact)) {
-        def proc = """${cli} --connect --command="deploy ${artifactsPath}" """.execute()
+        def proc = """${cli} --connect --command='deploy ${artifactsPath}'""".execute()
         proc.waitFor()
         if (proc.exitValue() != 0 || !isDeployed(artifact)) {
-          throw new RuntimeException(proc.in.text)
+          throw new RuntimeException(proc.err.text)
         }
       } else {
         logger.info "${artifact} is already deployed in JBoss"
@@ -312,10 +356,10 @@ class JBossServer {
   void undeploy(String artifact) throws RuntimeException {
     doWhenRunning {
       if (isDeployed(artifact)) {
-        def proc = """${cli} --connect --command="undeploy ${artifact}" """.execute()
+        def proc = """${cli} --connect --command='undeploy ${artifact}'""".execute()
         proc.waitFor()
         if (proc.exitValue() != 0 || isDeployed(artifact)) {
-          throw new RuntimeException(proc.in.text)
+          throw new RuntimeException(proc.err.text)
         }
       } else {
         logger.info "${artifact} isn't deployed in JBoss"
@@ -330,12 +374,9 @@ class JBossServer {
    */
   boolean isDeployed(String artifact) {
     return doWhenRunning {
-      StringBuilder output = new StringBuilder()
-      def proc = """${
-        cli
-      } --connect --command=:read-children-names(child-type=deployment)""".execute()
-      proc.waitForProcessOutput(output, output)
-      return output.contains('"outcome" => "success"') && output.contains(artifact)
+      def proc = """${cli} --connect --command='ls deployment'""".execute()
+      proc.waitFor()
+      return proc.in.text.contains(artifact)
     }
   }
 
