@@ -148,9 +148,7 @@ class JBossConfigurationTask extends DefaultTask {
         return child.isFile()
       }
     }).each { confFile ->
-      String[] resource = confFile.name.split('\\.')
-      JBossResourceType type = JBossResourceType.valueOf(resource[1])
-      log.info "Configure ${type} ${resource[0]} for Silverpeas"
+      log.info "Process configuration file ${confFile.name}"
       try {
         Script script = ConfigurationScriptBuilder.fromScript(confFile.path)
             .withLogger(log)

@@ -44,9 +44,7 @@ class JBossCliScript implements Script {
   @Override
   void run(def args) throws RuntimeException {
     try {
-      String[] resource = script.name.split('\\.')
-      JBossResourceType type = JBossResourceType.valueOf(resource[1])
-      log.info "Prepare configuration of ${type} ${resource[0]} for Silverpeas"
+      log.info "Prepare JBoss configuration from ${script.name}"
       Path cli = Files.createTempFile(script.name, '')
       new FileReader(script).transformLine(new FileWriter(cli.toString())) { line ->
         VariableReplacement.parseExpression(line, args.settings)
