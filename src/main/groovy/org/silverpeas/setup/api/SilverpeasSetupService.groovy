@@ -33,6 +33,7 @@ import java.util.regex.Matcher
 /**
  * A service providing high-level or added-value functions for both the tasks defined by this
  * plugin and the Groovy scripts invoked within the execution of those tasks.
+ *
  * @author mmoquillon
  */
 class SilverpeasSetupService {
@@ -40,23 +41,23 @@ class SilverpeasSetupService {
   private static final def VAR_PATTERN = /\$\{(env\.|sys\.)?(\w+)\}/
   private static final def SCRIPT_PATTERN = /\$\{eval:([:.\w \{\}\$]+)\}/
 
+ /**
+  * This service extends dynamically the String class with an additional method, String#asPath(),
+  * that returns a Path instance from the path representation of the String. The difference between
+  * this method and {@code Paths#getPath(String)} is that the former takes into account any system
+  * properties or environment variables in the path; if the path contains any system or
+  * environment variables, they are then replaced by their value.
+  * @see SilverpeasSetupService#expanseVariables(java.lang.String)
+  */
+  static {
+    String.metaClass.asPath = { Paths.get(expanseVariables(delegate)) }
+  }
+
   /**
    * The current Silverpeas settings from both the customer configuration properties and the
    * default configuration properties.
    */
   static def currentSettings = [:]
-
-  /**
-   * Gets a Path object from the specified file or directory path. The difference with the
-   * {@code Paths#getPath(String)} method is that it supports the system properties or environment
-   * variables in the specified path. If the given path contains system or environment variables,
-   * then they are replaced by their value.
-   * @param path the path of a file or a directory.
-   * @return the Path instance representing the specified file/directory path.
-   */
-  static final Path getPath(String path) {
-    return Paths.get(expanseVariables(path))
-  }
 
   /**
    * Updates the specified properties file by replacing each property value by those specified in

@@ -33,7 +33,8 @@ import org.silverpeas.setup.api.SilverpeasSetupService
 import java.util.regex.Matcher
 
 /**
- * This task is to configure JBoss/Wildfly in order to be ready to migrate Silverpeas.
+ * A Gradle task to configure a JBoss/Wildfly instance from some CLI scripts to be ready to run
+ * Silverpeas.
  * @author mmoquillon
  */
 class JBossConfigurationTask extends DefaultTask {

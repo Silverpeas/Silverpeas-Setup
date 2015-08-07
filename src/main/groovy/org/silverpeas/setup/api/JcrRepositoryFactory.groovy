@@ -66,6 +66,7 @@ class JcrRepositoryFactory {
       XmlUtil.serialize(jcrRepositoryConf, new FileWriter(destination))
       repositoryConf = destination
     }
+    return repositoryConf
   }
 
   private void initJNDIContext() {

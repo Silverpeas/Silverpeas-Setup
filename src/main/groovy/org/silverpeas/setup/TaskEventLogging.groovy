@@ -44,7 +44,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
             "SILVERPEAS SETUP: ${task.project.version}",
             "SILVERPEAS HOME:  ${task.project.silversetup.silverpeasHome}",
             "JBOSS HOME:       ${task.project.silversetup.jbossHome}",
-            "JCR HOME:         ${SilverpeasSetupService.getPath(SilverpeasSetupService.currentSettings.JCR_HOME).toString()}",
+            "JCR HOME:         ${SilverpeasSetupService.currentSettings.JCR_HOME.asPath().toString()}",
             "JAVA HOME:        ${System.getenv('JAVA_HOME')}",
             "DATABASE:         ${SilverpeasSetupService.currentSettings.DB_SERVERTYPE.toLowerCase()}",
             "OPERATING SYSTEM: ${System.getProperty('os.name')}")

@@ -9,11 +9,11 @@ import java.sql.SQLException
  * log file.
  * </p>
  * This logger is defined because Gradle vampires the logging system to redirect any traces into
- * the standard outputs and doesn't provide no configuration to define new appenders or to override
+ * the standard outputs and doesn't provide any configuration to define new appender or to override
  * this logging behaviour.
  * </p>
  * If this logger isn't initialized by invoking the {@code Logger#init(File, LogLevel)} static
- * method, then by default the traces will be written into the standard output with as level INFO.
+ * method, then by default the traces will be written into the standard output with INFO as level.
  * @author mmoquillon
  */
 class Logger {
