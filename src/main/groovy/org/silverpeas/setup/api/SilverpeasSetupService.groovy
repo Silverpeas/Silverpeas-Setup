@@ -65,7 +65,7 @@ class SilverpeasSetupService {
    * @param propertiesFilePath the path of the properties file.
    * @param properties the properties to put into the file.
    */
-  static final void updateProperties(propertiesFilePath, properties) {
+  static final void updateProperties(String propertiesFilePath, properties) {
     def existingProperties = []
     FileWriter updatedPropertiesFile = new FileWriter(propertiesFilePath + '.tmp')
     new FileReader(propertiesFilePath).transformLine(updatedPropertiesFile) { line ->

@@ -30,6 +30,8 @@ import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.regex.Matcher
 
 /**
@@ -153,7 +155,7 @@ class JBossConfigurationTask extends DefaultTask {
         Script script = ConfigurationScriptBuilder.fromScript(confFile.path)
             .withLogger(log)
             .build()
-        script.run([jboss: jboss, settings: settings, log: log, service: SilverpeasSetupService])
+        script.run([jboss: jboss, settings: settings, service: SilverpeasSetupService])
       } catch(Exception ex) {
         log.error("Error while running script ${confFile.name}", ex)
         throw ex

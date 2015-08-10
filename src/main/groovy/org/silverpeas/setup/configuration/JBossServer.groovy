@@ -24,14 +24,9 @@
 package org.silverpeas.setup.configuration
 
 import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Paths
-import java.util.concurrent.Callable
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
 
@@ -395,39 +390,26 @@ class JBossServer {
   /**
    * Configures JBoss by running the JBoss CLI statements in the specified commands file.
    * If the server isn't running, then it is started before.
-   * <p>
-   * If the command file contains the following line:</p>
-   * <pre><code>#check: SUBSYSTEM_RESOURCE</code></pre>
-   * <p>with SUBSYSTEM_RESOURCE as the path of a resource in a subsystem of JBoss/Wildfly, then
-   * the method will check the specified resource exists before executing the command file;
-   * the command file wil be processed only if the specified resource doesn't already exist in
-   * JBoss/Wildfly. For example:</p>
-   * <pre><code>#check: /subsystem=datasources/data-source=Silverpeas</code></pre>
-   * <p>specified to check the datasource Silverpeas already exists in JBoss/Wildfly.</p>
    * @param commandsFile the commands file to eat.
+   * commands file.
    * @throws Exception if an error occurs while processing the specified commands file.
    */
   void processCommandFile(File commandsFile) throws Exception {
     doWhenRunning {
       try {
         logger.info "${commandsFile.name} processing..."
-
-        if (shouldBeProcessed(commandsFile)) {
-          logger.info "${commandsFile.name} processing: [DONE]"
-        } else {
-          def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
-          proc.waitFor()
-          assertCommandSucceeds(proc)
-          if (status() == 'starting') {
-            logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
-            // case of a reload, wait for the instance is running
-            while (!isRunning()) {
-              sleep(1000)
-            }
-            logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
+        def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
+        proc.waitFor()
+        assertCommandSucceeds(proc)
+        if (status() == 'starting') {
+          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
+          // case of a reload, wait for the instance is running
+          while (!isRunning()) {
+            sleep(1000)
           }
-          logger.info "${commandsFile.name} processing: [OK]"
+          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
         }
+        logger.info "${commandsFile.name} processing: [OK]"
       } catch (InvalidObjectException e) {
         logger.info "${commandsFile.name} processing: [WARNING]"
         logger.warn "Invalid resource. ${e.message}"
@@ -436,41 +418,6 @@ class JBossServer {
         throw e
       }
     }
-  }
-
-  private boolean shouldBeProcessed(File commandsFile) {
-    boolean processed = false
-    List<String> lines = commandsFile.readLines()
-    for (int i = 0; i < lines.size() && !processed; i++) {
-      // the commands file should be processed if and only if some given properties are set
-      Matcher matcher = lines.get(i) =~ /\s*#isDefined:\s+(.+)/
-      boolean matched = false
-      matcher.each { token ->
-        matched = true
-        processed = true
-        token[1].split('( )+').each { property ->
-          if (!SilverpeasSetupService.currentSettings[property]) {
-            processed = false
-          }
-        }
-      }
-      if (matched && !processed) {
-        break
-      }
-
-      // the commands file should be processed if and only if the resource referred by the file
-      // isn't already defined in JBoss/Wildfly
-      matcher = lines.get(i)  =~ /\s*#check:\s+(.+)/
-      matcher.each { token ->
-        StringBuilder output = new StringBuilder()
-        def proc = """${cli} --connect --command="${token[1]}:read-resource" """.execute()
-        proc.waitForProcessOutput(output, output)
-        if (proc.exitValue() == 0 && output.contains('"outcome" => "success"')) {
-          processed = true
-        }
-      }
-    }
-    return processed
   }
 
 }

@@ -2,6 +2,7 @@ package org.silverpeas.setup.configuration
 
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -33,24 +34,28 @@ class JBossCliScript implements Script {
     this.log = logger
     return this
   }
-/**
+
+  /**
    * Runs this script with the specified arguments.
    * @param args a Map of variables to pass to the scripts. The keys in the Map are the names of the
-   * variables. Expected the configuration settings of Silverpeas under the name
-   * <code>settings</code>, the logger used in the tasks under the name <code>log</code>, and the
-   * JBossServer instance under the name <code>jboss</code>.
+   * variables. Expected the following:
+   * <ul>
+   *  <li><em>settings</em>: the settings of Silverpeas;</li>
+   *  <li><em>jboss</em>: the JBossServer instance.</li>
+   * </ul>
    * @throws RuntimeException if an error occurs during the execution of the script.
    */
   @Override
   void run(def args) throws RuntimeException {
     try {
       log.info "Prepare JBoss configuration from ${script.name}"
+      JBossServer jboss = args.jboss
+      def settings = args.settings
       Path cli = Files.createTempFile(script.name, '')
       new FileReader(script).transformLine(new FileWriter(cli.toString())) { line ->
-        VariableReplacement.parseExpression(line, args.settings)
+        VariableReplacement.parseExpression(line, settings)
       }
-
-      args.jboss.processCommandFile(cli.toFile())
+      jboss.processCommandFile(cli.toFile())
     } catch (Exception ex) {
       throw new RuntimeException(ex)
     }

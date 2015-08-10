@@ -57,9 +57,14 @@ class SQLScript implements Script {
   SQLScript useLogger(final Logger logger) {
     return this
   }
-/**
+
+  /**
    * Runs this script.
- * @param args the Sql instance to use to perform operations against the database.
+   * @param args a Map of variables to pass to the scripts. The keys in the Map are the names of the
+   * variables. Expected the following:
+   * <ul>
+   *   <li><em>sql</em>: the Sql instance to use to perform operations against the database.</li>
+   * </ul>
    * @throws SQLException if an error occurs during the execution of this script.
    */
   @Override

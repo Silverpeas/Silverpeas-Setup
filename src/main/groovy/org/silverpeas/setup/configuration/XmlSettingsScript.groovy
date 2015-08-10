@@ -48,19 +48,22 @@ class XmlSettingsScript implements Script {
   /**
    * Runs this script with the specified arguments.
    * @param args a Map of variables to pass to the scripts. The keys in the Map are the names of the
-   * variables. Expected the configuration settings of Silverpeas under the name
-   * <code>settings</code>.
+   * variables. Expected the following:
+   * <ul>
+   *   <li><em>settings</em>: the configuration settings of Silverpeas.</li>
+   * </ul>
    * @throws RuntimeException if an error occurs during the execution of the script.
    */
   @Override
   void run(def args) throws RuntimeException {
+    def settings = args.settings
     def settingsStatements = new XmlSlurper().parse(script)
     settingsStatements.fileset.each { GPathResult fileset ->
       String dir = SilverpeasSetupService.expanseVariables(fileset.@root.text())
       fileset.children().each { GPathResult file ->
         String status = '[OK]'
         String filename = file.@name
-        String settingFile = "${pathToLog(dir, args.settings.SILVERPEAS_HOME)}/${filename}"
+        String settingFile = "${pathToLog(dir, settings.SILVERPEAS_HOME)}/${filename}"
         log.info "${settingFile} processing..."
         try {
           switch (file.name()) {
