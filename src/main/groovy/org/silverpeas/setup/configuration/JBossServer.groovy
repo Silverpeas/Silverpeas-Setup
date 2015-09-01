@@ -48,6 +48,8 @@ class JBossServer {
 
   private int debugging = 0
 
+  private long timeout = 60000
+
   private def logger = Logger.getLogger(getClass().getSimpleName())
 
   /**
@@ -97,7 +99,7 @@ class JBossServer {
         this.reload()
       }
       Thread.sleep(1000)
-      if (System.currentTimeMillis() - start > 6000) {
+      if (System.currentTimeMillis() - start > this.timeout) {
         logger.error "JBoss doesn't respond. Stop all"
         throw new TimeoutException("JBoss doesn't respond. Stop all")
       }
@@ -142,12 +144,26 @@ class JBossServer {
   }
 
   /**
-   * The logger to use with this JBossService instance to output any traces about its actions.
+   * The logger to use with this JBoss/Wildfly instance to output any traces about its actions.
    * @param logger the logger to use.
    * @return itself.
    */
   JBossServer useLogger(logger) {
     this.logger = logger
+    return this
+  }
+
+  /**
+   * The JBoss/Wildfly starting timeout in milliseconds. Whether JBoss/Wildfly is not running before
+   * the expected time, then an exception is thrown. By default, the timeout is set to 1 minute.
+   * @param timeout the JBoss/Wildfly starting timeout in milliseconds. If null or equals to 0,
+   * nothing is set.
+   * @return itself.
+   */
+  JBossServer withStartingTimeout(long timeout) {
+    if (this.timeout!= null && this.timeout > 0) {
+      this.timeout = timeout
+    }
     return this
   }
 
