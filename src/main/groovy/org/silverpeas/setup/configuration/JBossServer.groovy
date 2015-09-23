@@ -235,7 +235,7 @@ class JBossServer {
     if (!isStartingOrRunning()) {
       String p = (port <= 1000 ? '5005':String.valueOf(port))
       ProcessBuilder process =
-          new ProcessBuilder(wstarter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
+          new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
               .directory(new File(jbossHome))
               .redirectErrorStream(true)
       if (redirection != null) {
@@ -347,10 +347,13 @@ class JBossServer {
     doWhenRunning {
       String artifact = Paths.get(artifactsPath).fileName
       if (!isDeployed(artifact)) {
-        def proc = """${cli} --connect --command='deploy ${artifactsPath}'""".execute()
+        Process proc =
+            new ProcessBuilder(cli, '--connect', "deploy ${artifactsPath}")
+                .redirectErrorStream(true)
+                .start()
         proc.waitFor()
         if (proc.exitValue() != 0 || !isDeployed(artifact)) {
-          throw new RuntimeException(proc.err.text)
+          throw new RuntimeException(proc.in.text)
         }
       } else {
         logger.info "${artifact} is already deployed in JBoss"
@@ -367,10 +370,13 @@ class JBossServer {
   void undeploy(String artifact) throws RuntimeException {
     doWhenRunning {
       if (isDeployed(artifact)) {
-        def proc = """${cli} --connect --command='undeploy ${artifact}'""".execute()
+        Process proc =
+            new ProcessBuilder(cli, '--connect', "undeploy ${artifact}")
+                .redirectErrorStream(true)
+                .start()
         proc.waitFor()
         if (proc.exitValue() != 0 || isDeployed(artifact)) {
-          throw new RuntimeException(proc.err.text)
+          throw new RuntimeException(proc.in.text)
         }
       } else {
         logger.info "${artifact} isn't deployed in JBoss"
@@ -385,7 +391,9 @@ class JBossServer {
    */
   boolean isDeployed(String artifact) {
     return doWhenRunning {
-      def proc = """${cli} --connect --command='ls deployment'""".execute()
+      Process proc =
+          new ProcessBuilder(cli, '--connect', "ls deployment")
+              .start()
       proc.waitFor()
       return proc.in.text.contains(artifact)
     }
