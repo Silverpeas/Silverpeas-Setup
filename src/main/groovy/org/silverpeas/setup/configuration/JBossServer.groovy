@@ -46,8 +46,6 @@ class JBossServer {
 
   private File redirection = null
 
-  private int debugging = 0
-
   private long timeout = 60000
 
   private def logger = Logger.getLogger(getClass().getSimpleName())
@@ -113,7 +111,7 @@ class JBossServer {
    * @param action the action to run against a running JBoss/Wildfly instance.
    * @return the result value of the closure if any.
    */
-  private def doWhenRunning(Closure action) {
+  def doWhenRunning(Closure action) {
     switch (status()) {
       case 'stopped':
         logger.info 'JBoss not started, so start it'
@@ -168,20 +166,10 @@ class JBossServer {
   }
 
   /**
-   * Asks JBoss to run by default in debugging mode when its start command is invoked.
-   * @param port the debugging port. If lesser or equal to 1000 or not set, the default port 5005
-   * will be used.
-   * @return itself.
-   */
-  JBossServer forceDebugMode(int port = 5005) {
-    this.debugging = (port <= 1000 ? 5005:port)
-    return this
-  }
-
-  /**
    * Gets the name and the version of the JBoss/Wildfly application server referred by the
    * JBOSS_HOME environment variable.
-   * @return the server name and version.tail -f
+   * A JBoss/Wildfly instance should be running.
+   * @return the server name and version.
    */
   String about() {
     def proc = """${cli} --connect --commands=:read-attribute(name=product-name),:read-attribute(name=product-version)""".execute()
@@ -200,28 +188,32 @@ class JBossServer {
   /**
    * Starts an instance of the JBoss/Wildfly server in a standalone mode (full JEE profile).
    * If an instance of JBoss/Wildfly is already running, then nothing is done.
-   * If the debug mode is forced, then it starts in debug.
+   * @param params named parameters. Parameters supported are:
+   * <ul>
+   *   <li>adminOnly: starts JBoss/Wildfly to perform only administration tasks</li>
+   * </ul>
    */
-  void start() {
-    if (debugging >= 1000) {
-      debug(debugging)
-    } else {
-      if (!isStartingOrRunning()) {
-        ProcessBuilder process =
-            new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0')
-                .directory(new File(jbossHome))
-                .redirectErrorStream(true)
-        if (redirection != null) {
-          process.redirectOutput(redirection)
-        } else {
-          process.inheritIO()
-          System.println(process.redirectOutput())
-        }
-        process.start()
-        waitUntilRunning()
+  void start(Map params = null) {
+    boolean adminOnly = (params != null && params.adminOnly ? params.adminOnly:false)
+    if (!isStartingOrRunning()) {
+      ProcessBuilder process
+      if (adminOnly) {
+        process = new ProcessBuilder(starter, '-c', 'standalone-full.xml', '--admin-only')
       } else {
-        logger.info 'A JBoss instance is already started'
+        process = new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0')
       }
+      process.directory(new File(jbossHome))
+          .redirectErrorStream(true)
+      if (redirection != null) {
+        process.redirectOutput(redirection)
+      } else {
+        process.inheritIO()
+        System.println(process.redirectOutput())
+      }
+      process.start()
+      waitUntilRunning()
+    } else {
+      logger.info 'A JBoss instance is already started'
     }
   }
 
@@ -267,7 +259,8 @@ class JBossServer {
 
   /**
    * Reloads the configuration. Usually any changes in the system settings require a reload of
-   * the server. If no JBoss/Wildfly instance is running, nothing is done.
+   * the server.
+   * A JBoss/Wildfly instance should be running.
    */
   void reload() {
     def proc = """${cli} --connect --command=:reload""".execute()
@@ -339,108 +332,89 @@ class JBossServer {
 
   /**
    * Deploys the artifacts at the specified path into this JBoss server by using the Management API.
-   * If the server isn't running, then it is started before.
+   * A JBoss/Wildfly instance should be running.
    * @param artifactsPath
    * @throws RuntimeException if the deployment of the artifact failed.
    */
   void deploy(String artifactsPath) throws RuntimeException {
-    doWhenRunning {
-      String artifact = Paths.get(artifactsPath).fileName
-      if (!isDeployed(artifact)) {
-        Process proc =
-            new ProcessBuilder(cli, '--connect', "deploy ${artifactsPath}")
-                .redirectErrorStream(true)
-                .start()
-        proc.waitFor()
-        if (proc.exitValue() != 0 || !isDeployed(artifact)) {
-          throw new RuntimeException(proc.in.text)
-        }
-      } else {
-        logger.info "${artifact} is already deployed in JBoss"
+    String artifact = Paths.get(artifactsPath).fileName
+    if (!isDeployed(artifact)) {
+      Process proc =
+          new ProcessBuilder(cli, '--connect', "deploy ${artifactsPath}")
+              .redirectErrorStream(true)
+              .start()
+      proc.waitFor()
+      if (proc.exitValue() != 0 || !isDeployed(artifact)) {
+        throw new RuntimeException(proc.in.text)
       }
+    } else {
+      logger.info "${artifact} is already deployed in JBoss"
     }
   }
 
   /**
    * Undeploys the specified artifact from this JBoss server by using the Management API.
-   * If the server isn't running, then it is started before.
+   * A JBoss/Wildfly instance should be running.
    * @param artifactName
    * @throws RuntimeException if the deployment of the artifact failed.
    */
   void undeploy(String artifact) throws RuntimeException {
-    doWhenRunning {
-      if (isDeployed(artifact)) {
-        Process proc =
-            new ProcessBuilder(cli, '--connect', "undeploy ${artifact}")
-                .redirectErrorStream(true)
-                .start()
-        proc.waitFor()
-        if (proc.exitValue() != 0 || isDeployed(artifact)) {
-          throw new RuntimeException(proc.in.text)
-        }
-      } else {
-        logger.info "${artifact} isn't deployed in JBoss"
+    if (isDeployed(artifact)) {
+      Process proc =
+          new ProcessBuilder(cli, '--connect', "undeploy ${artifact}")
+              .redirectErrorStream(true)
+              .start()
+      proc.waitFor()
+      if (proc.exitValue() != 0 || isDeployed(artifact)) {
+        throw new RuntimeException(proc.in.text)
       }
+    } else {
+      logger.info "${artifact} isn't deployed in JBoss"
     }
   }
 
   /**
    * Is the specified artifact is deployed?
+   * A JBoss/Wildfly instance should be running.
    * @param artifact the artifact to check its deployment status.
    * @return true if the artifact is deployed, false otherwise.
    */
   boolean isDeployed(String artifact) {
-    return doWhenRunning {
-      Process proc =
-          new ProcessBuilder(cli, '--connect', "ls deployment")
-              .start()
-      proc.waitFor()
-      return proc.in.text.contains(artifact)
-    }
-  }
-
-  /**
-   * Prints out information about the deployment status of artifacts in this JBoss server. It an
-   * artifact doesn't appear in the output, then it isn't deployed.
-   * If the server isn't running, then it is started before.
-   */
-  void printDeployedArtifacts() {
-    doWhenRunning {
-      def proc = """${cli} --connect --command=deployment-info""".execute()
-      proc.waitFor()
-    }
+    Process proc =
+        new ProcessBuilder(cli, '--connect', "ls deployment")
+            .start()
+    proc.waitFor()
+    return proc.in.text.contains(artifact)
   }
 
   /**
    * Configures JBoss by running the JBoss CLI statements in the specified commands file.
-   * If the server isn't running, then it is started before.
+   * A JBoss/Wildfly instance should be running.
    * @param commandsFile the commands file to eat.
    * commands file.
    * @throws Exception if an error occurs while processing the specified commands file.
    */
   void processCommandFile(File commandsFile) throws Exception {
-    doWhenRunning {
-      try {
-        logger.info "${commandsFile.name} processing..."
-        def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
-        proc.waitFor()
-        assertCommandSucceeds(proc)
-        if (status() == 'starting') {
-          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
-          // case of a reload, wait for the instance is running
-          while (!isRunning()) {
-            sleep(1000)
-          }
-          logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
+    try {
+      logger.info "${commandsFile.name} processing..."
+      def proc = """${cli} --connect --file=${commandsFile.path}""".execute()
+      proc.waitFor()
+      assertCommandSucceeds(proc)
+      if (status() == 'starting') {
+        logger.info "${commandsFile.name} processing: JBoss/Wildfly reloading..."
+        // case of a reload, wait for the instance is running
+        while (!isRunning()) {
+          sleep(1000)
         }
-        logger.info "${commandsFile.name} processing: [OK]"
-      } catch (InvalidObjectException e) {
-        logger.info "${commandsFile.name} processing: [WARNING]"
-        logger.warn "Invalid resource. ${e.message}"
-      } catch (AssertionError | Exception e) {
-        logger.info "${commandsFile.name} processing: [FAILURE]"
-        throw e
+        logger.info "${commandsFile.name} processing: JBoss/Wildfly reloaded"
       }
+      logger.info "${commandsFile.name} processing: [OK]"
+    } catch (InvalidObjectException e) {
+      logger.info "${commandsFile.name} processing: [WARNING]"
+      logger.warn "Invalid resource. ${e.message}"
+    } catch (AssertionError | Exception e) {
+      logger.info "${commandsFile.name} processing: [FAILURE]"
+      throw e
     }
   }
 

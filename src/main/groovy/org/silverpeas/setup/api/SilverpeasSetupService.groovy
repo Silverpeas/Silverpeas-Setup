@@ -57,7 +57,7 @@ class SilverpeasSetupService {
    * The current Silverpeas settings from both the customer configuration properties and the
    * default configuration properties.
    */
-  static def currentSettings = [:]
+  static Map currentSettings = [:]
 
   /**
    * Updates the specified properties file by replacing each property value by those specified in

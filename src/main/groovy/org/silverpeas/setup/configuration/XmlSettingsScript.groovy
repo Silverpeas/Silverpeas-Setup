@@ -1,6 +1,7 @@
 package org.silverpeas.setup.configuration
 
 import groovy.util.slurpersupport.GPathResult
+import org.silverpeas.setup.api.AbstractScript
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
@@ -21,42 +22,24 @@ import javax.xml.xpath.XPathFactory
  * files to update and for each of them the properties to add or to update.
  * @author mmoquillon
  */
-class XmlSettingsScript implements Script {
-
-  private String script
-  private Logger log
+class XmlSettingsScript extends AbstractScript {
 
   /**
    * Constructs a new XML script for an XML settings file located at the specified absolute path.
    * @param path
    */
   XmlSettingsScript(String path) {
-    script = path
-  }
-
-  /**
-   * Uses the specified logger to trace this script execution.
-   * @param logger a logger.
-   * @return itself.
-   */
-  @Override
-  XmlSettingsScript useLogger(final Logger logger) {
-    this.log = logger
-    return this
+    super(path)
   }
 
   /**
    * Runs this script with the specified arguments.
    * @param args a Map of variables to pass to the scripts. The keys in the Map are the names of the
-   * variables. Expected the following:
-   * <ul>
-   *   <li><em>settings</em>: the configuration settings of Silverpeas.</li>
-   * </ul>
+   * variables.
    * @throws RuntimeException if an error occurs during the execution of the script.
    */
   @Override
-  void run(def args) throws RuntimeException {
-    def settings = args.settings
+  void run(Map args) throws RuntimeException {
     def settingsStatements = new XmlSlurper().parse(script)
     settingsStatements.fileset.each { GPathResult fileset ->
       String dir = SilverpeasSetupService.expanseVariables(fileset.@root.text())

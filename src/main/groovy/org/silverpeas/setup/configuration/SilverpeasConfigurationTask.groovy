@@ -60,8 +60,9 @@ class SilverpeasConfigurationTask extends DefaultTask {
       try {
         Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path)
             .withLogger(log)
+            .withSettings(settings)
             .build()
-        script.run([log: log, settings: settings, service: SilverpeasSetupService])
+        script.run(service: SilverpeasSetupService)
       } catch (Exception ex) {
         log.error("Error while processing the configuration file ${configurationFile.path}", ex)
         throw new TaskExecutionException(this, ex)

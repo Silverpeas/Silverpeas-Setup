@@ -24,8 +24,7 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
-import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.Script
+import org.silverpeas.setup.api.AbstractScript
 
 import java.sql.SQLException
 
@@ -35,27 +34,18 @@ import static org.silverpeas.setup.api.SilverpeasSetupService.expanseVariables
  * A SQL script.
  * @author mmoquillon
  */
-class SQLScript implements Script {
+class SQLScript extends AbstractScript {
 
   private List<String> statements = []
 
   SQLScript(String scriptPath) {
-    String script = new File(scriptPath).getText('UTF-8')
-      script.split(';').each { String aStatement ->
+    super(scriptPath)
+    String scriptContent = new File(scriptPath).getText('UTF-8')
+    scriptContent.split(';').each { String aStatement ->
         if (!aStatement.trim().isEmpty()) {
           statements << expanseVariables(aStatement.trim())
         }
       }
-  }
-
-  /**
-   * Uses the specified logger to trace this script execution.
-   * @param logger a logger.
-   * @return itself.
-   */
-  @Override
-  SQLScript useLogger(final Logger logger) {
-    return this
   }
 
   /**
@@ -68,7 +58,7 @@ class SQLScript implements Script {
    * @throws SQLException if an error occurs during the execution of this script.
    */
   @Override
-  void run(def args) throws SQLException {
+  void run(Map args) throws SQLException {
     Sql sql = args.sql
     sql.withBatch { batch ->
       statements.each {

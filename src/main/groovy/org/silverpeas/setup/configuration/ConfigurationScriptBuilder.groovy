@@ -12,11 +12,13 @@ class ConfigurationScriptBuilder {
 
   private String scriptPath
   private Logger logger
+  private Map settings
+  private JBossCliScript cliScript
 
   /**
    * Creates a script builder from the specified absolute path of a script.
    * @param scriptPath the absolute path of a script.
-   * @return a migration script builder.
+   * @return a configuration script builder.
    */
   static ConfigurationScriptBuilder fromScript(String scriptPath) {
     if (!new File(scriptPath).exists()) {
@@ -27,8 +29,39 @@ class ConfigurationScriptBuilder {
     return builder
   }
 
+  /**
+   * Instead to build a Script object from the given CLI script path, merges finally the content of
+   * latter into the specified CLI script <code>destination</code> and returns it.
+   * @param destination a JBoss CLI script into which will be merge the content of the script given
+   * by its path at this ConfigurationScriptBuilder construction.
+   * @return itself.
+   */
+  ConfigurationScriptBuilder mergeOnlyIfCLIInto(JBossCliScript destination) {
+    File scriptFile = destination.toFile()
+    if (!scriptFile.exists()) {
+      scriptFile.createNewFile()
+    }
+    this.cliScript = destination
+    return this
+  }
+
+  /**
+   * Sets the logger the script will use at his execution.
+   * @param logger a logger.
+   * @return itself.
+   */
   ConfigurationScriptBuilder withLogger(Logger logger) {
     this.logger = logger
+    return this
+  }
+
+  /**
+   * Sets the settings the script will use to parameterize his execution.
+   * @param settings the settings of the Silverpeas setup.
+   * @return itself
+   */
+  ConfigurationScriptBuilder withSettings(Map settings) {
+    this.settings = settings
     return this
   }
 
@@ -41,7 +74,12 @@ class ConfigurationScriptBuilder {
     Script script
     switch(type.toLowerCase()) {
       case 'cli':
-        script = new JBossCliScript(scriptPath)
+        if (cliScript) {
+          cliScript.toFile() << new File(scriptPath).text
+          script = cliScript
+        } else {
+          script = new JBossCliScript(scriptPath)
+        }
         break
       case 'xml':
         script = new XmlSettingsScript(scriptPath)
@@ -52,6 +90,8 @@ class ConfigurationScriptBuilder {
       default:
         throw new IllegalArgumentException("Unknow script type: ${type}")
     }
-    return script.useLogger(logger)
+    return script
+        .useLogger(logger)
+        .useSettings(settings)
   }
 }

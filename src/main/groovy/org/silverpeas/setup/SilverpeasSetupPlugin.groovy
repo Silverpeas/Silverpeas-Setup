@@ -23,11 +23,9 @@
  */
 package org.silverpeas.setup
 
-import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.ProjectState
-import org.gradle.api.invocation.Gradle
 import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
@@ -46,7 +44,7 @@ import org.silverpeas.setup.security.EncryptionFactory
  */
 class SilverpeasSetupPlugin implements Plugin<Project> {
 
-  private def settings
+  private Map settings
 
   @Override
   void apply(Project project) {
@@ -78,7 +76,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     }
   }
 
-  private def loadConfiguration(String configurationHome) {
+  private Map loadConfiguration(String configurationHome) {
     Properties properties = new Properties()
     properties.load(getClass().getResourceAsStream('/default_config.properties'))
     def customConfiguration = new File("${configurationHome}/config.properties")
@@ -94,7 +92,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     return VariableReplacement.parseParameters(properties, properties)
   }
 
-  private def completeSettingsForProject(Project project) {
+  private void completeSettingsForProject(Project project) {
     settings.SILVERPEAS_HOME = normalizePath(project.silversetup.silverpeasHome)
     settings.MIGRATION_HOME = normalizePath(project.silversetup.migrationHome)
     settings.CONFIGURATION_HOME = normalizePath(project.silversetup.configurationHome)
@@ -130,12 +128,12 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     settings.DB_SCHEMA = settings.DB_SERVERTYPE.toLowerCase()
   }
 
-  private def encryptAdminPassword() {
+  private void encryptAdminPassword() {
     Encryption encryption = EncryptionFactory.instance.createDefaultEncryption()
     settings.SILVERPEAS_ADMIN_PASSWORD = encryption.encrypt(settings.SILVERPEAS_ADMIN_PASSWORD)
   }
 
-  private def initLogging(Project project) {
+  private void initLogging(Project project) {
     String timestamp = new Date().format('yyyyMMdd_HHmmss')
     File logDir = new File(project.silversetup.logging.logDir)
     if (!logDir.exists()) {

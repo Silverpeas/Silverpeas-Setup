@@ -31,7 +31,6 @@ import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.regex.Matcher
 
 /**
@@ -52,20 +51,23 @@ class JBossConfigurationTask extends DefaultTask {
 
   @TaskAction
   def configureJBoss() {
+    jboss = new JBossServer("${project.silversetup.jbossHome}")
+        .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
+        .useLogger(log)
     try {
-      jboss = new JBossServer("${project.silversetup.jbossHome}")
-          .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
-          .useLogger(log)
       if (jboss.isStartingOrRunning()) {
         jboss.stop()
       }
       setUpJVMOptions()
       installAdditionalModules()
+      jboss.start(adminOnly: true) // start in admin only to perform only configuration tasks
       setUpJDBCDriver()
       processConfigurationFiles()
     } catch(Exception ex) {
       log.error 'Error while configuring JBoss/Wildfly', ex
       throw new TaskExecutionException(this, ex)
+    } finally {
+      jboss.stop() // stop the admin mode
     }
   }
 
@@ -144,22 +146,28 @@ class JBossConfigurationTask extends DefaultTask {
 
   private void processConfigurationFiles() throws Exception {
     File configurationDir = new File("${project.silversetup.configurationHome}/jboss")
+    JBossCliScript cliScript = new JBossCliScript(
+        Files.createTempFile('jboss-configuration-', '.cli').toString())
+    log.info "CLI configuration scripts will be merged into ${cliScript.toFile().name}"
+    Set<Script> scripts = new HashSet<>()
     configurationDir.listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
         return child.isFile()
       }
-    }).each { confFile ->
-      log.info "Process configuration file ${confFile.name}"
-      try {
-        Script script = ConfigurationScriptBuilder.fromScript(confFile.path)
-            .withLogger(log)
-            .build()
-        script.run([jboss: jboss, settings: settings, service: SilverpeasSetupService])
-      } catch(Exception ex) {
-        log.error("Error while running script ${confFile.name}", ex)
-        throw ex
-      }
+    }).each { File confFile ->
+      log.info "Load configuration file ${confFile.name}"
+      scripts.add(ConfigurationScriptBuilder.fromScript(confFile.path)
+          .withLogger(log)
+          .withSettings(settings)
+          .mergeOnlyIfCLIInto(cliScript)
+          .build())
+    }
+    try {
+      scripts*.run(service: SilverpeasSetupService, jboss: jboss)
+    } catch(Exception ex) {
+      log.error("Error while running script ${cliTemplate.name}", ex)
+      throw ex
     }
   }
 }
