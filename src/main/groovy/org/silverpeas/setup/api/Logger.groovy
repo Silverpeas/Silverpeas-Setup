@@ -18,20 +18,21 @@ import java.sql.SQLException
  */
 class Logger {
 
-  private static def file = System.out
+  private static def DEFAULT_FILE = System.out
   private static LogLevel defaultLevel = LogLevel.INFO
   private LogLevel level = defaultLevel
   private String namespace
+  private def file = DEFAULT_FILE
 
   /**
-   * Initialises the logging system of the plugin by specifying the default log file into which
-   * the traces will be written and the default log level from which the traces will be really
+   * Initialises the logging system of the plugin by specifying the default logging file into which
+   * the traces will be written and the default logging level from which the traces will be really
    * output.
    * @param logFile the default log file to use to write the traces.
    * @param level the default level from which any traces will be output.
    */
   static void init(File logFile, LogLevel level) {
-    file = logFile
+    DEFAULT_FILE = logFile
     defaultLevel = level
   }
 
@@ -42,6 +43,20 @@ class Logger {
    */
   static Logger getLogger(String namespace) {
     return new Logger(namespace)
+  }
+
+  /**
+   * Gets a logger for the specified namespace or scopes of traces and by using explicitly the
+   * specified logging backend instead of the default one (the one that was set by invoking the
+   * init method).
+   * @param namespace the namespace within which the traces to output has to belong.
+   * @param logBackend force to use the specified logging backend instead of the default one.
+   * @return the logger matching the specified namespace.
+   */
+  static Logger getLogger(String namespace, logBackend) {
+    Logger logger = new Logger(namespace)
+    logger.file = logBackend
+    return logger
   }
 
   /**
@@ -195,4 +210,5 @@ class Logger {
   private Logger(String namespace) {
     this.namespace = namespace
   }
+
 }

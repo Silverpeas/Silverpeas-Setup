@@ -48,7 +48,7 @@ class JBossServer {
 
   private long timeout = 60000
 
-  private def logger = Logger.getLogger(getClass().getSimpleName())
+  private def logger = Logger.getLogger(getClass().getSimpleName(), System.out)
 
   /**
    * Constructs a new instance of a JBossServer wrapping the specified JBoss/Wildfly installation.

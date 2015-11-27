@@ -79,7 +79,11 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
   void buildFinished(final BuildResult result) {
     JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome)
     String status = "JBoss is ${jboss.status()}"
-    Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
+    if (buildStarted) {
+      Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
+      buildStarted = false
+    }
+    println()
     println "INFO: ${status}"
     result.rethrowFailure()
   }
