@@ -46,7 +46,7 @@ class JBossServer {
 
   private File redirection = null
 
-  private long timeout = 60000
+  private long timeout = 120000
 
   private def logger = Logger.getLogger(getClass().getSimpleName(), System.out)
 
