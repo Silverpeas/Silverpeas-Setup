@@ -18,22 +18,22 @@ import java.sql.SQLException
  */
 class Logger {
 
-  private static def DEFAULT_FILE = System.out
-  private static LogLevel defaultLevel = LogLevel.INFO
-  private LogLevel level = defaultLevel
+  private static def DEFAULT_LOG_HANDLER = System.out
+  private static LogLevel DEFAULT_LOG_LEVEL = LogLevel.INFO
+  private LogLevel level
   private String namespace
-  private def file = DEFAULT_FILE
+  private def logHandler
 
   /**
-   * Initialises the logging system of the plugin by specifying the default logging file into which
-   * the traces will be written and the default logging level from which the traces will be really
-   * output.
+   * Initialises the logging system of the plugin by specifying the default logging handler to use
+   * for storing the traces of all loggers and the default logging level from which the traces will
+   * be really output.
    * @param logFile the default log file to use to write the traces.
    * @param level the default level from which any traces will be output.
    */
   static void init(File logFile, LogLevel level) {
-    DEFAULT_FILE = logFile
-    defaultLevel = level
+    DEFAULT_LOG_HANDLER = logFile
+    DEFAULT_LOG_LEVEL = level
   }
 
   /**
@@ -47,15 +47,15 @@ class Logger {
 
   /**
    * Gets a logger for the specified namespace or scopes of traces and by using explicitly the
-   * specified logging backend instead of the default one (the one that was set by invoking the
+   * specified logging handler instead of the default one (the one that was set by invoking the
    * init method).
    * @param namespace the namespace within which the traces to output has to belong.
-   * @param logBackend force to use the specified logging backend instead of the default one.
+   * @param logHandler the logging handler to use instead of the default one.
    * @return the logger matching the specified namespace.
    */
-  static Logger getLogger(String namespace, logBackend) {
+  static Logger getLogger(String namespace, logHandler) {
     Logger logger = new Logger(namespace)
-    logger.file = logBackend
+    logger.logHandler = logHandler
     return logger
   }
 
@@ -64,7 +64,7 @@ class Logger {
    * @return the logging level.
    */
   LogLevel level() {
-    return this.level
+    return this.level == null ? DEFAULT_LOG_LEVEL:this.level
   }
 
   /**
@@ -204,7 +204,12 @@ class Logger {
 
   private void formatMsg(String format, Object... args) {
     Formatter formatter = new Formatter()
-    file << formatter.format(format, args).toString()
+    def handler = getLogHandler()
+    handler << formatter.format(format, args).toString()
+  }
+
+  private def getLogHandler() {
+    return this.logHandler == null ? DEFAULT_LOG_HANDLER: this.logHandler;
   }
 
   private Logger(String namespace) {
