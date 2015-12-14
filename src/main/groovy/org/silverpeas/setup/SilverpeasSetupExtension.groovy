@@ -75,6 +75,12 @@ class SilverpeasSetupExtension {
    */
   String driversDir
 
+  /**
+   * Is in development mode (in this case, some peculiar configuration are applied to support the
+   * dev mode in the application server.
+   */
+  boolean developmentMode = false
+
 
   /**
    * Constructs a new silverpeas configuration extension. It checks the environment variables

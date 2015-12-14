@@ -93,6 +93,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   }
 
   private void completeSettingsForProject(Project project) {
+    settings.DEV_MODE = project.silversetup.developmentMode as String
     settings.SILVERPEAS_HOME = normalizePath(project.silversetup.silverpeasHome)
     settings.MIGRATION_HOME = normalizePath(project.silversetup.migrationHome)
     settings.CONFIGURATION_HOME = normalizePath(project.silversetup.configurationHome)

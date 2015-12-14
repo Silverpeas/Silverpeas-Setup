@@ -136,7 +136,8 @@ class JBossConfigurationTask extends DefaultTask {
     // H2 is already available by default in JBoss/Wildfly
     if (settings.DB_SERVERTYPE != 'H2') {
       try {
-        jboss.deploy("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
+        jboss.add("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
+        jboss.deploy(settings.DB_DRIVER_NAME)
       } catch (Exception ex) {
         log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
         throw ex
@@ -166,7 +167,7 @@ class JBossConfigurationTask extends DefaultTask {
     try {
       scripts*.run(service: SilverpeasSetupService, jboss: jboss)
     } catch(Exception ex) {
-      log.error("Error while running script ${cliTemplate.name}", ex)
+      log.error("Error while running cli script: ${ex.message}", ex)
       throw ex
     }
   }

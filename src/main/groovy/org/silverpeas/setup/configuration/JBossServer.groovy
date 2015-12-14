@@ -26,6 +26,8 @@ package org.silverpeas.setup.configuration
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SystemWrapper
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
@@ -34,6 +36,9 @@ import java.util.regex.Matcher
  * It wraps an existing installation of a JBoss application server. It provides functions to
  * interact with the JBoss AS (either Wildfly or JBoss EAP) in order to start/stop it or to
  * configure it. The configuration is done through command files with JBoss CLI statements.
+ * </p>
+ * The features supported by this class are compatible to any Wildfly or JBoss EAP built upon
+ * Wildfly version superior than 9.0
  * @author mmoquillon
  */
 class JBossServer {
@@ -331,35 +336,52 @@ class JBossServer {
   }
 
   /**
-   * Deploys the artifacts at the specified path into this JBoss server by using the Management API.
+   * Adds the artifact at the specified path into this JBoss server by using the Management API.
+   * If it is already added, nothing is done.
+   * Once added, the artifact should be ready to be deployed.
    * A JBoss/Wildfly instance should be running.
-   * @param artifactsPath
-   * @throws RuntimeException if the deployment of the artifact failed.
+   * @param artifactPath the path of the artifact to add.
+   * @throws RuntimeException if the adding of the artifact failed.
    */
-  void deploy(String artifactsPath) throws RuntimeException {
-    String artifact = Paths.get(artifactsPath).fileName
-    if (!isDeployed(artifact)) {
-      Process proc =
-          new ProcessBuilder(cli, '--connect', "deploy ${artifactsPath}")
-              .redirectErrorStream(true)
-              .start()
+  void add(String artifactPath) throws RuntimeException {
+    String artifactName = Paths.get(artifactPath).fileName
+    add(artifactPath, artifactName)
+  }
+
+  /**
+   * Adds the artifact at the specified path into this JBoss server under the specified name and
+   * by using the Management API. * If it is already added, nothing is done.
+   * Once added, the artifact should be ready to be deployed.
+   * A JBoss/Wildfly instance should be running.
+   * @param artifactPath the path of the artifact to add.
+   * @throws RuntimeException if the adding of the artifact failed.
+   */
+  void add(String artifactPath, String artifactName) throws RuntimeException {
+    boolean archive = Files.isRegularFile(Paths.get(artifactPath))
+    if (!isInDeployments(artifactName)) {
+      Process proc = new ProcessBuilder(cli, '--connect',
+          "/deployment=${artifactName}:add(runtime-name=${artifactName},content=[{path=>${artifactPath},archive=${archive}}])")
+          .redirectErrorStream(true)
+          .start()
       proc.waitFor()
-      if (proc.exitValue() != 0 || !isDeployed(artifact)) {
+      if (proc.exitValue() != 0 || !isInDeployments(artifactName)) {
         throw new RuntimeException(proc.in.text)
       }
     } else {
-      logger.info "${artifact} is already deployed in JBoss"
+      logger.info "${artifactName} is already added in JBoss"
     }
   }
 
   /**
-   * Undeploys the specified artifact from this JBoss server by using the Management API.
+   * Removes the specified artifact from the deployment repository of this JBoss server by using
+   * the Management API. If it isn't in this JBoss server, then nothing is done. If the artifact
+   * is deployed, then it is undeployed before being removed.
    * A JBoss/Wildfly instance should be running.
-   * @param artifactName
-   * @throws RuntimeException if the deployment of the artifact failed.
+   * @param artifact the name of the artifact to remove.
+   * @throws RuntimeException if the removing of the artifact failed.
    */
-  void undeploy(String artifact) throws RuntimeException {
-    if (isDeployed(artifact)) {
+  void remove(String artifact) throws RuntimeException {
+    if (isInDeployments(artifact)) {
       Process proc =
           new ProcessBuilder(cli, '--connect', "undeploy ${artifact}")
               .redirectErrorStream(true)
@@ -374,14 +396,64 @@ class JBossServer {
   }
 
   /**
-   * Is the specified artifact is deployed?
+   * Deploys the specified artifact by using the Management API. It should be first added into
+   * this JBoss server. If the artifact is already deployed, then nothing is done.
    * A JBoss/Wildfly instance should be running.
-   * @param artifact the artifact to check its deployment status.
+   * @param artifact the name of the artifact to deploy.
+   * @throws RuntimeException if the deployment of the artifact failed.
+   */
+  void deploy(String artifact) throws RuntimeException {
+    Process proc =
+        new ProcessBuilder(cli, '--connect', "/deployment=${artifact}:deploy()")
+            .redirectErrorStream(true)
+            .start()
+    proc.waitFor()
+    if (proc.exitValue() != 0 || !isDeployed(artifact)) {
+      throw new RuntimeException(proc.in.text)
+    }
+  }
+
+  /**
+   * Undeploys the specified artifact from this JBoss server by using the Management API. It should
+   * be added into this JBoss server. If the artifact is already undeployed, then nothing is done.
+   * A JBoss/Wildfly instance should be running.
+   * @param artifact the name of the artifact to undeploy.
+   * @throws RuntimeException if the deployment of the artifact failed.
+   */
+  void undeploy(String artifact) throws RuntimeException {
+    Process proc =
+        new ProcessBuilder(cli, '--connect', "/deployment=${artifact}:undeploy()")
+            .redirectErrorStream(true)
+            .start()
+    proc.waitFor()
+    if (proc.exitValue() != 0 || isDeployed(artifact)) {
+      throw new RuntimeException(proc.in.text)
+    }
+  }
+
+  /**
+   * Is the specified artifact deployed?
+   * A JBoss/Wildfly instance should be running.
+   * @param artifact the name of the artifact to check its deployment status.
    * @return true if the artifact is deployed, false otherwise.
    */
   boolean isDeployed(String artifact) {
     Process proc =
-        new ProcessBuilder(cli, '--connect', "ls deployment")
+        new ProcessBuilder(cli, '--connect', "/deployment=${artifact}:read-attribute(name=enabled)")
+            .start()
+    proc.waitFor()
+    return proc.in.text.contains('"result" => true')
+  }
+
+ /**
+  * Is the specified artifact added as a deployment in this JBoss/Wildfly?
+  * A JBoss/Wildfly instance should be running.
+  * @param artifact the name of the artifact to check it is added into this JBoss/Wildfly.
+  * @return true if the artifact is among the deployments, false otherwise.
+  */
+  boolean isInDeployments(String artifact) {
+    Process proc =
+        new ProcessBuilder(cli, '--connect', 'ls deployment')
             .start()
     proc.waitFor()
     return proc.in.text.contains(artifact)

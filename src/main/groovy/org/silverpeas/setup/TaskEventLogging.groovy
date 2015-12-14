@@ -40,14 +40,15 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     if (tasks.contains(task.name)) {
       if (!buildStarted) {
         buildStarted = true
-        Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n',
+        Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
             "SILVERPEAS SETUP: ${task.project.version}",
             "SILVERPEAS HOME:  ${task.project.silversetup.silverpeasHome}",
             "JBOSS HOME:       ${task.project.silversetup.jbossHome}",
             "JCR HOME:         ${SilverpeasSetupService.currentSettings.JCR_HOME.asPath().toString()}",
             "JAVA HOME:        ${System.getenv('JAVA_HOME')}",
             "DATABASE:         ${SilverpeasSetupService.currentSettings.DB_SERVERTYPE.toLowerCase()}",
-            "OPERATING SYSTEM: ${System.getProperty('os.name')}")
+            "OPERATING SYSTEM: ${System.getProperty('os.name')}",
+            "PRODUCTION MODE:  ${!task.project.silversetup.developmentMode}")
       }
       Logger log = Logger.getLogger(task.name)
       String taskTitle = unformat(task.name)
