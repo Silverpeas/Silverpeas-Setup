@@ -387,7 +387,7 @@ class JBossServer {
               .redirectErrorStream(true)
               .start()
       proc.waitFor()
-      if (proc.exitValue() != 0 || isDeployed(artifact)) {
+      if (proc.exitValue() != 0 || isInDeployments(artifact)) {
         throw new RuntimeException(proc.in.text)
       }
     } else {
