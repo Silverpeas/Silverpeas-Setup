@@ -94,6 +94,8 @@ buildscript {
 
 dependencies {
   compile gradleApi()
+  compile 'commons-lang:commons-lang:2.6'
+  compile 'commons-io:commons-io:2.2'
   compile 'org.apache.commons:commons-dbcp2:2.0.1'
   compile 'commons-codec:commons-codec:1.10'
   compile 'javax.jcr:jcr:2.0'

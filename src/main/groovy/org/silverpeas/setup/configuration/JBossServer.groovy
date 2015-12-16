@@ -23,11 +23,12 @@
  */
 package org.silverpeas.setup.configuration
 
+import org.apache.commons.io.FilenameUtils
+import org.apache.commons.lang.SystemUtils
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
@@ -357,12 +358,12 @@ class JBossServer {
    * @throws RuntimeException if the adding of the artifact failed.
    */
   void add(String artifactPath, String artifactName) throws RuntimeException {
-    boolean archive = Files.isRegularFile(Paths.get(artifactPath))
+    String unixArtifactPath = FilenameUtils.separatorsToUnix(artifactPath);
+    boolean archive = Files.isRegularFile(Paths.get(unixArtifactPath))
     if (!isInDeployments(artifactName)) {
-      Process proc = new ProcessBuilder(cli, '--connect',
-          "/deployment=${artifactName}:add(runtime-name=${artifactName},content=[{path=>${artifactPath},archive=${archive}}])")
-          .redirectErrorStream(true)
-          .start()
+      Process proc = executeCliCommand(
+          "/deployment=${artifactName}:add(runtime-name=${artifactName},content=[{path=>${unixArtifactPath},archive=${archive}}])",
+          SystemUtils.IS_OS_WINDOWS);
       proc.waitFor()
       if (proc.exitValue() != 0 || !isInDeployments(artifactName)) {
         throw new RuntimeException(proc.in.text)
@@ -382,10 +383,7 @@ class JBossServer {
    */
   void remove(String artifact) throws RuntimeException {
     if (isInDeployments(artifact)) {
-      Process proc =
-          new ProcessBuilder(cli, '--connect', "undeploy ${artifact}")
-              .redirectErrorStream(true)
-              .start()
+      Process proc = executeCliCommand("undeploy ${artifact}")
       proc.waitFor()
       if (proc.exitValue() != 0 || isInDeployments(artifact)) {
         throw new RuntimeException(proc.in.text)
@@ -403,10 +401,7 @@ class JBossServer {
    * @throws RuntimeException if the deployment of the artifact failed.
    */
   void deploy(String artifact) throws RuntimeException {
-    Process proc =
-        new ProcessBuilder(cli, '--connect', "/deployment=${artifact}:deploy()")
-            .redirectErrorStream(true)
-            .start()
+    Process proc = executeCliCommand("/deployment=${artifact}:deploy()")
     proc.waitFor()
     if (proc.exitValue() != 0 || !isDeployed(artifact)) {
       throw new RuntimeException(proc.in.text)
@@ -421,10 +416,7 @@ class JBossServer {
    * @throws RuntimeException if the deployment of the artifact failed.
    */
   void undeploy(String artifact) throws RuntimeException {
-    Process proc =
-        new ProcessBuilder(cli, '--connect', "/deployment=${artifact}:undeploy()")
-            .redirectErrorStream(true)
-            .start()
+    Process proc = executeCliCommand("/deployment=${artifact}:undeploy()")
     proc.waitFor()
     if (proc.exitValue() != 0 || isDeployed(artifact)) {
       throw new RuntimeException(proc.in.text)
@@ -438,9 +430,7 @@ class JBossServer {
    * @return true if the artifact is deployed, false otherwise.
    */
   boolean isDeployed(String artifact) {
-    Process proc =
-        new ProcessBuilder(cli, '--connect', "/deployment=${artifact}:read-attribute(name=enabled)")
-            .start()
+    Process proc = executeCliCommand("/deployment=${artifact}:read-attribute(name=enabled)")
     proc.waitFor()
     return proc.in.text.contains('"result" => true')
   }
@@ -452,9 +442,7 @@ class JBossServer {
   * @return true if the artifact is among the deployments, false otherwise.
   */
   boolean isInDeployments(String artifact) {
-    Process proc =
-        new ProcessBuilder(cli, '--connect', 'ls deployment')
-            .start()
+    Process proc = executeCliCommand("ls deployment")
     proc.waitFor()
     return proc.in.text.contains(artifact)
   }
@@ -490,4 +478,19 @@ class JBossServer {
     }
   }
 
+  /**
+   * Centralizes the process creation corresponding to the execution of a CLI command.
+   * @param commands the CLI commands.
+   * @param wrapIntoDoubleQuotes if true, the commands are wrapped into double quotes.
+   * @return the instance of the process which handles the CLI command execution.
+   */
+  Process executeCliCommand(String commands, boolean wrapIntoDoubleQuotes = false) {
+    String finalCommands = commands;
+    if (wrapIntoDoubleQuotes) {
+      finalCommands = "\"" + finalCommands + "\"";
+    }
+    return new ProcessBuilder(cli, '--connect', finalCommands)
+        .redirectErrorStream(true)
+        .start()
+  }
 }
