@@ -31,6 +31,7 @@ import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.regex.Matcher
 
 /**
@@ -46,7 +47,11 @@ class JBossConfigurationTask extends DefaultTask {
   JBossConfigurationTask() {
     description = 'Configure JBoss/Wildfly for Silverpeas'
     group = 'Build'
-    dependsOn = ['assemble']
+    onlyIf {
+      Files.exists(Paths.get(project.silversetup.driversDir)) &&
+          project.silversetup.jbossHome != null &&
+          Files.exists(Paths.get(project.silversetup.jbossHome))
+    }
   }
 
   @TaskAction

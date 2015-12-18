@@ -30,6 +30,9 @@ import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
 /**
  * This task aims to configure Silverpeas from the Silverpeas configuration file, from some XML
  * configuration rules and from Groovy scripts.
@@ -44,7 +47,10 @@ class SilverpeasConfigurationTask extends DefaultTask {
   SilverpeasConfigurationTask() {
     description = 'Configure Silverpeas'
     group = 'Build'
-    dependsOn = ['assemble']
+    onlyIf {
+      project.buildDir.exists() &&
+          Files.exists(Paths.get(project.silversetup.silverpeasHome, 'properties'))
+    }
   }
 
   @TaskAction
