@@ -97,15 +97,15 @@ class MigrationModule {
    * module.
    */
   void migrate() throws Exception {
-    String status = '[OK]'
+    String result = '[OK]'
     try {
       logger.info "Migration(s) of module ${module}"
       migrations*.migrate(settings)
     } catch (Exception ex) {
-      status = '[FAILURE]'
+      result = '[FAILURE]'
       throw ex
     } finally {
-      logger.info "Migration(s) of module ${module}: ${status}"
+      logger.info "Migration(s) of module ${module}: ${result}"
     }
   }
 

@@ -42,12 +42,19 @@ import java.sql.SQLException
  * migrate a given part (aka a package) of Silverpeas. These rules are described and performed by
  * SQL and Groovy scripts.
  * <p/>
+ * Both the settings and the data of a data source migration process are persisted into the default
+ * data source used as the backbone of the Silverpeas persistence. As such, they can also be
+ * subject to a migration task. Hence, the migration tool is also represented by a migration
+ * module that is loaded and migrated before any others migration modules.
+ * </p>
  * Among the data sources used by Silverpeas, a database is used as the backbone of its persistence
  * mechanism. Currently, the  only types of database supported by Silverpeas are H2, PostgreSQL,
  * MS-SQL, and Oracle).
  * @author mmoquillon
  */
 class SilverpeasMigrationTask extends DefaultTask {
+
+  static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
   def settings
   Logger log = Logger.getLogger(this.name)
@@ -60,6 +67,7 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   @TaskAction
   def performMigration() {
+    initMigrationTask()
     loadMigrationModules().each { module ->
       try {
         module.migrate()
@@ -70,16 +78,43 @@ class SilverpeasMigrationTask extends DefaultTask {
     }
   }
 
-  private List<MigrationModule> loadMigrationModules() {
-    List<MigrationModule> modules = []
+  /**
+   * Initializes the migration task first by loading the settings of the migration process, then by
+   * performing any migration of these settings if it is required.
+   * </p>
+   * The migration settings are also persisted in a data source and they could be subject to a
+   * migration before doing anything.
+   */
+  private def initMigrationTask() {
+    log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
+    File descriptor =
+        new File("${project.silversetup.migrationHome}/modules/${MIGRATION_SETTING_MODULE}")
+    MigrationModule module = new MigrationModule()
+        .withStatus(status)
+        .withSettings(settings)
+        .withLogger(log)
+        .loadMigrationsFrom(descriptor)
+    module.migrate()
+    log.info 'Migration initialization done'
+  }
+
+  /**
+   * Loads all the available migration modules in Silverpeas.
+   * @return a list of the available migration modules.
+   */
+  private List<MigrationModule> loadMigrationModules() {
+    def status = loadInstalledModuleStatus()
+    List<MigrationModule> modules = []
     new File("${project.silversetup.migrationHome}/modules").listFiles().each { descriptor ->
-      MigrationModule module = new MigrationModule()
-          .withStatus(status)
-          .withSettings(settings)
-          .withLogger(log)
-          .loadMigrationsFrom(descriptor)
-      modules << module
+      if (descriptor.name != MIGRATION_SETTING_MODULE) {
+        MigrationModule module = new MigrationModule()
+            .withStatus(status)
+            .withSettings(settings)
+            .withLogger(log)
+            .loadMigrationsFrom(descriptor)
+        modules << module
+      }
     }
     return modules.sort { module1, module2 ->
       module1.executionOrder() <=> module2.executionOrder()
