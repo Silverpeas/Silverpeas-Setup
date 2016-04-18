@@ -115,7 +115,7 @@ processTestResources << {
     FileWriter props = new FileWriter("${file.path}.tmp")
     new FileReader(file).transformLine(props) { line ->
       if (line.contains('${buildDir}')) {
-        line = line.replaceAll('\\$\\{buildDir\\}', buildDir.path)
+        line = line.replaceAll('\\$\\{buildDir\\}', buildDir.path.replaceAll("[\\\\]", '/'))
       }
       line
     }

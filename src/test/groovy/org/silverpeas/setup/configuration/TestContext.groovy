@@ -69,11 +69,16 @@ class TestContext {
 
   private Properties loadPropertiesFrom(String path) {
     Properties properties = new Properties()
-    properties.load(getClass().getResourceAsStream("/properties/org/silverpeas/${path}"))
+    InputStream is = getClass().getResourceAsStream("/properties/org/silverpeas/${path}")
+    properties.load(is)
+    is.close()
     return properties
   }
 
   private GPathResult loadXmlFileFrom(String path) {
-    return new XmlSlurper().parse(getClass().getResourceAsStream(path))
+    InputStream is = getClass().getResourceAsStream(path)
+    GPathResult result = new XmlSlurper().parse(is)
+    is.close()
+    return result
   }
 }
