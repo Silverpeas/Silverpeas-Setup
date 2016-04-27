@@ -36,6 +36,10 @@ import org.silverpeas.setup.migration.SilverpeasMigrationTask
 import org.silverpeas.setup.security.Encryption
 import org.silverpeas.setup.security.EncryptionFactory
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
 /**
  * This plugin aims to prepare the configuration and to setup Silverpeas.
  * For doing, it loads both the default and the customer configuration file of Silverpeas and it
@@ -115,8 +119,11 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.PostgreSQLPersistenceManager'
         break
       case 'H2':
-        if (settings.DB_SERVER == ':mem:') {
-          settings.DB_URL = "jdbc:h2:mem:${settings.DB_NAME}"
+        if (settings.DB_SERVER == ':file:') {
+          Path databaseDirPath = Paths.get(settings.SILVERPEAS_HOME, 'h2')
+          if (!Files.exists(databaseDirPath))
+            Files.createDirectory(databaseDirPath)
+          settings.DB_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.DB_NAME};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" //USER=${settings.DB_USER};PASSWORD=${settings.DB_PASSWORD}"
         } else {
           settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
         }

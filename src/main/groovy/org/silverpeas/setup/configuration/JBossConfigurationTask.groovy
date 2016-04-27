@@ -130,22 +130,24 @@ class JBossConfigurationTask extends DefaultTask {
 
   private def setUpJDBCDriver() throws Exception {
     log.info "Install database driver for ${settings.DB_SERVERTYPE}"
-    new File(project.silversetup.driversDir).listFiles().each { driver ->
-      if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
-          (driver.name.startsWith('jtds') && settings.DB_SERVERTYPE == 'MSSQL') ||
-          (driver.name.startsWith('ojdbc') && settings.DB_SERVERTYPE == 'ORACLE') ||
-          (driver.name.startsWith('h2') && settings.DB_SERVERTYPE == 'H2')) {
-        settings.DB_DRIVER_NAME = driver.name
-      }
-    }
-    // H2 is already available by default in JBoss/Wildfly
-    if (settings.DB_SERVERTYPE != 'H2') {
-      try {
-        jboss.add("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
-        jboss.deploy(settings.DB_DRIVER_NAME)
-      } catch (Exception ex) {
-        log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
-        throw ex
+    if (settings.DB_SERVERTYPE == 'H2') {
+      // H2 is already available by default in JBoss/Wildfly
+      settings.DB_DRIVER_NAME = 'h2'
+    } else {
+      // install the required driver other than H2
+      new File(project.silversetup.driversDir).listFiles().each { driver ->
+        if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
+            (driver.name.startsWith('jtds') && settings.DB_SERVERTYPE == 'MSSQL') ||
+            (driver.name.startsWith('ojdbc') && settings.DB_SERVERTYPE == 'ORACLE')) {
+          settings.DB_DRIVER_NAME = driver.name
+          try {
+            jboss.add("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
+            jboss.deploy(settings.DB_DRIVER_NAME)
+          } catch (Exception ex) {
+            log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
+            throw ex
+          }
+        }
       }
     }
   }
