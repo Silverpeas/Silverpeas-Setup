@@ -93,7 +93,11 @@ class JBossConfigurationTask extends DefaultTask {
         regexp = /\s*JAVA_OPTS="-Xm.+/
       }
       if (settings.PROXY_HOST && settings.PROXY_PORT) {
-        jvmOpts += " -Dhttp.proxyHost=${settings.PROXY_HOST} -Dhttp.proxyPort=${settings.PROXY_PORT}"
+        if (settings.HTTPS_PROXY) {
+          jvmOpts += " -Dhttps.proxyHost=${settings.PROXY_HOST} -Dhttps.proxyPort=${settings.PROXY_PORT}"
+        } else {
+          jvmOpts += " -Dhttp.proxyHost=${settings.PROXY_HOST} -Dhttp.proxyPort=${settings.PROXY_PORT}"
+        }
         if (settings.NONPROXY_HOST) {
           jvmOpts += " -Dhttp.nonProxyHosts=${settings.NONPROXY_HOST}"
         }
