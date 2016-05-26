@@ -40,6 +40,8 @@ class SilverpeasSetupService {
 
   private static final def VAR_PATTERN = /\$\{(env\.|sys\.)?(\w+)\}/
   private static final def SCRIPT_PATTERN = /\$\{eval:([:.\w \{\}\$]+)\}/
+  // pattern defining the grammar of a property in a properties file and in which we capture the key
+  private static final def PROPERTY_PATTERN = /^\s*(\S+)\s*=[\s*\S+\s*]*/
 
  /**
   * This service extends dynamically the String class with an additional method, String#asPath(),
@@ -69,11 +71,16 @@ class SilverpeasSetupService {
     def existingProperties = []
     FileWriter updatedPropertiesFile = new FileWriter(propertiesFilePath + '.tmp')
     new FileReader(propertiesFilePath).transformLine(updatedPropertiesFile) { line ->
-      properties.each() { key, value ->
-        if (line.contains(key)) {
-          existingProperties << key
-          value = Matcher.quoteReplacement(value.replaceAll('\\\\', '\\\\\\\\')).trim()
-          line = line.replaceFirst('=.*',"=  ${value}")
+      Matcher m = (line =~ PROPERTY_PATTERN)
+      if (m.matches()) {
+        // it is a property definition, then capture the key
+        String currentKey = m.group(1)
+        properties.each() { key, value ->
+          if (key == currentKey) {
+            existingProperties << key
+            value = Matcher.quoteReplacement(value.replaceAll('\\\\', '\\\\\\\\')).trim()
+            line = line.replaceFirst('=.*', "=  ${value}")
+          }
         }
       }
       line
