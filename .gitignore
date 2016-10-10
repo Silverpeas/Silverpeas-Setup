@@ -1,5 +1,7 @@
 /target/
+/build/
 nbactions.xml
+.gradle
 nb-configuration.xml
 *.iws
 *.ipr
