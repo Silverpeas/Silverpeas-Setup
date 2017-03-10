@@ -3,11 +3,6 @@
 
   <!-- PROPERTIES CONFIGURATION -->
   <fileset root="${SILVERPEAS_HOME}/properties/org/silverpeas/">
-    <configfile name="systemSettings.properties">
-      <parameter key="http.proxyHost">${PROXY_HOST}</parameter>
-      <parameter key="http.proxyPort">${PROXY_PORT}</parameter>
-      <parameter key="http.nonProxyHosts">${NONPROXY_HOST}</parameter>
-    </configfile>
 
     <configfile name="authentication/autDomainSQL.properties">
       <parameter key="fallbackType">${FALLBACK_TYPE}</parameter>

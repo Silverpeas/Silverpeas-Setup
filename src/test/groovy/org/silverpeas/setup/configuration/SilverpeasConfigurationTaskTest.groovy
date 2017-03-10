@@ -120,13 +120,6 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
     assert after.autDomainSQL['autServer0.SQLDriverClass'] == 'org.h2.Driver' &&
         after.autDomainSQL['autServer0.SQLDriverClass'] != before.autDomainSQL['autServer0.SQLDriverClass']
 
-    assert after.system['http.proxyHost'] == 'tartempion.net' &&
-        after.system['http.proxyHost'] != before.system['http.proxyHost']
-    assert after.system['http.proxyPort'] == '1234' &&
-        after.system['http.proxyPort'] != before.system['http.proxyPort']
-    assert after.system['http.nonProxyHosts'] == '127.0.0.1|localhost' &&
-        after.system['http.nonProxyHosts'] != before.system['http.nonProxyHosts']
-
     assert after.scheduler['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *' &&
         after.scheduler['timeoutSchedule'] != before.scheduler['timeoutSchedule']
 

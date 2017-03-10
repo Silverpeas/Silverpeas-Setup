@@ -92,19 +92,6 @@ class JBossConfigurationTask extends DefaultTask {
         jvmOpts = "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}"
         regexp = /\s*JAVA_OPTS="-Xm.+/
       }
-      if (settings.PROXY_HOST && settings.PROXY_PORT) {
-        if (settings.HTTPS_PROXY) {
-          jvmOpts += " -Dhttps.proxyHost=${settings.PROXY_HOST} -Dhttps.proxyPort=${settings.PROXY_PORT}"
-        } else {
-          jvmOpts += " -Dhttp.proxyHost=${settings.PROXY_HOST} -Dhttp.proxyPort=${settings.PROXY_PORT}"
-        }
-        if (settings.NONPROXY_HOST) {
-          jvmOpts += " -Dhttp.nonProxyHosts=${settings.NONPROXY_HOST}"
-        }
-        if (settings.PROXY_USER && settings.PROXY_PASSWORD) {
-          jvmOpts += " -Dhttp.proxyUser=${settings.PROXY_USER} -Dhttp.proxyPassword=${settings.PROXY_PASSWORD}"
-        }
-      }
       jvmOpts += '"'
       conf.withReader {
         it.transformLine(new FileWriter("${conf.path}.tmp")) { line ->
