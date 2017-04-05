@@ -2,8 +2,6 @@ package org.silverpeas.setup.configuration
 
 import groovy.util.slurpersupport.GPathResult
 import org.silverpeas.setup.api.AbstractScript
-import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.w3c.dom.Document
 import org.w3c.dom.Node
@@ -16,7 +14,6 @@ import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-
 /**
  * A script represented by an XML file in which are indicated the Silverpeas properties and XML
  * files to update and for each of them the properties to add or to update.
@@ -41,6 +38,17 @@ class XmlSettingsScript extends AbstractScript {
   @Override
   void run(Map args) throws RuntimeException {
     def settingsStatements = new XmlSlurper().parse(script)
+
+    settingsStatements.test.each { GPathResult test ->
+      test.parameter.each { GPathResult parameter ->
+        String settingName = parameter.@key.text();
+        if (settings[settingName] == null || settings[settingName].trim().isEmpty()) {
+          throw new RuntimeException(
+              "The parameter '${settingName}' is not defined or not valued in config.properties");
+        }
+      }
+    }
+
     settingsStatements.fileset.each { GPathResult fileset ->
       String dir = SilverpeasSetupService.expanseVariables(fileset.@root.text())
       fileset.children().each { GPathResult file ->
