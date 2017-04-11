@@ -25,12 +25,10 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import groovy.transform.builder.Builder
-import jdk.jfr.events.ExceptionThrownEvent
-import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
-
 /**
  * The migration of the structure of a data source for a given package in Silverpeas. It consists,
  * in each data source concerned by the migration, to change the persistence schema of the package
@@ -65,7 +63,7 @@ class DatasourceMigration {
    * @param settings the settings applied in the migration of Silverpeas.
    */
   def migrate(settings) throws Exception {
-    Sql sql = new Sql(DataSourceProvider.dataSource)
+    Sql sql = SilverpeasSetupService.sql
     def settingsToApply = (settings ? settings:[:])
     if (isAnInstallation()) {
       performInstallation(sql, settingsToApply)

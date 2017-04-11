@@ -23,6 +23,7 @@
  */
 package org.silverpeas.setup.api
 
+import groovy.sql.Sql
 import org.gradle.api.tasks.StopExecutionException
 
 import java.nio.file.Files
@@ -194,6 +195,14 @@ class SilverpeasSetupService {
    */
   static final Logger getLogger(String namespace) {
     return Logger.getLogger(namespace)
+  }
+
+  /**
+   * Gets a SQL engine to execute SQL requests against the datasource configured for Silverpeas.
+   * @return a SQL engine.
+   */
+  static final Sql getSql() {
+    return new Sql(DataSourceProvider.dataSource)
   }
 
   private static final String normalizePath(String path) {

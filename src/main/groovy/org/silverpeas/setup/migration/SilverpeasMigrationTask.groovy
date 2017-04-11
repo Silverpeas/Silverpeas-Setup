@@ -28,13 +28,12 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.SQLException
-
 /**
  * This task is for migrating the data sources used as the backend by Silverpeas. A migration is
  * either a fresh setting-up of a data source structure or an upgrade of an existing data source
@@ -125,7 +124,7 @@ class SilverpeasMigrationTask extends DefaultTask {
     def level = logging.level
     logging.captureStandardOutput(LogLevel.ERROR)
     def status = [:]
-    Sql sql = new Sql(DataSourceProvider.dataSource)
+    Sql sql = SilverpeasSetupService.sql;
     try {
       DatabaseMetaData metaData = sql.getDataSource().getConnection().getMetaData()
       ResultSet tables = metaData.getTables(null, null, 'sr_packages', ['TABLE'] as String[])

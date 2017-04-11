@@ -25,6 +25,7 @@ package org.silverpeas.setup.test
 
 import groovy.sql.Sql
 import org.silverpeas.setup.api.DataSourceProvider
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
 
@@ -127,7 +128,7 @@ class DatabaseSetUp {
 
   private Sql sql() {
     if (sql == null) {
-      sql = new Sql(DataSourceProvider.dataSource)
+      sql = SilverpeasSetupService.sql
     }
     return sql
   }

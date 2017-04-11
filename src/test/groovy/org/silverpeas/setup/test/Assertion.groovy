@@ -1,10 +1,9 @@
 package org.silverpeas.setup.test
 
 import groovy.sql.Sql
-import org.silverpeas.setup.api.DataSourceProvider
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
-
 /**
  *
  * @author mmoquillon
@@ -15,7 +14,7 @@ abstract class Assertion {
       final String VERSION_QUERY = 'SELECT sr_version from sr_packages WHERE sr_package = :module'
 
   static def versionOfModule(String module) {
-    Sql sql = new Sql(DataSourceProvider.dataSource)
+    Sql sql = SilverpeasSetupService.sql
     try {
       return sql.firstRow(VERSION_QUERY, [module: module])?.get('sr_version')
     } catch (SQLException ex) {
@@ -24,7 +23,7 @@ abstract class Assertion {
   }
 
   static def numberOfItemsIn(String table) {
-    Sql sql = new Sql(DataSourceProvider.dataSource)
+    Sql sql = SilverpeasSetupService.sql
     try {
       return sql.firstRow('SELECT count(id) AS count FROM ' + table)?.get('count')
     } catch (SQLException ex) {
