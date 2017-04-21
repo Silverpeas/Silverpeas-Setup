@@ -1,16 +1,13 @@
 package org.silverpeas.setup
 
 import org.gradle.BuildAdapter
-import org.gradle.BuildListener
 import org.gradle.BuildResult
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
-import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.TaskState
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.configuration.JBossServer
-
 /**
  * A logger hooking to events from the task execution in order to customize the output of the
  * traces coming from Gradle and to indicates in this plugin's logging system at which tasks the
@@ -30,13 +27,13 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
   private buildStarted = false
   private List<String> executedTasks = []
 
-  public TaskEventLogging withTasks(tasks) {
+  TaskEventLogging withTasks(tasks) {
     this.tasks.addAll(tasks)
     return this
   }
 
   @Override
-  public void beforeExecute(Task task) {
+  void beforeExecute(Task task) {
     if (tasks.contains(task.name)) {
       if (!buildStarted) {
         buildStarted = true
@@ -54,7 +51,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
       String taskTitle = unformat(task.name)
       if (!task.didWork) {
         log.info "${taskTitle}..."
-        print "${taskTitle}... "
+        print normalize("${taskTitle}... ");
       } else {
         executedTasks << task.name
       }
@@ -62,7 +59,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
   }
 
   @Override
-  public void afterExecute(Task task, TaskState state) {
+  void afterExecute(Task task, TaskState state) {
     if (tasks.contains(task.name) && !executedTasks.contains(task.name)) {
       Logger log = Logger.getLogger(task.name)
       String taskTitle = unformat(task.name)
@@ -100,5 +97,14 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
       str.append(c)
     }
     return str.toString()
+  }
+
+  private String normalize(String output) {
+    StringBuilder result = new StringBuilder(output)
+    int charToAdd = 25 - output.length()
+    for (int i = 0; i < charToAdd; i++) {
+      result.append(' ')
+    }
+    return result.toString()
   }
 }
