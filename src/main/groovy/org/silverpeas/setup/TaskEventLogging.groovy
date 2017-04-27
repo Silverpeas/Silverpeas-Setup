@@ -51,7 +51,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
       String taskTitle = unformat(task.name)
       if (!task.didWork) {
         log.info "${taskTitle}..."
-        print normalize("${taskTitle}... ");
+        outputTask taskTitle
       } else {
         executedTasks << task.name
       }
@@ -63,13 +63,13 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     if (tasks.contains(task.name) && !executedTasks.contains(task.name)) {
       Logger log = Logger.getLogger(task.name)
       String taskTitle = unformat(task.name)
-      String status = '[OK]'
+      String status = 'OK'
       if (state.failure != null) {
-        status = '[FAILURE]'
+        status = 'FAILURE'
         log.error state.failure
       }
-      log.info "${taskTitle}: ${status}\n"
-      println "${status}"
+      log.info "${taskTitle}: [${status}]\n"
+      outputStatus status
     }
   }
 
@@ -99,12 +99,16 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     return str.toString()
   }
 
-  private String normalize(String output) {
-    StringBuilder result = new StringBuilder(output)
-    int charToAdd = 25 - output.length()
+  private void outputTask(String taskTitle) {
+    StringBuilder result = new StringBuilder("${taskTitle}... ")
+    int charToAdd = 20 - result.length()
     for (int i = 0; i < charToAdd; i++) {
       result.append(' ')
     }
-    return result.toString()
+    print result.toString()
+  }
+
+  private void outputStatus(String status) {
+    println "       ${status}"
   }
 }
