@@ -105,16 +105,19 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
         settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME}"
+        settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME}"
         settings.DB_DRIVER = 'net.sourceforge.jtds.jdbc.Driver'
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.MSSqlPersistenceManager'
         break
       case 'ORACLE':
         settings.DB_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.DB_NAME}"
+        settings.JCR_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.JCR_NAME}"
         settings.DB_DRIVER = 'oracle.jdbc.driver.OracleDriver'
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.OraclePersistenceManager'
         break
       case 'POSTGRESQL':
         settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}"
+        settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}"
         settings.DB_DRIVER = 'org.postgresql.Driver'
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.PostgreSQLPersistenceManager'
         break
@@ -124,8 +127,10 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           if (!Files.exists(databaseDirPath))
             Files.createDirectory(databaseDirPath)
           settings.DB_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.DB_NAME};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" //USER=${settings.DB_USER};PASSWORD=${settings.DB_PASSWORD}"
+          settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" //USER=${settings.DB_USER};PASSWORD=${settings.DB_PASSWORD}"
         } else {
           settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
+          settings.JCR_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"
         }
         settings.DB_DRIVER = 'org.h2.Driver'
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.H2PersistenceManager'
