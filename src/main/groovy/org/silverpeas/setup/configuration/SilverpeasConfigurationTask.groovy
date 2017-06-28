@@ -62,7 +62,9 @@ class SilverpeasConfigurationTask extends DefaultTask {
       boolean accept(final File child) {
         return child.isFile()
       }
-    }).each { configurationFile ->
+    }).sort{
+      it.name
+    }.each { configurationFile ->
       try {
         Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path)
             .withLogger(log)
