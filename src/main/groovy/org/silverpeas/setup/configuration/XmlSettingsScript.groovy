@@ -38,7 +38,7 @@ class XmlSettingsScript extends AbstractScript {
   @Override
   void run(Map args) throws RuntimeException {
     def settingsStatements = new XmlSlurper().parse(script)
-
+    log.info "${script.name} scanning..."
     settingsStatements.test.each { GPathResult test ->
       test.parameter.each { GPathResult parameter ->
         String settingName = parameter.@key.text();
@@ -72,6 +72,8 @@ class XmlSettingsScript extends AbstractScript {
         }
       }
     }
+
+    log.info "${script.name} scanning done."
   }
 
   private void updateConfigurationFile(String configurationFilePath, GPathResult parameters) {
