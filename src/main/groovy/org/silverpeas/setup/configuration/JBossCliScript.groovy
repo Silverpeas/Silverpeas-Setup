@@ -2,7 +2,6 @@ package org.silverpeas.setup.configuration
 
 import org.apache.commons.io.FilenameUtils
 import org.silverpeas.setup.api.AbstractScript
-import org.silverpeas.setup.api.Logger
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -19,28 +18,6 @@ class JBossCliScript extends AbstractScript {
    */
   JBossCliScript(String path) {
     super(path)
-  }
-
-  /**
-   * Uses the specified logger to trace the execution of this script.
-   * @param logger a logger.
-   * @return itself.
-   */
-  @Override
-  JBossCliScript useLogger(final Logger logger) {
-    this.log = logger
-    return this
-  }
-
-  /**
-   * Uses the specified settings to parameterize the execution of this script.
-   * @param settings a collection of key-value pairs defining all the settings.
-   * @return itself.
-   */
-  @Override
-  JBossCliScript useSettings(final Map settings) {
-    this.settings = settings
-    return this
   }
 
   /**

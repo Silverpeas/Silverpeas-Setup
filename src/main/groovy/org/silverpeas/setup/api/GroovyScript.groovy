@@ -27,6 +27,7 @@ class GroovyScript extends AbstractScript {
     Binding parameters = new Binding()
     parameters.setVariable('settings', settings)
     parameters.setVariable('log', log)
+    parameters.setVariable('service', SilverpeasSetupService)
     args.each { key, value ->
       parameters.setVariable(key, value)
     }

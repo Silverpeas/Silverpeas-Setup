@@ -45,7 +45,6 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/002/create_table.sql")
         .ofType(sql)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -65,7 +64,6 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up002/update.sql")
         .ofType(sql)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -87,7 +85,6 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -110,12 +107,10 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     Script sqlScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up003/create_table.sql")
         .ofType(sql)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     Script groovyScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
         .module('toto')
@@ -136,7 +131,6 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db//h2/foo/002/create_table.sql")
         .ofType(sql)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
 
     shouldFail(SQLException) {
@@ -159,7 +153,6 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/foo/up002/update.groovy")
         .ofType(groovy)
-        .withLogger(Logger.getLogger(getClass().getSimpleName()))
         .build()
 
     shouldFail(SQLException) {

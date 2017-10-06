@@ -28,19 +28,17 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
-import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.regex.Matcher
-
 /**
  * A Gradle task to configure a JBoss/Wildfly instance from some CLI scripts to be ready to run
  * Silverpeas.
  * @author mmoquillon
  */
 class JBossConfigurationTask extends DefaultTask {
-  def settings
+  Map settings
   JBossServer jboss
   Logger log = Logger.getLogger(this.name)
 
@@ -157,13 +155,13 @@ class JBossConfigurationTask extends DefaultTask {
     }).each { File confFile ->
       log.info "Load configuration file ${confFile.name}"
       scripts.add(ConfigurationScriptBuilder.fromScript(confFile.path)
-          .withLogger(log)
-          .withSettings(settings)
           .mergeOnlyIfCLIInto(cliScript)
           .build())
     }
     try {
-      scripts*.run(service: SilverpeasSetupService, jboss: jboss)
+      scripts.each { aScript ->
+        aScript.useLogger(log).useSettings(settings).run(jboss: jboss)
+      }
     } catch(Exception ex) {
       log.error("Error while running cli script: ${ex.message}", ex)
       throw ex

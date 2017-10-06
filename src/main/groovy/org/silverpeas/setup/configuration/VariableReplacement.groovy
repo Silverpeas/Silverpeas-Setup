@@ -48,9 +48,9 @@ class VariableReplacement {
    * @return the specified parameters with any variable declaration in their value replaced by
    * the variable value.
    */
-  static final def parseParameters(def parameters, def variables) {
+  static final def parseParameters(def parameters, Map variables) {
     parameters.each { key, value ->
-      parameters[key] = parseExpression(value, variables)
+      parameters[key] = parseExpression(value as String, variables)
     }
     return parameters
   }
@@ -64,7 +64,7 @@ class VariableReplacement {
    * variable value.
    * @return the specified expression with any variable declaration replaced by their value.
    */
-  static final String parseExpression(String expression, def variables) {
+  static final String parseExpression(String expression, Map variables) {
     def matching = expression =~ VARIABLE_PATTERN
     matching.each { token ->
       if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {

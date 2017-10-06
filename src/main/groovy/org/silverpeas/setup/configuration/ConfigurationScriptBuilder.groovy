@@ -1,9 +1,7 @@
 package org.silverpeas.setup.configuration
 
 import org.silverpeas.setup.api.GroovyScript
-import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
-
 /**
  * A build of configuration scripts.
  * @author mmoquillon
@@ -11,8 +9,6 @@ import org.silverpeas.setup.api.Script
 class ConfigurationScriptBuilder {
 
   private String scriptPath
-  private Logger logger
-  private Map settings
   private JBossCliScript cliScript
 
   /**
@@ -46,26 +42,6 @@ class ConfigurationScriptBuilder {
   }
 
   /**
-   * Sets the logger the script will use at his execution.
-   * @param logger a logger.
-   * @return itself.
-   */
-  ConfigurationScriptBuilder withLogger(Logger logger) {
-    this.logger = logger
-    return this
-  }
-
-  /**
-   * Sets the settings the script will use to parameterize his execution.
-   * @param settings the settings of the Silverpeas setup.
-   * @return itself
-   */
-  ConfigurationScriptBuilder withSettings(Map settings) {
-    this.settings = settings
-    return this
-  }
-
-  /**
    * Builds a script object.
    * @return an object representing a script in the migration process.
    */
@@ -91,7 +67,5 @@ class ConfigurationScriptBuilder {
         throw new IllegalArgumentException("Unknow script type: ${type}")
     }
     return script
-        .useLogger(logger)
-        .useSettings(settings)
   }
 }

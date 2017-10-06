@@ -130,7 +130,6 @@ class MigrationModule {
               MigrationScriptBuilder
                   .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), "up${versionIn3Digits}"))
                   .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
-                  .withLogger(logger)
                   .build()
             }
         if (scripts.empty) {
@@ -149,7 +148,6 @@ class MigrationModule {
         MigrationScriptBuilder
             .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), toVersion))
             .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
-            .withLogger(logger)
             .build()
       }
       migrations << DatasourceMigration.builder()

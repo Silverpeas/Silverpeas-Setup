@@ -24,7 +24,7 @@ abstract class AbstractScript implements Script {
    * @return itself.
    */
   @Override
-  def AbstractScript useLogger(final Logger logger) {
+  AbstractScript useLogger(final Logger logger) {
     this.log = logger
     return this
   }
@@ -35,7 +35,7 @@ abstract class AbstractScript implements Script {
    * @return itself.
    */
   @Override
-  def AbstractScript useSettings(final Map settings) {
+  AbstractScript useSettings(final Map settings) {
     this.settings = settings
     return this
   }

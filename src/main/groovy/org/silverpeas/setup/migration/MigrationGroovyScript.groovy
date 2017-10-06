@@ -24,10 +24,8 @@
 package org.silverpeas.setup.migration
 
 import org.silverpeas.setup.api.GroovyScript
-import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
-
 /**
  * A programming script written in Groovy.
  * @author mmoquillon
@@ -50,7 +48,7 @@ class MigrationGroovyScript extends GroovyScript {
   @Override
   void run(Map args) throws SQLException {
     try {
-      super.run(sql: args.sql, service: SilverpeasSetupService)
+      super.run(sql: args.sql)
     } catch(Exception ex) {
       throw new SQLException(ex)
     }

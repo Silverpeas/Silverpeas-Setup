@@ -55,7 +55,7 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
-  def settings
+  Map settings
   Logger log = Logger.getLogger(this.name)
 
   SilverpeasMigrationTask() {

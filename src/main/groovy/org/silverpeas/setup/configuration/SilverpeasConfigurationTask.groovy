@@ -28,11 +28,9 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.Script
-import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.nio.file.Files
 import java.nio.file.Paths
-
 /**
  * This task aims to configure Silverpeas from the Silverpeas configuration file, from some XML
  * configuration rules and from Groovy scripts.
@@ -40,8 +38,7 @@ import java.nio.file.Paths
  */
 class SilverpeasConfigurationTask extends DefaultTask {
 
-  def settings
-  def scriptEngine
+  Map settings
   Logger log = Logger.getLogger(this.name)
 
   SilverpeasConfigurationTask() {
@@ -56,7 +53,6 @@ class SilverpeasConfigurationTask extends DefaultTask {
   @TaskAction
   def configureSilverpeas() {
     File configurationDir = new File("${project.silversetup.configurationHome}/silverpeas")
-    scriptEngine = new GroovyScriptEngine([configurationDir.toURI().toString()] as String[])
     configurationDir.listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
@@ -66,11 +62,8 @@ class SilverpeasConfigurationTask extends DefaultTask {
       it.name
     }.each { configurationFile ->
       try {
-        Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path)
-            .withLogger(log)
-            .withSettings(settings)
-            .build()
-        script.run(service: SilverpeasSetupService)
+        Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path).build()
+        script.useLogger(log).useSettings(settings).run()
       } catch (Exception ex) {
         log.error("Error while processing the configuration file ${configurationFile.path}", ex)
         throw new TaskExecutionException(this, ex)

@@ -337,9 +337,10 @@ class JBossServer {
   }
 
   /**
-   * Adds the artifact at the specified path into this JBoss server by using the Management API.
-   * If it is already added, nothing is done.
-   * Once added, the artifact should be ready to be deployed.
+   * Adds the artifact located at the specified path into the deployment repository of this JBoss
+   * server under the specified name and deploys it by using the Management API. If it is already
+   * registered, nothing is done.
+   * Once added, the artifact can be undeployed and deployed again on demand.
    * A JBoss/Wildfly instance should be running.
    * @param artifactPath the path of the artifact to add.
    * @throws RuntimeException if the adding of the artifact failed.
@@ -350,9 +351,10 @@ class JBossServer {
   }
 
   /**
-   * Adds the artifact at the specified path into this JBoss server under the specified name and
-   * by using the Management API. * If it is already added, nothing is done.
-   * Once added, the artifact should be ready to be deployed.
+   * Adds the artifact located at the specified path into the deployment repository of this JBoss
+   * server under the specified name and deploys it by using the Management API. If it is already
+   * registered, nothing is done.
+   * Once added, the artifact can be undeployed and deployed again on demand.
    * A JBoss/Wildfly instance should be running.
    * @param artifactPath the path of the artifact to add.
    * @throws RuntimeException if the adding of the artifact failed.
@@ -366,7 +368,8 @@ class JBossServer {
           SystemUtils.IS_OS_WINDOWS);
       proc.waitFor()
       if (proc.exitValue() != 0 || !isInDeployments(artifactName)) {
-        throw new RuntimeException(proc.in.text)
+        throw new RuntimeException("Adding of ${artifactName} in JBoss failed with exit code " +
+            "${proc.exitValue()} and message ${proc.in.text}")
       }
     } else {
       logger.info "${artifactName} is already added in JBoss"
@@ -386,7 +389,8 @@ class JBossServer {
       Process proc = executeCliCommand("undeploy ${artifact}")
       proc.waitFor()
       if (proc.exitValue() != 0 || isInDeployments(artifact)) {
-        throw new RuntimeException(proc.in.text)
+        throw new RuntimeException("Remove of ${artifact} from JBoss failed with exit code " +
+            "${proc.exitValue()} and message ${proc.in.text}")
       }
     } else {
       logger.info "${artifact} isn't deployed in JBoss"
@@ -404,7 +408,8 @@ class JBossServer {
     Process proc = executeCliCommand("/deployment=${artifact}:deploy()")
     proc.waitFor()
     if (proc.exitValue() != 0 || !isDeployed(artifact)) {
-      throw new RuntimeException(proc.in.text)
+      throw new RuntimeException("Deployment of ${artifact} failed with exit code " +
+          "${proc.exitValue()} and message ${proc.in.text}")
     }
   }
 
@@ -419,7 +424,8 @@ class JBossServer {
     Process proc = executeCliCommand("/deployment=${artifact}:undeploy()")
     proc.waitFor()
     if (proc.exitValue() != 0 || isDeployed(artifact)) {
-      throw new RuntimeException(proc.in.text)
+      throw new RuntimeException("Deployment of ${artifact} failed with exit code " +
+          "${proc.exitValue()} and message ${proc.in.text}")
     }
   }
 

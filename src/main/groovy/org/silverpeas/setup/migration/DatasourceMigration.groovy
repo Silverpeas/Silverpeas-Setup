@@ -26,6 +26,7 @@ package org.silverpeas.setup.migration
 import groovy.sql.Sql
 import groovy.transform.builder.Builder
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
@@ -48,7 +49,7 @@ class DatasourceMigration {
   String fromVersion
   String toVersion
   Logger logger
-  def scripts = []
+  List<Script> scripts = []
 
   private DatasourceMigration() {
 
@@ -82,12 +83,14 @@ class DatasourceMigration {
     return fromVersion != null && (fromVersion as int) < (toVersion as int)
   }
 
-  private void performInstallation(Sql sql, def settings) throws Exception {
+  private void performInstallation(Sql sql, Map settings) throws Exception {
     logger.info "  Installation of the module ${module} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {
-        scripts*.run([sql: sql, settings: settings])
+        scripts.each { aScript ->
+          aScript.useLogger(logger).useSettings(settings).run([sql: sql])
+        }
         int count = sql.executeUpdate(MODULE_INSTALL, [module: this.module, version: this.toVersion])
         if (count != 1) {
           throw new SQLException("Setting up of module to version ${toVersion} not done!")
@@ -101,12 +104,14 @@ class DatasourceMigration {
     }
   }
 
-  private void performUpgrade(Sql sql, def settings) throws Exception {
+  private void performUpgrade(Sql sql, Map settings) throws Exception {
     logger.info "  Upgrade of the module ${module} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {
-        scripts*.run([sql: sql, settings: settings])
+        scripts.each { aScript ->
+          aScript.useLogger(logger).useSettings(settings).run([sql: sql])
+        }
         int count = sql.executeUpdate(VERSION_UPDATE, [module: this.module, version: this.toVersion])
         if (count != 1) {
           throw new SQLException("Upgrade of module to version ${toVersion} not done!")
