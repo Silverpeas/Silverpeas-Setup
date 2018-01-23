@@ -24,7 +24,7 @@
 package org.silverpeas.setup.configuration
 
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.lang.SystemUtils
+import org.apache.commons.lang3.SystemUtils
 import org.silverpeas.setup.api.Logger
 import org.silverpeas.setup.api.SystemWrapper
 
