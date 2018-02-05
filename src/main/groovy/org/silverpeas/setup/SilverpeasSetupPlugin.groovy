@@ -126,8 +126,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           Path databaseDirPath = Paths.get(settings.SILVERPEAS_HOME, 'h2')
           if (!Files.exists(databaseDirPath))
             Files.createDirectory(databaseDirPath)
-          settings.DB_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.DB_NAME};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" //USER=${settings.DB_USER};PASSWORD=${settings.DB_PASSWORD}"
-          settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" //USER=${settings.DB_USER};PASSWORD=${settings.DB_PASSWORD}"
+          settings.DB_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.DB_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+          settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
         } else {
           settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
           settings.JCR_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"

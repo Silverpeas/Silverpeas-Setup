@@ -111,7 +111,7 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
     assert after.autDomainSQL['fallbackType'] == 'always' &&
         after.autDomainSQL['fallbackType'] == before.autDomainSQL['fallbackType']
     assert after.autDomainSQL['autServer0.SQLJDBCUrl'] ==
-        "jdbc:h2:file:${testSetUp.resourcesDir}/h2/test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" &&
+        "jdbc:h2:file:${testSetUp.resourcesDir}/h2/test;MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" &&
         after.autDomainSQL['autServer0.SQLJDBCUrl'] != before.autDomainSQL['autServer0.SQLJDBCUrl']
     assert after.autDomainSQL['autServer0.SQLAccessLogin'] == 'sa' &&
         after.autDomainSQL['autServer0.SQLAccessLogin'] != before.autDomainSQL['autServer0.SQLAccessLogin']
