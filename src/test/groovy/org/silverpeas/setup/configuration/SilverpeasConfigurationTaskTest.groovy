@@ -26,6 +26,7 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
 
     project.silversetup.logging.logDir = "${project.buildDir.path.replaceAll("[\\\\]", "/")}/log"
     project.silversetup.logging.useLogger = false
+    project.silversetup.silverpeasVersion = project.version
   }
 
   void testSilverpeasConfiguration() {

@@ -66,6 +66,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       if (currentProject.silversetup.logging.useLogger) {
         initLogging(currentProject)
       }
+      settings.SILVERPEAS_VERSION = currentProject.silversetup.silverpeasVersion as String
     }
 
     project.task('configureJBoss', type: JBossConfigurationTask) {

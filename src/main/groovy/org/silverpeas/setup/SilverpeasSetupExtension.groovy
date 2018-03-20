@@ -23,9 +23,7 @@
  */
 package org.silverpeas.setup
 
-import org.gradle.api.logging.LogLevel
 import org.silverpeas.setup.api.SystemWrapper
-
 /**
  * Extension of the plugin in order to provide to the usual Silverpeas setting up properties.
  * @author mmoquillon
@@ -80,6 +78,11 @@ class SilverpeasSetupExtension {
    * dev mode in the application server.
    */
   boolean developmentMode = false
+
+  /**
+   * The actual version of Silverpeas to set up and run.
+   */
+  String silverpeasVersion
 
 
   /**
