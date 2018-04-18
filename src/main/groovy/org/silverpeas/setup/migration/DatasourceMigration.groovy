@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -25,9 +25,10 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import groovy.transform.builder.Builder
+import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.Script
-import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
 /**
@@ -49,6 +50,7 @@ class DatasourceMigration {
   String fromVersion
   String toVersion
   Logger logger
+  Map settings
   List<Script> scripts = []
 
   private DatasourceMigration() {
@@ -63,8 +65,9 @@ class DatasourceMigration {
    * process).
    * @param settings the settings applied in the migration of Silverpeas.
    */
-  def migrate(settings) throws Exception {
-    Sql sql = SilverpeasSetupService.sql
+  def migrate() throws Exception {
+    DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider.class)
+    Sql sql = new Sql(dataSourceProvider.dataSource)
     def settingsToApply = (settings ? settings:[:])
     if (isAnInstallation()) {
       performInstallation(sql, settingsToApply)
@@ -89,7 +92,10 @@ class DatasourceMigration {
     try {
       sql.withTransaction {
         scripts.each { aScript ->
-          aScript.useLogger(logger).useSettings(settings).run([sql: sql])
+          aScript
+              .useLogger(logger)
+              .useSettings(settings)
+              .run(sql: sql)
         }
         int count = sql.executeUpdate(MODULE_INSTALL, [module: this.module, version: this.toVersion])
         if (count != 1) {
@@ -110,7 +116,10 @@ class DatasourceMigration {
     try {
       sql.withTransaction {
         scripts.each { aScript ->
-          aScript.useLogger(logger).useSettings(settings).run([sql: sql])
+          aScript
+              .useLogger(logger)
+              .useSettings(settings)
+              .run(sql: sql)
         }
         int count = sql.executeUpdate(VERSION_UPDATE, [module: this.module, version: this.toVersion])
         if (count != 1) {

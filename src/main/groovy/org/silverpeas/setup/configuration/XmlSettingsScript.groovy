@@ -2,6 +2,7 @@ package org.silverpeas.setup.configuration
 
 import groovy.util.slurpersupport.GPathResult
 import org.silverpeas.setup.api.AbstractScript
+import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.w3c.dom.Document
 import org.w3c.dom.Node
@@ -37,6 +38,7 @@ class XmlSettingsScript extends AbstractScript {
    */
   @Override
   void run(Map args) throws RuntimeException {
+    SilverpeasSetupService service = ManagedBeanContainer.get(SilverpeasSetupService)
     def settingsStatements = new XmlSlurper().parse(script)
     log.info "${script.name} scanning..."
     settingsStatements.test.each { GPathResult test ->
@@ -50,7 +52,7 @@ class XmlSettingsScript extends AbstractScript {
     }
 
     settingsStatements.fileset.each { GPathResult fileset ->
-      String dir = SilverpeasSetupService.expanseVariables(fileset.@root.text())
+      String dir = service.expanseVariables(fileset.@root.text())
       fileset.children().each { GPathResult file ->
         String status = '[OK]'
         String filename = file.@name
@@ -59,10 +61,10 @@ class XmlSettingsScript extends AbstractScript {
         try {
           switch (file.name()) {
             case 'configfile':
-              updateConfigurationFile("${dir}/${filename}", file.parameter)
+              updateConfigurationFile(service, "${dir}/${filename}", file.parameter)
               break
             case 'xmlfile':
-              updateXmlFile("${dir}/${filename}", file.parameter)
+              updateXmlFile(service, "${dir}/${filename}", file.parameter)
           }
         } catch (Exception ex) {
           status = '[FAILURE]'
@@ -76,24 +78,26 @@ class XmlSettingsScript extends AbstractScript {
     log.info "${script.name} scanning done."
   }
 
-  private void updateConfigurationFile(String configurationFilePath, GPathResult parameters) {
+  private void updateConfigurationFile(SilverpeasSetupService service, String configurationFilePath,
+                                       GPathResult parameters) {
     def properties = [:]
     parameters.each { GPathResult parameter ->
-      properties[parameter.@key.text()] = SilverpeasSetupService.expanseVariables(parameter.text())
+      properties[parameter.@key.text()] = service.expanseVariables(parameter.text())
     }
-    SilverpeasSetupService.updateProperties(configurationFilePath, properties)
+    service.updateProperties(configurationFilePath, properties)
   }
 
-  private void updateXmlFile(String xmlFilePath, GPathResult parameters) {
+  private void updateXmlFile(SilverpeasSetupService service, String xmlFilePath,
+                             GPathResult parameters) {
     Document xml = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File(xmlFilePath))
     XPath xpath = XPathFactory.newInstance().newXPath()
     parameters.each { GPathResult parameter ->
       def nodes = xpath.evaluate(parameter.@key.text(), xml, XPathConstants.NODESET)
       nodes.each { Node node ->
         if (node.nodeType == Node.ATTRIBUTE_NODE) {
-          node.nodeValue = SilverpeasSetupService.expanseVariables(parameter.text())
+          node.nodeValue = service.expanseVariables(parameter.text())
         } else if (node.nodeType == Node.ELEMENT_NODE) {
-          node.textContent = SilverpeasSetupService.expanseVariables(parameter.text())
+          node.textContent = service.expanseVariables(parameter.text())
         }
       }
     }

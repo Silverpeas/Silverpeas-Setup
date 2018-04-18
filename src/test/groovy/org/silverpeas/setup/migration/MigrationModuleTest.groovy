@@ -26,7 +26,7 @@ package org.silverpeas.setup.migration
 import org.silverpeas.setup.api.Logger
 import org.xml.sax.SAXParseException
 
-import static org.silverpeas.setup.test.Assertion.numberOfItemsIn
+import static org.silverpeas.setup.test.Assertion.numberOfItems
 import static org.silverpeas.setup.test.Assertion.versionOfModule
 
 /**
@@ -36,7 +36,7 @@ import static org.silverpeas.setup.test.Assertion.versionOfModule
 class MigrationModuleTest extends AbstractDatabaseTest{
 
   void testAFreshInstallation() {
-    assert versionOfModule('toto') == null
+    assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
     MigrationModule module = new MigrationModule()
         .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
@@ -45,13 +45,13 @@ class MigrationModuleTest extends AbstractDatabaseTest{
         .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
-    assert versionOfModule('toto') == '004'
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
   }
 
   void testAnUpgradeFrom002To004() {
     prepareInitialData('toto', '002')
-    assert versionOfModule('toto') == '002'
-    assert numberOfItemsIn('Person') == 0
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     MigrationModule module = new MigrationModule()
         .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
@@ -60,14 +60,14 @@ class MigrationModuleTest extends AbstractDatabaseTest{
         .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
-    assert versionOfModule('toto') == '004'
-    assert numberOfItemsIn('Person') == 1
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
   void testAnUpgradeFrom003To004() {
     prepareInitialData('toto', '003')
-    assert versionOfModule('toto') == '003'
-    assert numberOfItemsIn('Person') == 0
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     MigrationModule module = new MigrationModule()
         .withSettings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
@@ -76,8 +76,8 @@ class MigrationModuleTest extends AbstractDatabaseTest{
         .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
-    assert versionOfModule('toto') == '004'
-    assert numberOfItemsIn('Person') == 1
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
   void testAMalformedMigrationDescriptor() {

@@ -25,10 +25,9 @@ package org.silverpeas.setup.test
 
 import groovy.sql.Sql
 import org.silverpeas.setup.api.DataSourceProvider
-import org.silverpeas.setup.api.SilverpeasSetupService
+import org.silverpeas.setup.api.ManagedBeanContainer
 
 import java.sql.SQLException
-
 /**
  * Sets up an in-memory database for testing purpose.
  * @author mmoquillon
@@ -48,7 +47,7 @@ class DatabaseSetUp {
     }
   }
 
-  private Sql sql
+  private Sql requester
 
   private DatabaseSetUp() {
   }
@@ -63,6 +62,7 @@ class DatabaseSetUp {
    * @return
    */
   static DatabaseSetUp setUp(args) {
+    DataSourceProvider dataSourceProvider
     if (args?.withDatasource) {
       def settings = [
           'DB_URL'     : 'jdbc:h2:mem:test',
@@ -70,7 +70,8 @@ class DatabaseSetUp {
           'DB_USER'    : 'sa',
           'DB_PASSWORD': ''
       ]
-      DataSourceProvider.init(settings)
+      dataSourceProvider = new DataSourceProvider(settings)
+      ManagedBeanContainer.registry().register(dataSourceProvider)
     }
     return new DatabaseSetUp()
   }
@@ -84,7 +85,8 @@ class DatabaseSetUp {
     String script = new File(getClass()
         .getResource('/migrations/db/h2/dbbuilder/002/create_table.sql').toURI()).text
     try {
-      sql().withTransaction {
+      Sql sql = getSql()
+      sql.withTransaction {
         script.split(';').each { statement ->
           sql.execute(statement.trim())
         }
@@ -106,7 +108,8 @@ class DatabaseSetUp {
    * @throws Exception if an error occurs during the closure execution.
    */
   DatabaseSetUp prepare(Closure closure) throws Exception {
-    sql().withTransaction {
+    Sql sql = getSql()
+    sql.withTransaction {
       closure.call(sql)
     }
     return this
@@ -118,7 +121,8 @@ class DatabaseSetUp {
    */
   DatabaseSetUp dropAll() {
     try {
-      sql().execute('DROP ALL OBJECTS')
+      Sql sql = getSql()
+      sql.execute('DROP ALL OBJECTS')
     } catch (SQLException ex) {
       println "Error while dropping all the tables: ${ex.message}"
       throw ex
@@ -126,11 +130,12 @@ class DatabaseSetUp {
     return this
   }
 
-  private Sql sql() {
-    if (sql == null) {
-      sql = SilverpeasSetupService.sql
+  private Sql getSql() {
+    if (requester == null) {
+      DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider.class)
+      requester = new Sql(dataSourceProvider.dataSource)
     }
-    return sql
+    return requester
   }
 
 }

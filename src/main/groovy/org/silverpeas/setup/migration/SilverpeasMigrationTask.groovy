@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -28,9 +28,14 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
+import org.silverpeas.setup.SilverpeasSetupExtension
+import org.silverpeas.setup.SilverpeasSetupPlugin
+import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.SilverpeasSetupService
+import org.silverpeas.setup.api.ManagedBeanContainer
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -55,13 +60,15 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
-  Map settings
-  Logger log = Logger.getLogger(this.name)
+  final SilverpeasSetupExtension silverSetup
+  final Logger log = Logger.getLogger(this.name)
 
   SilverpeasMigrationTask() {
     description = 'Migrate in version the datasource schema expected by Silverpeas'
     group = 'Build'
     dependsOn = ['configureSilverpeas']
+    silverSetup =
+        (SilverpeasSetupExtension) project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
   }
 
   @TaskAction
@@ -87,13 +94,12 @@ class SilverpeasMigrationTask extends DefaultTask {
   private def initMigrationTask() {
     log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
-    File descriptor =
-        new File("${project.silversetup.migrationHome}/modules/${MIGRATION_SETTING_MODULE}")
+    Path descriptor = Paths.get(silverSetup.migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
     MigrationModule module = new MigrationModule()
         .withStatus(status)
-        .withSettings(settings)
+        .withSettings(silverSetup.config)
         .withLogger(log)
-        .loadMigrationsFrom(descriptor)
+        .loadMigrationsFrom(descriptor.toFile())
     module.migrate()
     log.info 'Migration initialization done'
   }
@@ -105,11 +111,11 @@ class SilverpeasMigrationTask extends DefaultTask {
   private List<MigrationModule> loadMigrationModules() {
     def status = loadInstalledModuleStatus()
     List<MigrationModule> modules = []
-    new File("${project.silversetup.migrationHome}/modules").listFiles().each { descriptor ->
+    new File(silverSetup.migrationHome, 'modules').listFiles().each { descriptor ->
       if (descriptor.name != MIGRATION_SETTING_MODULE) {
         MigrationModule module = new MigrationModule()
             .withStatus(status)
-            .withSettings(settings)
+            .withSettings(silverSetup.config)
             .withLogger(log)
             .loadMigrationsFrom(descriptor)
         modules << module
@@ -124,7 +130,8 @@ class SilverpeasMigrationTask extends DefaultTask {
     def level = logging.level
     logging.captureStandardOutput(LogLevel.ERROR)
     def status = [:]
-    Sql sql = SilverpeasSetupService.sql;
+    DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider.class)
+    Sql sql = new Sql(dataSourceProvider.dataSource)
     try {
       DatabaseMetaData metaData = sql.getDataSource().getConnection().getMetaData()
       ResultSet tables = metaData.getTables(null, null, 'sr_packages', ['TABLE'] as String[])

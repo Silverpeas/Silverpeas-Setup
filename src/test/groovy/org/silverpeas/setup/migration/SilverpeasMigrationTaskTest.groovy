@@ -16,7 +16,7 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
 
   @Override
   DatabaseSetUp initDatabaseSetUp() {
-    return DatabaseSetUp.setUp()
+    return DatabaseSetUp.setUp(withDatasource: true)
   }
 
   @Override
@@ -30,25 +30,25 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
   }
 
   void testSilverpeasInstallation() {
-    assert versionOfModule('toto') == null
-    assert versionOfModule('busCore') == null
+    assert versionOfModule(databaseSetUp.sql, 'toto') == null
+    assert versionOfModule(databaseSetUp.sql, 'busCore') == null
 
     project.tasks.findByPath('migration').performMigration()
 
-    assert versionOfModule('toto') == '004'
-    assert versionOfModule('busCore') == '032'
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
+    assert versionOfModule(databaseSetUp.sql, 'busCore') == '032'
   }
 
   void testSilverpeasUpgrade() {
     databaseSetUp.createSrPackagesTable()
     prepareInitialData('toto', '002')
 
-    assert versionOfModule('toto') == '002'
-    assert versionOfModule('busCore') == null
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
+    assert versionOfModule(databaseSetUp.sql, 'busCore') == null
 
     project.tasks.findByPath('migration').performMigration()
 
-    assert versionOfModule('toto') == '004'
-    assert versionOfModule('busCore') == '032'
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
+    assert versionOfModule(databaseSetUp.sql, 'busCore') == '032'
   }
 }

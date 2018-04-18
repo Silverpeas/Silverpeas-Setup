@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -25,10 +25,10 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import org.silverpeas.setup.api.AbstractScript
+import org.silverpeas.setup.api.ManagedBeanContainer
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.sql.SQLException
-
-import static org.silverpeas.setup.api.SilverpeasSetupService.expanseVariables
 
 /**
  * A SQL script.
@@ -36,16 +36,8 @@ import static org.silverpeas.setup.api.SilverpeasSetupService.expanseVariables
  */
 class SQLScript extends AbstractScript {
 
-  private List<String> statements = []
-
   SQLScript(String scriptPath) {
     super(scriptPath)
-    String scriptContent = new File(scriptPath).getText('UTF-8')
-    scriptContent.split(';').each { String aStatement ->
-        if (!aStatement.trim().isEmpty()) {
-          statements << expanseVariables(aStatement.trim())
-        }
-      }
   }
 
   /**
@@ -60,10 +52,23 @@ class SQLScript extends AbstractScript {
   @Override
   void run(Map args) throws SQLException {
     Sql sql = args.sql
+    List<String> statements = loadSqlStatements()
     sql.withBatch { batch ->
       statements.each {
         batch.addBatch(it)
       }
     }
+  }
+
+  private List<String> loadSqlStatements() {
+    SilverpeasSetupService service = new ManagedBeanContainer().get(SilverpeasSetupService)
+    List<String> statements = []
+    String scriptContent = script.getText('UTF-8')
+    scriptContent.split(';').each { String aStatement ->
+      if (!aStatement.trim().isEmpty()) {
+        statements << service.expanseVariables(aStatement.trim())
+      }
+    }
+    return statements
   }
 }
