@@ -21,6 +21,8 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import org.apache.tools.ant.filters.ReplaceTokens
+
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
 version = '6.1-SNAPSHOT'
@@ -127,7 +129,6 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allSource
 }
 
-import org.apache.tools.ant.filters.ReplaceTokens
 processTestResources {
   filter(ReplaceTokens, tokens:[buildDir: buildDir.path], beginToken: '${', endToken: '}')
 }

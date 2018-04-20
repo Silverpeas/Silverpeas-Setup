@@ -40,7 +40,7 @@ class XmlSettingsScript extends AbstractScript {
   void run(Map args) throws RuntimeException {
     SilverpeasSetupService service = ManagedBeanContainer.get(SilverpeasSetupService)
     def settingsStatements = new XmlSlurper().parse(script)
-    log.info "${script.name} scanning..."
+    logger.info "${script.name} scanning..."
     settingsStatements.test.each { GPathResult test ->
       test.parameter.each { GPathResult parameter ->
         String settingName = parameter.@key.text();
@@ -57,7 +57,7 @@ class XmlSettingsScript extends AbstractScript {
         String status = '[OK]'
         String filename = file.@name
         String settingFile = "${pathToLog(dir, settings.SILVERPEAS_HOME)}/${filename}"
-        log.info "${settingFile} processing..."
+        logger.info "${settingFile} processing..."
         try {
           switch (file.name()) {
             case 'configfile':
@@ -70,12 +70,12 @@ class XmlSettingsScript extends AbstractScript {
           status = '[FAILURE]'
           throw new RuntimeException(ex)
         } finally {
-          log.info "${settingFile} processing: ${status}"
+          logger.info "${settingFile} processing: ${status}"
         }
       }
     }
 
-    log.info "${script.name} scanning done."
+    logger.info "${script.name} scanning done."
   }
 
   private void updateConfigurationFile(SilverpeasSetupService service, String configurationFilePath,

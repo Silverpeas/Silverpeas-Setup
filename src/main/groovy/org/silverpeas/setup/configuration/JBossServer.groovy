@@ -25,14 +25,13 @@ package org.silverpeas.setup.configuration
 
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.SystemUtils
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
-
 /**
  * It wraps an existing installation of a JBoss application server. It provides functions to
  * interact with the JBoss AS (either Wildfly or JBoss EAP) in order to start/stop it or to
@@ -54,7 +53,7 @@ class JBossServer {
 
   private long timeout = 120000
 
-  private def logger = Logger.getLogger(getClass().getSimpleName(), System.out)
+  private def logger = FileLogger.getLogger(getClass().getSimpleName(), System.out)
 
   /**
    * Constructs a new instance of a JBossServer wrapping the specified JBoss/Wildfly installation.

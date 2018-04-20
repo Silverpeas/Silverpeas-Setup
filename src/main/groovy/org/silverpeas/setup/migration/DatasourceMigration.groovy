@@ -26,7 +26,7 @@ package org.silverpeas.setup.migration
 import groovy.sql.Sql
 import groovy.transform.builder.Builder
 import org.silverpeas.setup.api.DataSourceProvider
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.Script
 
@@ -49,7 +49,7 @@ class DatasourceMigration {
   String module
   String fromVersion
   String toVersion
-  Logger logger
+  FileLogger logger
   Map settings
   List<Script> scripts = []
 

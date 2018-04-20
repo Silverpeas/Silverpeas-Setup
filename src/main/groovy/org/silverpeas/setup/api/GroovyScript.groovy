@@ -46,10 +46,10 @@ class GroovyScript extends AbstractScript {
   */
   @Override
   void run(Map args) throws RuntimeException {
-    log.info "${script.name} processing..."
+    logger.info "${script.name} processing..."
     Binding parameters = new Binding()
     parameters.setVariable('settings', settings)
-    parameters.setVariable('log', log)
+    parameters.setVariable('log', logger)
     parameters.setVariable('service', ManagedBeanContainer.get(SilverpeasSetupService))
     args.each { key, value ->
       parameters.setVariable(key, value)
@@ -61,7 +61,7 @@ class GroovyScript extends AbstractScript {
       status = '[FAILURE]'
       throw ex
     } finally {
-      log.info "${script.name} processing: ${status}"
+      logger.info "${script.name} processing: ${status}"
     }
   }
 

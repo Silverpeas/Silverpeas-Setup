@@ -59,7 +59,7 @@ class JBossCliScript extends AbstractScript {
       JBossServer jboss = args.jboss
       String fileBaseName = FilenameUtils.getBaseName(script.name)
       Path cli = Files.createTempFile("${fileBaseName}-", '.cli')
-      log.info "Prepare ${script.name} into ${cli.fileName}"
+      logger.info "Prepare ${script.name} into ${cli.fileName}"
       new FileReader(script).transformLine(new FileWriter(cli.toString())) { line ->
         VariableReplacement.parseExpression(line, settings)
       }

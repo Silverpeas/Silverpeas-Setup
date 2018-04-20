@@ -25,6 +25,9 @@ package org.silverpeas.setup
 
 import org.gradle.api.Action
 import org.gradle.api.Project
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.FileCollection
+import org.gradle.api.provider.Property
 import org.silverpeas.setup.api.SystemWrapper
 
 /**
@@ -62,42 +65,10 @@ class SilverpeasSetupExtension {
   final File jbossHome
 
   /**
-   * The home configuration directory of Silverpeas. It should contain both the global
-   * configuration properties, the Silverpeas and the JBoss configuration directory. It is expected
-   * to contain two subdirectories:
-   * <ul>
-   *   <li><code>jboss</code> with the scripts to configure JBoss/Wildfly for Silverpeas;</li>
-   *   <li><code>silverpeas</code> with the scripts to configure Silverpeas itself.</li>
-   * </ul>
-   * By default, the configuration home directory is expected to be
-   * <code>SILVERPEAS_HOME/configuration</code> where <code>SILVERPEAS_HOME</code> is the
-   * Silverpeas installation directory.
+   * The properties to access the configuration if Silverpeas in order to apply it to the
+   * current Silverpeas distribution.
    */
-  File configurationHome
-
-  /**
-   * The directory that contains all the configuration scripts to configure JBoss/Wildfly for
-   * Silverpeas.
-   */
-  final File jbossConfigurationDir
-
-  /**
-   * The directory that contains all the configuration scripts to configure specifically the
-   * Silverpeas web portal and components.
-   */
-  final File silverpeasConfigurationDir
-
-  /**
-   * The directory that contains the additional JBoss/Wildfly modules to install in JBoss/Wildfy
-   * for Silverpeas
-   */
-  final File jbossModulesDir
-
-  /**
-   * The Silverpeas configuration properties as defined in the <code>config.properties</code> file.
-   * Some of them are computed from the properties in the file <code>config.properties</code>.
-   */
-  final Map config = [:]
+  final SilverpeasConfigurationProperties config
 
   /**
    * The directory in which are all located both the data source migration descriptors
@@ -128,14 +99,28 @@ class SilverpeasSetupExtension {
    * by Silverpeas. Currently only PostgreSQL, MS-SQLServer, and Oracle database systems are
    * supported.
    */
-  String driversDir
+  final File driversDir
+
+  /**
+   * All the software bundles that made Silverpeas. Those bundles are usually downloaded from our
+   * own Software Repository by the Silverpeas installer. They are required to assemble and build
+   * the final Silverpeas Web Application. The Jar libraries other than the supported JDBC drivers
+   * aren't taken in charge.
+   */
+  final ConfigurableFileCollection silverpeasBundles
+
+  /**
+   * Any tiers bundles to add into the Silverpeas Application being built. The tiers bundles are
+   * processed differently by the plugin: only the JAR libraries are taken in charge.
+   */
+  final ConfigurableFileCollection tiersBundles
 
   /**
    * Is in development mode ? (In this case, some peculiar configuration are applied to support the
    * dev mode in the application server.) This is a property and hence can be set by the user input
    * from the build script.
    */
-  boolean developmentMode = false
+  final Property<Boolean> developmentMode
 
   /**
    * The actual version of Silverpeas to set up and run.
@@ -161,19 +146,29 @@ class SilverpeasSetupExtension {
       println 'The path referred by SILVERPEAS_HOME or by JBOSS_HOME doesn\'t exist or isn\'t a directory!'
       throw new IllegalStateException()
     }
-    configurationHome = project.file("${silverpeasHome.path}/configuration")
     migrationHome = project.file("${silverpeasHome.path}/migrations")
-    jbossConfigurationDir = project.file("${silverpeasHome.path}/configuration/jboss")
-    silverpeasConfigurationDir = project.file("${silverpeasHome.path}/configuration/silverpeas")
-    jbossModulesDir = project.file("${jbossConfigurationDir.path}/modules")
+    driversDir = project.file("${project.buildDir.path}/drivers")
+    config  = project.objects.newInstance(SilverpeasConfigurationProperties, project, silverpeasHome)
     logging = project.objects.newInstance(SilverpeasLoggingProperties)
+    silverpeasBundles = project.files()
+    tiersBundles = project.files();
+    developmentMode = project.objects.property(Boolean)
+    developmentMode.set(false)
+  }
+
+  void setSilverpeasBundles(FileCollection bundles) {
+    this.silverpeasBundles.setFrom(bundles)
+  }
+
+  void setTiersBundles(FileCollection bundles) {
+    this.tiersBundles.setFrom(bundles)
   }
 
   void logging(Action<? extends SilverpeasLoggingProperties> action) {
     action.execute(logging)
   }
 
-  void setConfig(final Map configProperties) {
-    this.config.putAll(configProperties)
+  void config(Action<? extends SilverpeasConfigurationProperties> action) {
+    action.execute(config)
   }
 }

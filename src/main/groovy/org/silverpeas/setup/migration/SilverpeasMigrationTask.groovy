@@ -28,10 +28,9 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.SilverpeasSetupExtension
-import org.silverpeas.setup.SilverpeasSetupPlugin
+import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.DataSourceProvider
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.ManagedBeanContainer
 
 import java.nio.file.Path
@@ -39,6 +38,8 @@ import java.nio.file.Paths
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.SQLException
+
+import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.CONFIGURE_SILVERPEAS
 /**
  * This task is for migrating the data sources used as the backend by Silverpeas. A migration is
  * either a fresh setting-up of a data source structure or an upgrade of an existing data source
@@ -60,15 +61,14 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
-  final SilverpeasSetupExtension silverSetup
-  final Logger log = Logger.getLogger(this.name)
+  File migrationHome
+  SilverpeasConfigurationProperties config
+  final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasMigrationTask() {
-    description = 'Migrate in version the datasource schema expected by Silverpeas'
+    description = 'Migrate in version the data source structure expected by Silverpeas'
     group = 'Build'
-    dependsOn = ['configureSilverpeas']
-    silverSetup =
-        (SilverpeasSetupExtension) project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
+    dependsOn = [CONFIGURE_SILVERPEAS.name]
   }
 
   @TaskAction
@@ -94,10 +94,10 @@ class SilverpeasMigrationTask extends DefaultTask {
   private def initMigrationTask() {
     log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
-    Path descriptor = Paths.get(silverSetup.migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
+    Path descriptor = Paths.get(migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
     MigrationModule module = new MigrationModule()
         .withStatus(status)
-        .withSettings(silverSetup.config)
+        .withSettings(config.settings)
         .withLogger(log)
         .loadMigrationsFrom(descriptor.toFile())
     module.migrate()
@@ -111,11 +111,11 @@ class SilverpeasMigrationTask extends DefaultTask {
   private List<MigrationModule> loadMigrationModules() {
     def status = loadInstalledModuleStatus()
     List<MigrationModule> modules = []
-    new File(silverSetup.migrationHome, 'modules').listFiles().each { descriptor ->
+    new File(migrationHome, 'modules').listFiles().each { descriptor ->
       if (descriptor.name != MIGRATION_SETTING_MODULE) {
         MigrationModule module = new MigrationModule()
             .withStatus(status)
-            .withSettings(silverSetup.config)
+            .withSettings(config.settings)
             .withLogger(log)
             .loadMigrationsFrom(descriptor)
         modules << module

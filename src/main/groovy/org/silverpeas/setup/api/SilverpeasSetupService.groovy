@@ -28,6 +28,7 @@ import org.gradle.api.tasks.StopExecutionException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Matcher
+
 /**
  * A service providing high-level or added-value functions for both the tasks defined by this
  * plugin and the Groovy scripts invoked within the execution of those tasks.
@@ -184,8 +185,8 @@ class SilverpeasSetupService {
    * @param namespace the namespace under which any traces will be written.
    * @return the logger.
    */
-  Logger getLogger(String namespace) {
-    return Logger.getLogger(namespace)
+  FileLogger getLogger(String namespace) {
+    return FileLogger.getLogger(namespace)
   }
 
   private static final String normalizePath(String path) {

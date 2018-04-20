@@ -23,7 +23,7 @@
  */
 package org.silverpeas.setup.migration
 
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
 import java.sql.SQLException
@@ -49,7 +49,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .module('toto')
         .toVersion('002')
         .scripts([script])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -69,7 +69,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('002')
         .toVersion('003')
         .scripts([script])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -90,7 +90,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([script])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -116,7 +116,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([sqlScript, groovyScript])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
@@ -137,7 +137,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .module('foo')
           .toVersion('002')
           .scripts([script])
-          .logger(Logger.getLogger(getClass().getSimpleName()))
+          .logger(FileLogger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
     }
@@ -160,7 +160,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .fromVersion('003')
           .toVersion('004')
           .scripts([script])
-          .logger(Logger.getLogger(getClass().getSimpleName()))
+          .logger(FileLogger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
     }

@@ -28,39 +28,52 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectState
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.SilverpeasSetupExtension
-import org.silverpeas.setup.SilverpeasSetupPlugin
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.SilverpeasConfigurationProperties
+import org.silverpeas.setup.SilverpeasLoggingProperties
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.regex.Matcher
+
 /**
  * A Gradle task to configure a JBoss/Wildfly instance from some CLI scripts to be ready to run
  * Silverpeas.
  * @author mmoquillon
  */
 class JBossConfigurationTask extends DefaultTask {
+
   File driversDir
-  final JBossServer jboss
-  final SilverpeasSetupExtension silverSetup
-  final Logger log = Logger.getLogger(this.name)
+  File jbossHome
+  SilverpeasConfigurationProperties config
+  SilverpeasLoggingProperties logConfig
+  JBossServer jboss
+  final FileLogger log = FileLogger.getLogger(this.name)
 
   JBossConfigurationTask() {
     description = 'Configure JBoss/Wildfly for Silverpeas'
     group = 'Build'
     onlyIf {
-      Files.exists(this.driversDir.path)
+      precondition()
     }
-    silverSetup =
-        (SilverpeasSetupExtension) project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
-    jboss = new JBossServer(silverSetup.jbossHome.path)
+
     project.afterEvaluate { Project currentProject, ProjectState state ->
-      if (currentProject.silversetup.logging.useLogger) {
-        jboss.redirectOutputTo(new File(currentProject.silversetup.logging.logDir, '/jboss_output.log'))
-            .useLogger(log)
+      if (state.executed) {
+        initializeJBossServer()
       }
+    }
+  }
+
+  boolean precondition() {
+    project.buildDir.exists() && Files.exists(this.driversDir.toPath())
+  }
+
+  void initializeJBossServer() {
+    jboss = new JBossServer(jbossHome.path)
+    if (logConfig.useLogger) {
+      jboss.redirectOutputTo(new File(logConfig.logDir, 'jboss_output.log'))
+          .useLogger(log)
     }
   }
 
@@ -85,7 +98,7 @@ class JBossConfigurationTask extends DefaultTask {
 
   private def setUpJVMOptions() {
     log.info 'JVM options setting'
-    new File(silverSetup.jbossHome, 'bin').listFiles(new FilenameFilter() {
+    new File(jbossHome, 'bin').listFiles(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
         return name.endsWith('.conf') || name.endsWith('.conf.bat')
@@ -93,10 +106,11 @@ class JBossConfigurationTask extends DefaultTask {
     }).each { conf ->
       String jvmOpts; def regexp
       if (conf.name.endsWith('.bat')) {
-        jvmOpts = "set \"JAVA_OPTS=-Xmx${silverSetup.config.JVM_RAM_MAX} ${silverSetup.config.JVM_OPTS}"
+        jvmOpts = "set \"JAVA_OPTS=-Xmx${config.settings.JVM_RAM_MAX} ${config.settings.JVM_OPTS}"
         regexp = /\s*set\s+"JAVA_OPTS=-Xm.+/
       } else {
-        jvmOpts = "JAVA_OPTS=\"-Xmx${silverSetup.config.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${silverSetup.config.JVM_OPTS}"
+        jvmOpts =
+            "JAVA_OPTS=\"-Xmx${config.settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${config.settings.JVM_OPTS}"
         regexp = /\s*JAVA_OPTS="-Xm.+/
       }
       jvmOpts += '"'
@@ -121,28 +135,28 @@ class JBossConfigurationTask extends DefaultTask {
   private def installAdditionalModules() {
     log.info 'Additional modules installation'
     project.copy {
-      from silverSetup.jbossModulesDir.toPath()
-      into Paths.get(silverSetup.jbossHome.path, 'modules')
+      it.from config.jbossModulesDir.toPath()
+      it.into Paths.get(jbossHome.path, 'modules')
     }
   }
 
   private def setUpJDBCDriver() throws Exception {
-    log.info "Install database driver for ${silverSetup.config.DB_SERVERTYPE}"
-    if (silverSetup.config.DB_SERVERTYPE == 'H2') {
+    log.info "Install database driver for ${config.settings.DB_SERVERTYPE}"
+    if (config.settings.DB_SERVERTYPE == 'H2') {
       // H2 is already available by default in JBoss/Wildfly
-      silverSetup.config.DB_DRIVER_NAME = 'h2'
+      config.settings.DB_DRIVER_NAME = 'h2'
     } else {
       // install the required driver other than H2
       driversDir.listFiles().each { driver ->
-        if ((driver.name.startsWith('postgresql') && silverSetup.config.DB_SERVERTYPE == 'POSTGRESQL') ||
-            (driver.name.startsWith('jtds') && silverSetup.config.DB_SERVERTYPE == 'MSSQL') ||
-            (driver.name.startsWith('ojdbc') && silverSetup.config.DB_SERVERTYPE == 'ORACLE')) {
-          silverSetup.config.DB_DRIVER_NAME = driver.name
+        if ((driver.name.startsWith('postgresql') && config.settings.DB_SERVERTYPE == 'POSTGRESQL') ||
+            (driver.name.startsWith('jtds') && config.settings.DB_SERVERTYPE == 'MSSQL') ||
+            (driver.name.startsWith('ojdbc') && config.settings.DB_SERVERTYPE == 'ORACLE')) {
+          config.settings.DB_DRIVER_NAME = driver.name
           try {
-            jboss.add(Paths.get(driversDir.path, silverSetup.config.DB_DRIVER_NAME).toString())
-            jboss.deploy(silverSetup.config.DB_DRIVER_NAME)
+            jboss.add(Paths.get(driversDir.path, config.settings.DB_DRIVER_NAME).toString())
+            jboss.deploy(config.settings.DB_DRIVER_NAME)
           } catch (Exception ex) {
-            log.error("Error: cannot deploy ${silverSetup.config.DB_DRIVER_NAME}", ex)
+            log.error("Error: cannot deploy ${config.settings.DB_DRIVER_NAME}", ex)
             throw ex
           }
         }
@@ -155,7 +169,7 @@ class JBossConfigurationTask extends DefaultTask {
         Files.createTempFile('jboss-configuration-', '.cli').toString())
     log.info "CLI configuration scripts will be merged into ${cliScript.toFile().name}"
     Set<Script> scripts = new HashSet<>()
-    silverSetup.jbossConfigurationDir.listFiles(new FileFilter() {
+    config.jbossConfigurationDir.listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
         return child.isFile()
@@ -170,7 +184,7 @@ class JBossConfigurationTask extends DefaultTask {
       scripts.each { aScript ->
         aScript
             .useLogger(log)
-            .useSettings(silverSetup.config)
+            .useSettings(config.settings)
             .run(jboss: jboss)
       }
     } catch(Exception ex) {

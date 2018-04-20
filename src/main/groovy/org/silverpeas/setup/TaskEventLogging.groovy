@@ -28,7 +28,8 @@ import org.gradle.BuildResult
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.SilverpeasSetupTaskNames
 import org.silverpeas.setup.configuration.JBossServer
 
 /**
@@ -45,7 +46,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
    * The name of the tasks to consider in the custom output. By default, the tasks configureJBoss,
    * configureSilverpeas, and migration are supported.
    */
-  List<String> tasks = ['configureJBoss', 'configureSilverpeas', 'migration']
+  List<String> tasks = SilverpeasSetupTaskNames.values().collect { it.name }
 
   private buildStarted = false
   private List<String> executedTasks = []
@@ -62,17 +63,17 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
         buildStarted = true
         SilverpeasSetupExtension silverSetup =
             (SilverpeasSetupExtension) task.project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
-        Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
+        FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
             "SILVERPEAS SETUP: ${task.project.version}",
             "SILVERPEAS HOME:  ${silverSetup.silverpeasHome.path}",
             "JBOSS HOME:       ${silverSetup.jbossHome.path}",
-            "JCR HOME:         ${silverSetup.config.JCR_HOME.asPath().toString()}",
+            "JCR HOME:         ${silverSetup.config.settings.JCR_HOME.asPath().toString()}",
             "JAVA HOME:        ${System.getenv('JAVA_HOME')}",
-            "DATABASE:         ${silverSetup.config.DB_SERVERTYPE.toLowerCase()}",
+            "DATABASE:         ${silverSetup.config.settings.DB_SERVERTYPE.toLowerCase()}",
             "OPERATING SYSTEM: ${System.getProperty('os.name')}",
             "PRODUCTION MODE:  ${!silverSetup.developmentMode}")
       }
-      Logger log = Logger.getLogger(task.name)
+      FileLogger log = FileLogger.getLogger(task.name)
       String taskTitle = unformat(task.name)
       if (!task.didWork) {
         log.info "${taskTitle}..."
@@ -86,7 +87,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
   @Override
   void afterExecute(Task task, TaskState state) {
     if (tasks.contains(task.name) && !executedTasks.contains(task.name)) {
-      Logger log = Logger.getLogger(task.name)
+      FileLogger log = FileLogger.getLogger(task.name)
       String taskTitle = unformat(task.name)
       String status = 'OK'
       if (state.failure != null) {
@@ -103,7 +104,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome.path)
     String status = "JBoss is ${jboss.status()}"
     if (buildStarted) {
-      Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
+      FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
       buildStarted = false
     }
     println()

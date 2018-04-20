@@ -42,7 +42,7 @@ interface Script {
    * @param logger a logger.
    * @return itself.
    */
-  Script useLogger(Logger logger)
+  Script useLogger(FileLogger logger)
 
   /**
    * Uses the specified settings to parametrize the execution of this script.

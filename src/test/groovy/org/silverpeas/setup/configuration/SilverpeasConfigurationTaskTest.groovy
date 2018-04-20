@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.silverpeas.setup.test.TestSetUp
 
+import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.CONFIGURE_SILVERPEAS
 /**
  * Test the case of the configuration of Silverpeas performed by a dedicated Gradle task.
  * @author mmoquillon
@@ -32,7 +33,7 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
   void testSilverpeasConfiguration() {
     TestContext context = new TestContext().before()
 
-    project.tasks.findByPath('configureSilverpeas').configureSilverpeas()
+    project.tasks.findByPath(CONFIGURE_SILVERPEAS.name).configureSilverpeas()
 
     context.after()
 

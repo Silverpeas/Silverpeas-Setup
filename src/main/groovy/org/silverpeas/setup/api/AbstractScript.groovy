@@ -31,7 +31,7 @@ package org.silverpeas.setup.api
 abstract class AbstractScript implements Script {
 
   protected File script
-  protected Logger log
+  protected FileLogger logger
   protected Map settings
 
   /**
@@ -48,8 +48,8 @@ abstract class AbstractScript implements Script {
    * @return itself.
    */
   @Override
-  AbstractScript useLogger(final Logger logger) {
-    this.log = logger
+  AbstractScript useLogger(final FileLogger logger) {
+    this.logger = logger
     return this
   }
 

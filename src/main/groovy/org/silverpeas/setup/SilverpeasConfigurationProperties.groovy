@@ -23,6 +23,10 @@
  */
 package org.silverpeas.setup
 
+import org.gradle.api.Project
+
+import javax.inject.Inject
+
 /**
  * Properties for the configuration of Silverpeas. Such properties include the location of the
  * configuration directories, the location of the Silverpeas data, and so on. Among those properties
@@ -30,4 +34,54 @@ package org.silverpeas.setup
  * @author mmoquillon
  */
 class SilverpeasConfigurationProperties {
+
+  /**
+   * The home configuration directory of Silverpeas. It should contain both the global
+   * configuration properties, the Silverpeas and the JBoss configuration directory. It is expected
+   * to contain two subdirectories:
+   * <ul>
+   *   <li><code>jboss</code> with the scripts to configure JBoss/Wildfly for Silverpeas;</li>
+   *   <li><code>silverpeas</code> with the scripts to configure Silverpeas itself.</li>
+   * </ul>
+   * By default, the configuration home directory is expected to be
+   * <code>SILVERPEAS_HOME/configuration</code> where <code>SILVERPEAS_HOME</code> is the
+   * Silverpeas installation directory.
+   */
+  File configurationHome
+
+  /**
+   * The directory that contains all the configuration scripts to configure JBoss/Wildfly for
+   * Silverpeas.
+   */
+  final File jbossConfigurationDir
+
+  /**
+   * The directory that contains all the configuration scripts to configure specifically the
+   * Silverpeas web portal and components.
+   */
+  final File silverpeasConfigurationDir
+
+  /**
+   * The directory that contains the additional JBoss/Wildfly modules to install in JBoss/Wildfy
+   * for Silverpeas
+   */
+  final File jbossModulesDir
+
+  /**
+   * The Silverpeas settings as defined in the <code>config.properties</code> file.
+   * Some of them are computed from the properties in the file <code>config.properties</code>.
+   */
+  final Map settings = [:]
+
+  @Inject
+  SilverpeasConfigurationProperties(Project project, File silverpeasHome) {
+    configurationHome = project.file("${silverpeasHome.path}/configuration")
+    jbossConfigurationDir = project.file("${silverpeasHome.path}/configuration/jboss")
+    silverpeasConfigurationDir = project.file("${silverpeasHome.path}/configuration/silverpeas")
+    jbossModulesDir = project.file("${jbossConfigurationDir.path}/modules")
+  }
+
+  void setSettings(final Map configProperties) {
+    this.settings.putAll(configProperties)
+  }
 }

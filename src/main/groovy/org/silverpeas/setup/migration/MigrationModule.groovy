@@ -28,7 +28,7 @@ import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
 import javax.xml.XMLConstants
@@ -56,7 +56,7 @@ class MigrationModule {
   def status
   Map settings
   Project project
-  Logger logger
+  FileLogger logger
 
   /**
    * The name of this migration module.
