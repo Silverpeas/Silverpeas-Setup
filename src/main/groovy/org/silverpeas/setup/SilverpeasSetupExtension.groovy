@@ -54,15 +54,24 @@ import org.silverpeas.setup.api.SystemWrapper
 class SilverpeasSetupExtension {
 
   /**
-   * The path of the Silverpeas home directory. Defaulted with the SILVERPEAS_HOME environment
+   * The Silverpeas home directory. Defaulted with the SILVERPEAS_HOME environment
    * variable.
    */
   final File silverpeasHome
 
   /**
-   * The path of the JBoss home directory. Defaulted with the JBOSS_HOME environment variable.
+   * The JBoss home directory. Defaulted with the JBOSS_HOME environment variable.
    */
   final File jbossHome
+
+  /**
+   * The distribution directory. It is the directory that contains all the content of the
+   * constructed Silverpeas collaborative application. Defaulted into the build directory. Set a
+   * different location is pertinent only for development mode as in this mode the distribution
+   * directory is deployed as such in the JBoss/Wildfly application server.
+   * environment variable.
+   */
+  final File distDir
 
   /**
    * The properties to access the configuration if Silverpeas in order to apply it to the
@@ -89,17 +98,16 @@ class SilverpeasSetupExtension {
   final File migrationHome
 
   /**
+   * Directory that have to contain all the application or resource archives to deploy into
+   * JBoss/Wildfly.
+   */
+  final File deploymentDir
+
+  /**
    * The properties to configure the logging. They define the location of the logging file, the
    * logging level and so on.
    */
   final SilverpeasLoggingProperties logging
-
-  /**
-   * The path of the directory containing the JDBC drivers for the different data source supported
-   * by Silverpeas. Currently only PostgreSQL, MS-SQLServer, and Oracle database systems are
-   * supported.
-   */
-  final File driversDir
 
   /**
    * All the software bundles that made Silverpeas. Those bundles are usually downloaded from our
@@ -147,7 +155,8 @@ class SilverpeasSetupExtension {
       throw new IllegalStateException()
     }
     migrationHome = project.file("${silverpeasHome.path}/migrations")
-    driversDir = project.file("${project.buildDir.path}/drivers")
+    deploymentDir = project.file("${silverpeasHome.path}/deployments")
+    distDir = project.file("${project.buildDir}/dist")
     config  = project.objects.newInstance(SilverpeasConfigurationProperties, project, silverpeasHome)
     logging = project.objects.newInstance(SilverpeasLoggingProperties)
     silverpeasBundles = project.files()

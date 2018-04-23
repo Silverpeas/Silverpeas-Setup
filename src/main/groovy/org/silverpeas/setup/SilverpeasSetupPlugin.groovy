@@ -24,15 +24,14 @@
 package org.silverpeas.setup
 
 import org.gradle.api.*
-import org.silverpeas.setup.api.DataSourceProvider
-import org.silverpeas.setup.api.FileLogger
-import org.silverpeas.setup.api.ManagedBeanContainer
-import org.silverpeas.setup.api.SilverpeasSetupService
+import org.gradle.api.provider.Property
+import org.silverpeas.setup.api.*
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
 import org.silverpeas.setup.configuration.VariableReplacement
 import org.silverpeas.setup.construction.SilverpeasBuilder
 import org.silverpeas.setup.construction.SilverpeasConstructionTask
+import org.silverpeas.setup.installation.SilverpeasInstallationTask
 import org.silverpeas.setup.migration.SilverpeasMigrationTask
 import org.silverpeas.setup.security.Encryption
 import org.silverpeas.setup.security.EncryptionFactory
@@ -59,6 +58,7 @@ import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.*
 class SilverpeasSetupPlugin implements Plugin<Project> {
 
   public static final String EXTENSION = 'silversetup'
+  public static final String JBOSS_OUTPUT_LOG = 'jboss-output.log'
 
   @Override
   void apply(Project project) {
@@ -71,6 +71,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         .register(setupService)
     String.metaClass.asPath = { Paths.get(setupService.expanseVariables(delegate.toString())) }
 
+    Property<JBossServer> jBossServer = project.objects.property(JBossServer)
+
     project.afterEvaluate { Project currentProject, ProjectState state ->
       SilverpeasSetupExtension silverSetup =
           (SilverpeasSetupExtension) currentProject.extensions.getByName(EXTENSION)
@@ -79,57 +81,74 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         initLogging(currentProject, silverSetup.logging)
       }
       silverSetup.config.settings.SILVERPEAS_VERSION = silverSetup.silverpeasVersion as String
+      jBossServer.set(new JBossServer(extension.jbossHome.path)
+          .redirectOutputTo(new File(extension.logging.logDir, JBOSS_OUTPUT_LOG)))
     }
 
-    project.tasks.create(CONFIGURE_JBOSS.name, JBossConfigurationTask) {
-      it.jbossHome  = extension.jbossHome
-      it.driversDir = extension.driversDir
-      it.config     = extension.config
-      it.logConfig  = extension.logging
-    }
-
-    project.tasks.create(CONFIGURE_SILVERPEAS.name, SilverpeasConfigurationTask) {
-      it.silverpeasHome = extension.silverpeasHome
-      it.config         = extension.config
-    }
-
-    project.tasks.create(MIGRATE.name, SilverpeasMigrationTask) {
-      it.migrationHome = extension.migrationHome
-      it.config        = extension.config
-    }
-
-    File distDir = new File (project.buildDir, 'dist')
-    project.tasks.create(CONSTRUCT.name, SilverpeasConstructionTask) {
+    File driversDir = new File(project.buildDir, 'drivers')
+    Task construction = project.tasks.create(CONSTRUCT.name, SilverpeasConstructionTask) {
       it.silverpeasHome    = extension.silverpeasHome
-      it.driversDir        = extension.driversDir
+      it.driversDir        = driversDir
       it.developmentMode   = extension.developmentMode
       it.silverpeasBundles = extension.silverpeasBundles
       it.tiersBundles      = extension.tiersBundles
-      it.destinationDir    = distDir
+      it.destinationDir    = extension.distDir
     }
 
-    setUpGradleAssemblingTaskForThisPlugin(project, extension, distDir)
-    setUpGradleBuildTaskForThisPlugin(project, extension, distDir)
+    Task jbossConf = project.tasks.create(CONFIGURE_JBOSS.name, JBossConfigurationTask) {
+      it.driversDir   = driversDir
+      it.config       = extension.config
+      it.jboss        = jBossServer
+    }
+
+    Task silverpeasConf = project.tasks.create(CONFIGURE_SILVERPEAS.name, SilverpeasConfigurationTask) {
+      it.silverpeasHome = extension.silverpeasHome
+      it.config         = extension.config
+    }.dependsOn(construction)
+
+    Task configuration = project.tasks.create(CONFIGURE.name) {
+      it.description = 'Configures both JBoss and Silverpeas'
+      it.group = 'Build'
+    }.doFirst {
+      ((JBossConfigurationTask) jbossConf).configureJBoss()
+    }.doLast {
+      ((SilverpeasConfigurationTask) silverpeasConf).configureSilverpeas()
+    }.dependsOn(construction)
+
+    Task migration = project.tasks.create(MIGRATE.name, SilverpeasMigrationTask) {
+      it.migrationHome = extension.migrationHome
+      it.config        = extension.config
+    }.dependsOn(configuration)
+
+    project.tasks.create(INSTALL.name, SilverpeasInstallationTask) {
+      it.deploymentDir   = extension.deploymentDir
+      it.distDir         = extension.distDir
+      it.developmentMode = extension.developmentMode
+      it.jboss           = jBossServer
+    }.dependsOn(construction, configuration, migration)
+
+    setUpGradleAssemblingTaskForThisPlugin(project, extension, driversDir)
+    setUpGradleBuildTaskForThisPlugin(project, extension)
   }
 
   private void setUpGradleAssemblingTaskForThisPlugin(Project project,
                                                       SilverpeasSetupExtension extension,
-                                                      File distDir) {
+                                                      File driversDir) {
     try {
       Task assemble = project.tasks.getByName(ASSEMBLE.name).doLast {
-        if (!distDir.exists()) {
-          distDir.mkdirs()
+        if (!extension.distDir.exists()) {
+          extension.distDir.mkdirs()
         }
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.driversDir = extension.driversDir
         builder.silverpeasHome = extension.silverpeasHome
         builder.extractSoftwareBundles(extension.silverpeasBundles.files,
-            extension.tiersBundles.files, distDir)
+            extension.tiersBundles.files, extension.distDir)
       }
       assemble.description = 'Assemble all the software bundles that made Silverpeas'
-      assemble.onlyIf { !distDir.exists() && !extension.driversDir.exists()}
+      assemble.onlyIf { !extension.distDir.exists() && !driversDir.exists()}
       assemble.outputs.upToDateWhen {
-        distDir.exists() && extension.driversDir.exists()
+        extension.distDir.exists() && driversDir.exists()
       }
     } catch (UnknownTaskException e) {
       // nothing to do
@@ -137,22 +156,21 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   }
 
   private void setUpGradleBuildTaskForThisPlugin(Project project,
-                                                 SilverpeasSetupExtension extension,
-                                                 File distDir) {
+                                                 SilverpeasSetupExtension extension) {
     try {
       Task build = project.tasks.getByName(BUILD.name).doLast {
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.silverpeasHome = extension.silverpeasHome
         builder.developmentMode = extension.developmentMode
-        builder.generateSilverpeasApplication(distDir)
+        builder.generateSilverpeasApplication(extension.distDir)
       }
       build.description = 'Build the Silverpeas Collaborative Web Application'
       build.onlyIf {
-        distDir.exists()
+        extension.distDir.exists()
       }
       build.outputs.upToDateWhen {
-        boolean ok = distDir.exists() &&
-            Files.exists(Paths.get(distDir.path, 'WEB-INF', 'web.xml'))
+        boolean ok = extension.distDir.exists() &&
+            Files.exists(Paths.get(extension.distDir.path, 'WEB-INF', 'web.xml'))
         if (!extension.developmentMode) {
           ok = ok && Files.exists(
               Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))

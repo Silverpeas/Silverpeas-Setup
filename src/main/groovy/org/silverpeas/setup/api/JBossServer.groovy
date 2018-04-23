@@ -21,17 +21,16 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.setup.configuration
+package org.silverpeas.setup.api
 
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.SystemUtils
-import org.silverpeas.setup.api.FileLogger
-import org.silverpeas.setup.api.SystemWrapper
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
+
 /**
  * It wraps an existing installation of a JBoss application server. It provides functions to
  * interact with the JBoss AS (either Wildfly or JBoss EAP) in order to start/stop it or to
@@ -47,13 +46,13 @@ class JBossServer {
 
   private String starter
 
-  private String jbossHome
+  final String jbossHome
 
   private File redirection = null
 
   private long timeout = 120000
 
-  private def logger = FileLogger.getLogger(getClass().getSimpleName(), System.out)
+  private FileLogger logger = FileLogger.getLogger(getClass().getSimpleName(), System.out)
 
   /**
    * Constructs a new instance of a JBossServer wrapping the specified JBoss/Wildfly installation.
@@ -116,7 +115,7 @@ class JBossServer {
    * @param action the action to run against a running JBoss/Wildfly instance.
    * @return the result value of the closure if any.
    */
-  def doWhenRunning(Closure action) {
+  void doWhenRunning(Closure action) {
     switch (status()) {
       case 'stopped':
         logger.info 'JBoss not started, so start it'

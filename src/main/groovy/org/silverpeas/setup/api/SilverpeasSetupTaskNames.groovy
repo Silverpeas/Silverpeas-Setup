@@ -32,8 +32,9 @@ enum SilverpeasSetupTaskNames {
   ASSEMBLE('assemble'),
   BUILD('build'),
   CONSTRUCT('construct'),
-  CONFIGURE_SILVERPEAS('configure Silverpeas'),
   CONFIGURE_JBOSS('configure JBoss'),
+  CONFIGURE_SILVERPEAS('configure Silverpeas'),
+  CONFIGURE('configure'),
   MIGRATE('migrate'),
   INSTALL('install')
 

@@ -30,7 +30,7 @@ import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.SilverpeasSetupTaskNames
-import org.silverpeas.setup.configuration.JBossServer
+import org.silverpeas.setup.api.JBossServer
 
 /**
  * A logger hooking to events from the task execution in order to customize the output of the

@@ -38,8 +38,6 @@ import java.nio.file.Paths
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.SQLException
-
-import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.CONFIGURE_SILVERPEAS
 /**
  * This task is for migrating the data sources used as the backend by Silverpeas. A migration is
  * either a fresh setting-up of a data source structure or an upgrade of an existing data source
@@ -68,11 +66,10 @@ class SilverpeasMigrationTask extends DefaultTask {
   SilverpeasMigrationTask() {
     description = 'Migrate in version the data source structure expected by Silverpeas'
     group = 'Build'
-    dependsOn = [CONFIGURE_SILVERPEAS.name]
   }
 
   @TaskAction
-  def performMigration() {
+  void performMigration() {
     initMigrationTask()
     loadMigrationModules().each { module ->
       try {
@@ -91,7 +88,7 @@ class SilverpeasMigrationTask extends DefaultTask {
    * The migration settings are also persisted in a data source and they could be subject to a
    * migration before doing anything.
    */
-  private def initMigrationTask() {
+  private void initMigrationTask() {
     log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
     Path descriptor = Paths.get(migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
@@ -152,7 +149,7 @@ class SilverpeasMigrationTask extends DefaultTask {
     return status
   }
 
-  private def fetchModuleStatusFromDb(Sql sql, def status) {
+  private void fetchModuleStatusFromDb(Sql sql, def status) {
     log.info 'This is an upgrade'
     sql.eachRow('SELECT sr_package, sr_version FROM sr_packages') { row ->
       status[row.sr_package] = row.sr_version

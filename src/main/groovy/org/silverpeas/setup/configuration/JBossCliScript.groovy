@@ -25,6 +25,7 @@ package org.silverpeas.setup.configuration
 
 import org.apache.commons.io.FilenameUtils
 import org.silverpeas.setup.api.AbstractScript
+import org.silverpeas.setup.api.JBossServer
 
 import java.nio.file.Files
 import java.nio.file.Path

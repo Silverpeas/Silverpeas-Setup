@@ -32,7 +32,6 @@ import org.silverpeas.setup.api.Script
 
 import java.nio.file.Files
 import java.nio.file.Paths
-
 /**
  * This task aims to configure Silverpeas from the Silverpeas configuration file, from some XML
  * configuration rules and from Groovy scripts.
@@ -58,7 +57,7 @@ class SilverpeasConfigurationTask extends DefaultTask {
   }
 
   @TaskAction
-  def configureSilverpeas() {
+  void configureSilverpeas() {
     config.silverpeasConfigurationDir.listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {

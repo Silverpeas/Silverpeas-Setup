@@ -65,7 +65,7 @@ class DatasourceMigration {
    * process).
    * @param settings the settings applied in the migration of Silverpeas.
    */
-  def migrate() throws Exception {
+  void migrate() throws Exception {
     DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider.class)
     Sql sql = new Sql(dataSourceProvider.dataSource)
     def settingsToApply = (settings ? settings:[:])

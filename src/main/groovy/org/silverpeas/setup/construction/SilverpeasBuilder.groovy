@@ -75,7 +75,7 @@ class SilverpeasBuilder {
     Objects.requireNonNull(silverpeasHome)
     Objects.requireNonNull(driversDir)
     def isAWar = { File f ->
-      f.name.endsWith('.war') && !f.name.startsWith('silverpeas-core-war-')
+      f.name.endsWith('.war') && !f.name.startsWith(CORE_WAR_BUNDLE_ID)
     }
     def isAConf = { File f ->
       f.name.matches(/^.*-configuration-.*.jar$/)
@@ -92,7 +92,7 @@ class SilverpeasBuilder {
 
     // the silverpeas core war bundle is first extracted so that others war bundles have a chance
     // to overwrite some of its files (for customizing purpose)
-    File silverpeasWar = silverpeasBundles.find { it.name.startsWith(CORE_WAR_BUNDLE_ID) }
+    File silverpeasWar = findSilverpeasCoreWarBundle(silverpeasBundles)
     extractWarBundle(silverpeasWar, destinationDir)
 
     // now we extract the other Silverpeas bundles by their type
@@ -135,7 +135,23 @@ class SilverpeasBuilder {
     compilePersistenceDescriptor(sourceDir)
   }
 
-  private void extractWarBundle(File war, File destinationDir) {
+  /**
+   * Finds among all the specified software bundles the Silverpeas Core War bundle. This bundle is
+   * the main archive of the Silverpeas web application; all other war bundles enrich it with
+   * additional features.
+   * @param bundles all the software bundles that made Silverpeas.
+   * @return the Silverpeas Core War bundle.
+   */
+  File findSilverpeasCoreWarBundle(Collection<File> bundles) {
+    bundles.find { it.name.startsWith(CORE_WAR_BUNDLE_ID) }
+  }
+
+  /**
+   * Extracts the specified war bundle into the specified directory.
+   * @param war a war bundle.
+   * @param destinationDir the directory into which the bundle's content has to be extracted.
+   */
+  void extractWarBundle(File war, File destinationDir) {
     logger.info "Extract ${war.name} into ${destinationDir.path}"
     project.copy {
       it.from(project.zipTree(war)) {
@@ -168,7 +184,7 @@ class SilverpeasBuilder {
         }
         it.rename rar.name, nameWithoutVersion
       }
-      into destinationDir
+      it.into destinationDir
     }
   }
 

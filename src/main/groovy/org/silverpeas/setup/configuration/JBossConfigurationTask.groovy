@@ -26,11 +26,12 @@ package org.silverpeas.setup.configuration
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.ProjectState
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
-import org.silverpeas.setup.SilverpeasLoggingProperties
 import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.api.Script
 
 import java.nio.file.Files
@@ -45,10 +46,8 @@ import java.util.regex.Matcher
 class JBossConfigurationTask extends DefaultTask {
 
   File driversDir
-  File jbossHome
   SilverpeasConfigurationProperties config
-  SilverpeasLoggingProperties logConfig
-  JBossServer jboss
+  Property<JBossServer> jboss = project.objects.property(JBossServer)
   final FileLogger log = FileLogger.getLogger(this.name)
 
   JBossConfigurationTask() {
@@ -60,7 +59,7 @@ class JBossConfigurationTask extends DefaultTask {
 
     project.afterEvaluate { Project currentProject, ProjectState state ->
       if (state.executed) {
-        initializeJBossServer()
+        jboss.get().useLogger(log)
       }
     }
   }
@@ -69,36 +68,29 @@ class JBossConfigurationTask extends DefaultTask {
     project.buildDir.exists() && Files.exists(this.driversDir.toPath())
   }
 
-  void initializeJBossServer() {
-    jboss = new JBossServer(jbossHome.path)
-    if (logConfig.useLogger) {
-      jboss.redirectOutputTo(new File(logConfig.logDir, 'jboss_output.log'))
-          .useLogger(log)
-    }
-  }
-
   @TaskAction
-  def configureJBoss() {
+  void configureJBoss() {
+    JBossServer server = jboss.get()
     try {
-      if (jboss.isStartingOrRunning()) {
-        jboss.stop()
+      if (server.isStartingOrRunning()) {
+        server.stop()
       }
       setUpJVMOptions()
       installAdditionalModules()
-      jboss.start(adminOnly: true) // start in admin only to perform only configuration tasks
+      server.start(adminOnly: true) // start in admin only to perform only configuration tasks
       setUpJDBCDriver()
       processConfigurationFiles()
     } catch(Exception ex) {
       log.error 'Error while configuring JBoss/Wildfly', ex
       throw new TaskExecutionException(this, ex)
     } finally {
-      jboss.stop() // stop the admin mode
+      server.stop() // stop the admin mode
     }
   }
 
-  private def setUpJVMOptions() {
+  private void setUpJVMOptions() {
     log.info 'JVM options setting'
-    new File(jbossHome, 'bin').listFiles(new FilenameFilter() {
+    new File(jboss.get().jbossHome, 'bin').listFiles(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
         return name.endsWith('.conf') || name.endsWith('.conf.bat')
@@ -132,16 +124,17 @@ class JBossConfigurationTask extends DefaultTask {
     }
   }
 
-  private def installAdditionalModules() {
+  private void installAdditionalModules() {
     log.info 'Additional modules installation'
     project.copy {
       it.from config.jbossModulesDir.toPath()
-      it.into Paths.get(jbossHome.path, 'modules')
+      it.into Paths.get(jboss.get().jbossHome, 'modules')
     }
   }
 
-  private def setUpJDBCDriver() throws Exception {
+  private void setUpJDBCDriver() throws Exception {
     log.info "Install database driver for ${config.settings.DB_SERVERTYPE}"
+    JBossServer server = jboss.get()
     if (config.settings.DB_SERVERTYPE == 'H2') {
       // H2 is already available by default in JBoss/Wildfly
       config.settings.DB_DRIVER_NAME = 'h2'
@@ -153,8 +146,8 @@ class JBossConfigurationTask extends DefaultTask {
             (driver.name.startsWith('ojdbc') && config.settings.DB_SERVERTYPE == 'ORACLE')) {
           config.settings.DB_DRIVER_NAME = driver.name
           try {
-            jboss.add(Paths.get(driversDir.path, config.settings.DB_DRIVER_NAME).toString())
-            jboss.deploy(config.settings.DB_DRIVER_NAME)
+            server.add(Paths.get(driversDir.path, config.settings.DB_DRIVER_NAME).toString())
+            server.deploy(config.settings.DB_DRIVER_NAME)
           } catch (Exception ex) {
             log.error("Error: cannot deploy ${config.settings.DB_DRIVER_NAME}", ex)
             throw ex
@@ -185,7 +178,7 @@ class JBossConfigurationTask extends DefaultTask {
         aScript
             .useLogger(log)
             .useSettings(config.settings)
-            .run(jboss: jboss)
+            .run(jboss: jboss.get())
       }
     } catch(Exception ex) {
       log.error("Error while running cli script: ${ex.message}", ex)

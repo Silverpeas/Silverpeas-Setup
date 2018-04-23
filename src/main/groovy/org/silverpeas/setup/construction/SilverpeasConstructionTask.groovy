@@ -86,6 +86,9 @@ class SilverpeasConstructionTask extends DefaultTask {
     if (!destinationDir.exists()) {
       destinationDir.mkdirs()
     }
+    if (!driversDir.exists()) {
+      driversDir.mkdirs()
+    }
     SilverpeasBuilder builder = new SilverpeasBuilder(project, log)
     builder.driversDir = driversDir
     builder.silverpeasHome = silverpeasHome
