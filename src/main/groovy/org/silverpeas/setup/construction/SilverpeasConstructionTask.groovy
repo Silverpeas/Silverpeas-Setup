@@ -45,6 +45,7 @@ class SilverpeasConstructionTask extends DefaultTask {
   File silverpeasHome
   File driversDir
   File destinationDir
+  Map settings
   final ConfigurableFileCollection silverpeasBundles = project.files()
   final ConfigurableFileCollection tiersBundles = project.files()
   final Property<Boolean> developmentMode = project.objects.property(Boolean)
@@ -93,6 +94,7 @@ class SilverpeasConstructionTask extends DefaultTask {
     builder.driversDir = driversDir
     builder.silverpeasHome = silverpeasHome
     builder.developmentMode = developmentMode.get()
+    builder.settings = settings
     builder.extractSoftwareBundles(silverpeasBundles.files, tiersBundles.files, destinationDir)
     builder.generateSilverpeasApplication(destinationDir)
   }

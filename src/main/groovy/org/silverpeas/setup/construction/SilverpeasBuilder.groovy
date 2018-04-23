@@ -28,12 +28,13 @@ import groovy.xml.XmlUtil
 import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.ManagedBeanContainer
+import org.silverpeas.setup.api.SilverpeasSetupService
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
 /**
  * A builder of the Silverpeas Collaborative Web Application from all the software bundles that made
  * it.
@@ -49,6 +50,7 @@ class SilverpeasBuilder {
   private FileLogger logger
   File silverpeasHome
   File driversDir
+  Map settings
   boolean developmentMode
 
   SilverpeasBuilder(final Project project) {
@@ -116,6 +118,8 @@ class SilverpeasBuilder {
         extractLibBundle(bundle, Paths.get(destinationDir.path, 'WEB-INF', 'lib').toFile())
       }
     }
+
+    moveSilverpeasDataDirectoriesContent()
   }
 
   /**
@@ -165,7 +169,7 @@ class SilverpeasBuilder {
   }
 
   private void extractConfigurationBundle(File conf, File destinationDir) {
-    logger.info "Explode ${conf.name} into ${destinationDir}"
+    logger.info "Extract ${conf.name} into ${destinationDir}"
     project.copy {
       it.from(project.zipTree(conf))
       it.exclude '**/META-INF/**'
@@ -274,6 +278,41 @@ class SilverpeasBuilder {
       project.ant.zip(destfile: "${project.buildDir.path}/silverpeas.war", baseDir: sourceDir.path)
     } else {
       logger.info "Silverpeas Application generation done in ${sourceDir}"
+    }
+  }
+
+  private void moveSilverpeasDataDirectoriesContent() {
+    // now move data and web data directories if necessary
+    SilverpeasSetupService service = ManagedBeanContainer.get(SilverpeasSetupService)
+    
+    final File silverpeasDataHome = new File(silverpeasHome, 'data')
+    final File silverpeasWebDataHome = new File(silverpeasDataHome, 'web')
+
+    final File dataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_HOME))
+    final File webDataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_WEB))
+
+    if (webDataDestinationDir.path != silverpeasWebDataHome.path) {
+      logger.info "Move content of ${silverpeasWebDataHome.path} into ${webDataDestinationDir.path}"
+      if (!webDataDestinationDir.exists()) {
+        webDataDestinationDir.mkdirs()
+      }
+      project.ant.move(todir: webDataDestinationDir.path) {
+        fileset(dir: silverpeasWebDataHome.path) {
+          include(name: '**/*')
+        }
+      }
+    }
+    if (dataDestinationDir.path != silverpeasDataHome.path) {
+      logger.info "Move content of ${silverpeasDataHome.path} into ${dataDestinationDir.path}"
+      if (!dataDestinationDir.exists()) {
+        dataDestinationDir.mkdirs()
+      }
+      project.ant.move(todir: dataDestinationDir.path) {
+        fileset(dir: silverpeasDataHome.path) {
+          include(name: '**/*')
+          exclude(name: 'web/**')
+        }
+      }
     }
   }
 }

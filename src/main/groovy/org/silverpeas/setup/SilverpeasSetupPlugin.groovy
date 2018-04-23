@@ -72,11 +72,10 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     String.metaClass.asPath = { Paths.get(setupService.expanseVariables(delegate.toString())) }
 
     Property<JBossServer> jBossServer = project.objects.property(JBossServer)
-
     project.afterEvaluate { Project currentProject, ProjectState state ->
       SilverpeasSetupExtension silverSetup =
           (SilverpeasSetupExtension) currentProject.extensions.getByName(EXTENSION)
-      silverSetup.config.settings.DEV_MODE = silverSetup.developmentMode as String
+      silverSetup.config.settings.DEV_MODE = silverSetup.developmentMode.get() as String
       if (silverSetup.logging.useLogger) {
         initLogging(currentProject, silverSetup.logging)
       }
@@ -89,6 +88,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     Task construction = project.tasks.create(CONSTRUCT.name, SilverpeasConstructionTask) {
       it.silverpeasHome    = extension.silverpeasHome
       it.driversDir        = driversDir
+      it.settings          = extension.config.settings
       it.developmentMode   = extension.developmentMode
       it.silverpeasBundles = extension.silverpeasBundles
       it.tiersBundles      = extension.tiersBundles
@@ -142,6 +142,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.driversDir = extension.driversDir
         builder.silverpeasHome = extension.silverpeasHome
+        builder.settings = extension.config.settings
         builder.extractSoftwareBundles(extension.silverpeasBundles.files,
             extension.tiersBundles.files, extension.distDir)
       }
@@ -161,6 +162,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       Task build = project.tasks.getByName(BUILD.name).doLast {
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.silverpeasHome = extension.silverpeasHome
+        builder.settings = extension.config.settings
         builder.developmentMode = extension.developmentMode
         builder.generateSilverpeasApplication(extension.distDir)
       }

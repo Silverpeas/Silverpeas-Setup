@@ -29,7 +29,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Property
 import org.silverpeas.setup.api.SystemWrapper
-
 /**
  * Extension of the plugin in which are defined the different properties required by the plugin to
  * work. Some of the properties are already valued whereas others have to be set by the Gradle
