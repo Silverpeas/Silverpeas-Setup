@@ -130,5 +130,5 @@ task sourceJar(type: Jar) {
 }
 
 processTestResources {
-  filter(ReplaceTokens, tokens:[buildDir: buildDir.path], beginToken: '${', endToken: '}')
+  filter(ReplaceTokens, tokens:[buildDir: buildDir.path.replace('\\', '/')], beginToken: '${', endToken: '}')
 }
