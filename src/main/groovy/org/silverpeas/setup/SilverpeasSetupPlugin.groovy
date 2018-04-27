@@ -136,20 +136,20 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
                                                       File driversDir) {
     try {
       Task assemble = project.tasks.getByName(ASSEMBLE.name).doLast {
-        if (!extension.distDir.exists()) {
-          extension.distDir.mkdirs()
+        if (!extension.distDir.get().exists()) {
+          extension.distDir.get().mkdirs()
         }
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.driversDir = extension.driversDir
         builder.silverpeasHome = extension.silverpeasHome
         builder.settings = extension.config.settings
         builder.extractSoftwareBundles(extension.silverpeasBundles.files,
-            extension.tiersBundles.files, extension.distDir)
+            extension.tiersBundles.files, extension.distDir.get())
       }
       assemble.description = 'Assemble all the software bundles that made Silverpeas'
-      assemble.onlyIf { !extension.distDir.exists() && !driversDir.exists()}
+      assemble.onlyIf { !extension.distDir.get().exists() && !driversDir.exists()}
       assemble.outputs.upToDateWhen {
-        extension.distDir.exists() && driversDir.exists()
+        extension.distDir.get().exists() && driversDir.exists()
       }
     } catch (UnknownTaskException e) {
       // nothing to do
@@ -163,16 +163,16 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.silverpeasHome = extension.silverpeasHome
         builder.settings = extension.config.settings
-        builder.developmentMode = extension.developmentMode
-        builder.generateSilverpeasApplication(extension.distDir)
+        builder.developmentMode = extension.developmentMode.get()
+        builder.generateSilverpeasApplication(extension.distDir.get())
       }
       build.description = 'Build the Silverpeas Collaborative Web Application'
       build.onlyIf {
-        extension.distDir.exists()
+        extension.distDir.get().exists()
       }
       build.outputs.upToDateWhen {
-        boolean ok = extension.distDir.exists() &&
-            Files.exists(Paths.get(extension.distDir.path, 'WEB-INF', 'web.xml'))
+        boolean ok = extension.distDir.get().exists() &&
+            Files.exists(Paths.get(extension.distDir.get().path, 'WEB-INF', 'web.xml'))
         if (!extension.developmentMode) {
           ok = ok && Files.exists(
               Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))
@@ -193,11 +193,11 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   private Map loadConfigurationProperties(File configurationHome) {
     Properties properties = new Properties()
     properties.load(getClass().getResourceAsStream('/default_config.properties'))
-    def customConfiguration = new File(configurationHome, 'config.properties')
+    File customConfiguration = new File(configurationHome, 'config.properties')
     // the custom configuration overrides the default configuration
     if (customConfiguration.exists()) {
       Properties customProperties = new Properties()
-      customProperties.load(customConfiguration.newReader())
+      customProperties.load(new StringReader(customConfiguration.text.replace('\\', '/')))
       customProperties.propertyNames().each {
         properties[it] = customProperties[it]
       }
@@ -210,9 +210,13 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     settings.SILVERPEAS_HOME = normalizePath(silverSetup.silverpeasHome.path)
     settings.MIGRATION_HOME = normalizePath(silverSetup.migrationHome.path)
     settings.CONFIGURATION_HOME = normalizePath(silverSetup.config.configurationHome.path)
-    settings.DB_DATASOURCE_JNDI = 'java:/datasources/silverpeas'
     settings.SILVERPEAS_DATA_HOME = normalizePath(settings.SILVERPEAS_DATA_HOME)
     settings.SILVERPEAS_DATA_WEB = normalizePath(settings.SILVERPEAS_DATA_WEB)
+    settings.JCR_HOME = normalizePath(settings.JCR_HOME)
+    settings.SILVERPEAS_TEMP = normalizePath(settings.SILVERPEAS_TEMP)
+    settings.SILVERPEAS_LOG = normalizePath(settings.SILVERPEAS_LOG)
+    settings.HIDDEN_SILVERPEAS_DIR = normalizePath(settings.HIDDEN_SILVERPEAS_DIR)
+    settings.DB_DATASOURCE_JNDI = 'java:/datasources/silverpeas'
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
         settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME}"
@@ -271,6 +275,6 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   }
 
   private static String normalizePath(String path) {
-    return path.replaceAll('\\\\', '/')
+    return path.replace('\\', '/')
   }
 }

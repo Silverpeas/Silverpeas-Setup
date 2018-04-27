@@ -44,8 +44,8 @@ class SilverpeasConstructionTask extends DefaultTask {
 
   File silverpeasHome
   File driversDir
-  File destinationDir
   Map settings
+  final Property<File> destinationDir = project.objects.property(File)
   final ConfigurableFileCollection silverpeasBundles = project.files()
   final ConfigurableFileCollection tiersBundles = project.files()
   final Property<Boolean> developmentMode = project.objects.property(Boolean)
@@ -63,11 +63,11 @@ class SilverpeasConstructionTask extends DefaultTask {
   }
 
   boolean precondition() {
-    !destinationDir.exists() && !driversDir.exists()
+    !destinationDir.get().exists() && !driversDir.exists()
   }
 
   boolean isUpToDate() {
-    boolean ok = destinationDir.exists() && driversDir.exists()
+    boolean ok = destinationDir.get().exists() && driversDir.exists()
     if (!developmentMode.get()) {
       ok = ok && Files.exists(Paths.get(project.buildDir.path, SILVERPEAS_WAR))
     }
@@ -84,8 +84,8 @@ class SilverpeasConstructionTask extends DefaultTask {
 
   @TaskAction
   void construct() {
-    if (!destinationDir.exists()) {
-      destinationDir.mkdirs()
+    if (!destinationDir.get().exists()) {
+      destinationDir.get().mkdirs()
     }
     if (!driversDir.exists()) {
       driversDir.mkdirs()
@@ -95,8 +95,8 @@ class SilverpeasConstructionTask extends DefaultTask {
     builder.silverpeasHome = silverpeasHome
     builder.developmentMode = developmentMode.get()
     builder.settings = settings
-    builder.extractSoftwareBundles(silverpeasBundles.files, tiersBundles.files, destinationDir)
-    builder.generateSilverpeasApplication(destinationDir)
+    builder.extractSoftwareBundles(silverpeasBundles.files, tiersBundles.files, destinationDir.get())
+    builder.generateSilverpeasApplication(destinationDir.get())
   }
 
 }

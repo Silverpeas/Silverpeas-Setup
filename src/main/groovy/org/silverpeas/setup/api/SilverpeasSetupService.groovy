@@ -126,14 +126,14 @@ class SilverpeasSetupService {
             println "Error: no such system property ${token[2]}"
             throw new StopExecutionException("Error: no such system property ${token[2]}")
           }
-          expression = expression.replace(token[0], SystemWrapper.getProperty(token[2]))
+          expression = expression.replace(token[0], normalizePath(SystemWrapper.getProperty(token[2])))
           break
         case 'env.':
           if (!SystemWrapper.getenv(token[2])) {
             println "Error: no such environment variable ${token[2]}"
             throw new StopExecutionException("Error: no such environment variable ${token[2]}")
           }
-          expression = expression.replace(token[0], SystemWrapper.getenv(token[2]))
+          expression = expression.replace(token[0], normalizePath(SystemWrapper.getenv(token[2])))
           break
         default:
           if (settings[token[2]] == null) {
@@ -190,7 +190,7 @@ class SilverpeasSetupService {
   }
 
   private static final String normalizePath(String path) {
-    return path.replaceAll('\\\\', '/');
+    return path.replace('\\', '/');
   }
 
 }

@@ -70,7 +70,7 @@ class SilverpeasSetupExtension {
    * directory is deployed as such in the JBoss/Wildfly application server.
    * environment variable.
    */
-  final File distDir
+  final Property<File> distDir
 
   /**
    * The properties to access the configuration if Silverpeas in order to apply it to the
@@ -155,7 +155,8 @@ class SilverpeasSetupExtension {
     }
     migrationHome = project.file("${silverpeasHome.path}/migrations")
     deploymentDir = project.file("${silverpeasHome.path}/deployments")
-    distDir = project.file("${project.buildDir}/dist")
+    distDir = project.objects.property(File)
+    distDir.set(new File(project.buildDir, "dist"))
     config  = project.objects.newInstance(SilverpeasConfigurationProperties, project, silverpeasHome)
     logging = project.objects.newInstance(SilverpeasLoggingProperties)
     silverpeasBundles = project.files()

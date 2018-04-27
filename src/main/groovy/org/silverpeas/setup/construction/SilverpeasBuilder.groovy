@@ -264,7 +264,7 @@ class SilverpeasBuilder {
     Paths.get(sourceDir.path, 'WEB-INF', 'lib').toFile().list(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
-        return name.endsWith("''${project.version}.jar")
+        return name.startsWith('silverpeas') && name.endsWith("${settings.SILVERPEAS_VERSION}.jar")
       }
     }).each { jpaComponent ->
       persistence.'persistence-unit'.'jta-data-source' + {

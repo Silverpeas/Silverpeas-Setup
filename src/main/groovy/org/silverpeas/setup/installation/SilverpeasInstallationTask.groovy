@@ -42,7 +42,7 @@ class SilverpeasInstallationTask extends DefaultTask {
 
   Property<JBossServer> jboss = project.objects.property(JBossServer)
   File deploymentDir
-  File distDir
+  final Property<File> distDir = project.objects.property(File)
   final Property<Boolean> developmentMode = project.objects.property(Boolean)
   final FileLogger log = FileLogger.getLogger(this.name)
 
@@ -86,7 +86,7 @@ class SilverpeasInstallationTask extends DefaultTask {
       if (developmentMode.get()) {
         log.info '(Re)Installation of silverpeas.war as exploded (dev mode)'
         server.remove(SILVERPEAS_WAR)
-        server.add(distDir.path, SILVERPEAS_WAR)
+        server.add(distDir.get().path, SILVERPEAS_WAR)
         server.deploy(SILVERPEAS_WAR)
         log.info '(Re)Installation of silverpeas.war as exploded (dev mode): [OK]'
       }
