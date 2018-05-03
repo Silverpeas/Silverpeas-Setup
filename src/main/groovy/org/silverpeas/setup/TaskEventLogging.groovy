@@ -1,3 +1,26 @@
+/*
+  Copyright (C) 2000 - 2018 Silverpeas
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as
+  published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  As a special exception to the terms and conditions of version 3.0 of
+  the GPL, you may redistribute this Program in connection with Free/Libre
+  Open Source Software ("FLOSS") applications as described in Silverpeas's
+  FLOSS exception.  You should have recieved a copy of the text describing
+  the FLOSS exception, and it is also available here:
+  "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.silverpeas.setup
 
 import org.gradle.BuildAdapter
@@ -5,9 +28,10 @@ import org.gradle.BuildResult
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
-import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.SilverpeasSetupService
-import org.silverpeas.setup.configuration.JBossServer
+import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.SilverpeasSetupTaskNames
+import org.silverpeas.setup.api.JBossServer
+
 /**
  * A logger hooking to events from the task execution in order to customize the output of the
  * traces coming from Gradle and to indicates in this plugin's logging system at which tasks the
@@ -22,7 +46,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
    * The name of the tasks to consider in the custom output. By default, the tasks configureJBoss,
    * configureSilverpeas, and migration are supported.
    */
-  List<String> tasks = ['configureJBoss', 'configureSilverpeas', 'migration']
+  List<String> tasks = SilverpeasSetupTaskNames.values().collect { it.name }
 
   private buildStarted = false
   private List<String> executedTasks = []
@@ -37,17 +61,19 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     if (tasks.contains(task.name)) {
       if (!buildStarted) {
         buildStarted = true
-        Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
+        SilverpeasSetupExtension silverSetup =
+            (SilverpeasSetupExtension) task.project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
+        FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
             "SILVERPEAS SETUP: ${task.project.version}",
-            "SILVERPEAS HOME:  ${task.project.silversetup.silverpeasHome}",
-            "JBOSS HOME:       ${task.project.silversetup.jbossHome}",
-            "JCR HOME:         ${SilverpeasSetupService.currentSettings.JCR_HOME.asPath().toString()}",
+            "SILVERPEAS HOME:  ${silverSetup.silverpeasHome.path}",
+            "JBOSS HOME:       ${silverSetup.jbossHome.path}",
+            "JCR HOME:         ${silverSetup.config.settings.JCR_HOME.asPath().toString()}",
             "JAVA HOME:        ${System.getenv('JAVA_HOME')}",
-            "DATABASE:         ${SilverpeasSetupService.currentSettings.DB_SERVERTYPE.toLowerCase()}",
+            "DATABASE:         ${silverSetup.config.settings.DB_SERVERTYPE.toLowerCase()}",
             "OPERATING SYSTEM: ${System.getProperty('os.name')}",
-            "PRODUCTION MODE:  ${!task.project.silversetup.developmentMode}")
+            "PRODUCTION MODE:  ${!silverSetup.developmentMode}")
       }
-      Logger log = Logger.getLogger(task.name)
+      FileLogger log = FileLogger.getLogger(task.name)
       String taskTitle = unformat(task.name)
       if (!task.didWork) {
         log.info "${taskTitle}..."
@@ -61,7 +87,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
   @Override
   void afterExecute(Task task, TaskState state) {
     if (tasks.contains(task.name) && !executedTasks.contains(task.name)) {
-      Logger log = Logger.getLogger(task.name)
+      FileLogger log = FileLogger.getLogger(task.name)
       String taskTitle = unformat(task.name)
       String status = 'OK'
       if (state.failure != null) {
@@ -75,10 +101,10 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
 
   @Override
   void buildFinished(final BuildResult result) {
-    JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome)
+    JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome.path)
     String status = "JBoss is ${jboss.status()}"
     if (buildStarted) {
-      Logger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
+      FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
       buildStarted = false
     }
     println()

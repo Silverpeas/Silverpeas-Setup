@@ -26,7 +26,8 @@ package org.silverpeas.setup.configuration
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.SilverpeasConfigurationProperties
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
 import java.nio.file.Files
@@ -38,22 +39,26 @@ import java.nio.file.Paths
  */
 class SilverpeasConfigurationTask extends DefaultTask {
 
-  Map settings
-  Logger log = Logger.getLogger(this.name)
+  File silverpeasHome
+  SilverpeasConfigurationProperties config
+  final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasConfigurationTask() {
     description = 'Configure Silverpeas'
     group = 'Build'
     onlyIf {
-      project.buildDir.exists() &&
-          Files.exists(Paths.get(project.silversetup.silverpeasHome, 'properties'))
+      precondition()
     }
   }
 
+  boolean precondition() {
+    project.buildDir.exists() &&
+        Files.exists(Paths.get(silverpeasHome.path, 'properties'))
+  }
+
   @TaskAction
-  def configureSilverpeas() {
-    File configurationDir = new File("${project.silversetup.configurationHome}/silverpeas")
-    configurationDir.listFiles(new FileFilter() {
+  void configureSilverpeas() {
+    config.silverpeasConfigurationDir.listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
         return child.isFile()
@@ -63,7 +68,10 @@ class SilverpeasConfigurationTask extends DefaultTask {
     }.each { configurationFile ->
       try {
         Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path).build()
-        script.useLogger(log).useSettings(settings).run()
+        script
+            .useLogger(log)
+            .useSettings(config.settings)
+            .run()
       } catch (Exception ex) {
         log.error("Error while processing the configuration file ${configurationFile.path}", ex)
         throw new TaskExecutionException(this, ex)

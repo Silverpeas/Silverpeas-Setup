@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -24,59 +24,73 @@
 package org.silverpeas.setup.configuration
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
+import org.gradle.api.ProjectState
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.SilverpeasConfigurationProperties
+import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.api.Script
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.regex.Matcher
+
 /**
  * A Gradle task to configure a JBoss/Wildfly instance from some CLI scripts to be ready to run
  * Silverpeas.
  * @author mmoquillon
  */
 class JBossConfigurationTask extends DefaultTask {
-  Map settings
-  JBossServer jboss
-  Logger log = Logger.getLogger(this.name)
+
+  File driversDir
+  SilverpeasConfigurationProperties config
+  Property<JBossServer> jboss = project.objects.property(JBossServer)
+  final FileLogger log = FileLogger.getLogger(this.name)
 
   JBossConfigurationTask() {
     description = 'Configure JBoss/Wildfly for Silverpeas'
     group = 'Build'
     onlyIf {
-      Files.exists(Paths.get(project.silversetup.driversDir)) &&
-          project.silversetup.jbossHome != null &&
-          Files.exists(Paths.get(project.silversetup.jbossHome))
+      precondition()
+    }
+
+    project.afterEvaluate { Project currentProject, ProjectState state ->
+      if (state.executed) {
+        jboss.get().useLogger(log)
+      }
     }
   }
 
+  boolean precondition() {
+    project.buildDir.exists() && Files.exists(this.driversDir.toPath())
+  }
+
   @TaskAction
-  def configureJBoss() {
-    jboss = new JBossServer("${project.silversetup.jbossHome}")
-        .redirectOutputTo(new File("${project.silversetup.logging.logDir}/jboss_output.log"))
-        .useLogger(log)
+  void configureJBoss() {
+    JBossServer server = jboss.get()
     try {
-      if (jboss.isStartingOrRunning()) {
-        jboss.stop()
+      if (server.isStartingOrRunning()) {
+        server.stop()
       }
       setUpJVMOptions()
       installAdditionalModules()
-      jboss.start(adminOnly: true) // start in admin only to perform only configuration tasks
+      server.start(adminOnly: true) // start in admin only to perform only configuration tasks
       setUpJDBCDriver()
       processConfigurationFiles()
     } catch(Exception ex) {
       log.error 'Error while configuring JBoss/Wildfly', ex
       throw new TaskExecutionException(this, ex)
     } finally {
-      jboss.stop() // stop the admin mode
+      server.stop() // stop the admin mode
     }
   }
 
-  private def setUpJVMOptions() {
+  private void setUpJVMOptions() {
     log.info 'JVM options setting'
-    new File("${project.silversetup.jbossHome}/bin").listFiles(new FilenameFilter() {
+    new File(jboss.get().jbossHome, 'bin').listFiles(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
         return name.endsWith('.conf') || name.endsWith('.conf.bat')
@@ -84,10 +98,11 @@ class JBossConfigurationTask extends DefaultTask {
     }).each { conf ->
       String jvmOpts; def regexp
       if (conf.name.endsWith('.bat')) {
-        jvmOpts = "set \"JAVA_OPTS=-Xmx${settings.JVM_RAM_MAX} ${settings.JVM_OPTS}"
+        jvmOpts = "set \"JAVA_OPTS=-Xmx${config.settings.JVM_RAM_MAX} ${config.settings.JVM_OPTS}"
         regexp = /\s*set\s+"JAVA_OPTS=-Xm.+/
       } else {
-        jvmOpts = "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}"
+        jvmOpts =
+            "JAVA_OPTS=\"-Xmx${config.settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${config.settings.JVM_OPTS}"
         regexp = /\s*JAVA_OPTS="-Xm.+/
       }
       jvmOpts += '"'
@@ -109,31 +124,32 @@ class JBossConfigurationTask extends DefaultTask {
     }
   }
 
-  private def installAdditionalModules() {
+  private void installAdditionalModules() {
     log.info 'Additional modules installation'
     project.copy {
-      from "${project.silversetup.configurationHome}/jboss/modules"
-      into "${project.silversetup.jbossHome}/modules"
+      it.from config.jbossModulesDir.toPath()
+      it.into Paths.get(jboss.get().jbossHome, 'modules')
     }
   }
 
-  private def setUpJDBCDriver() throws Exception {
-    log.info "Install database driver for ${settings.DB_SERVERTYPE}"
-    if (settings.DB_SERVERTYPE == 'H2') {
+  private void setUpJDBCDriver() throws Exception {
+    log.info "Install database driver for ${config.settings.DB_SERVERTYPE}"
+    JBossServer server = jboss.get()
+    if (config.settings.DB_SERVERTYPE == 'H2') {
       // H2 is already available by default in JBoss/Wildfly
-      settings.DB_DRIVER_NAME = 'h2'
+      config.settings.DB_DRIVER_NAME = 'h2'
     } else {
       // install the required driver other than H2
-      new File(project.silversetup.driversDir).listFiles().each { driver ->
-        if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
-            (driver.name.startsWith('jtds') && settings.DB_SERVERTYPE == 'MSSQL') ||
-            (driver.name.startsWith('ojdbc') && settings.DB_SERVERTYPE == 'ORACLE')) {
-          settings.DB_DRIVER_NAME = driver.name
+      driversDir.listFiles().each { driver ->
+        if ((driver.name.startsWith('postgresql') && config.settings.DB_SERVERTYPE == 'POSTGRESQL') ||
+            (driver.name.startsWith('jtds') && config.settings.DB_SERVERTYPE == 'MSSQL') ||
+            (driver.name.startsWith('ojdbc') && config.settings.DB_SERVERTYPE == 'ORACLE')) {
+          config.settings.DB_DRIVER_NAME = driver.name
           try {
-            jboss.add("${project.silversetup.driversDir}/${settings.DB_DRIVER_NAME}")
-            jboss.deploy(settings.DB_DRIVER_NAME)
+            server.add(Paths.get(driversDir.path, config.settings.DB_DRIVER_NAME).toString())
+            server.deploy(config.settings.DB_DRIVER_NAME)
           } catch (Exception ex) {
-            log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
+            log.error("Error: cannot deploy ${config.settings.DB_DRIVER_NAME}", ex)
             throw ex
           }
         }
@@ -142,12 +158,11 @@ class JBossConfigurationTask extends DefaultTask {
   }
 
   private void processConfigurationFiles() throws Exception {
-    File configurationDir = new File("${project.silversetup.configurationHome}/jboss")
     JBossCliScript cliScript = new JBossCliScript(
         Files.createTempFile('jboss-configuration-', '.cli').toString())
     log.info "CLI configuration scripts will be merged into ${cliScript.toFile().name}"
     Set<Script> scripts = new HashSet<>()
-    configurationDir.listFiles(new FileFilter() {
+    config.jbossConfigurationDir.listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
         return child.isFile()
@@ -160,7 +175,10 @@ class JBossConfigurationTask extends DefaultTask {
     }
     try {
       scripts.each { aScript ->
-        aScript.useLogger(log).useSettings(settings).run(jboss: jboss)
+        aScript
+            .useLogger(log)
+            .useSettings(config.settings)
+            .run(jboss: jboss.get())
       }
     } catch(Exception ex) {
       log.error("Error while running cli script: ${ex.message}", ex)

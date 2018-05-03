@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -28,9 +28,13 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.SilverpeasSetupService
+import org.silverpeas.setup.SilverpeasConfigurationProperties
+import org.silverpeas.setup.api.DataSourceProvider
+import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.ManagedBeanContainer
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -55,17 +59,17 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
-  Map settings
-  Logger log = Logger.getLogger(this.name)
+  File migrationHome
+  SilverpeasConfigurationProperties config
+  final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasMigrationTask() {
-    description = 'Migrate in version the datasource schema expected by Silverpeas'
+    description = 'Migrate in version the data source structure expected by Silverpeas'
     group = 'Build'
-    dependsOn = ['configureSilverpeas']
   }
 
   @TaskAction
-  def performMigration() {
+  void performMigration() {
     initMigrationTask()
     loadMigrationModules().each { module ->
       try {
@@ -84,16 +88,15 @@ class SilverpeasMigrationTask extends DefaultTask {
    * The migration settings are also persisted in a data source and they could be subject to a
    * migration before doing anything.
    */
-  private def initMigrationTask() {
+  private void initMigrationTask() {
     log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
-    File descriptor =
-        new File("${project.silversetup.migrationHome}/modules/${MIGRATION_SETTING_MODULE}")
+    Path descriptor = Paths.get(migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
     MigrationModule module = new MigrationModule()
         .withStatus(status)
-        .withSettings(settings)
+        .withSettings(config.settings)
         .withLogger(log)
-        .loadMigrationsFrom(descriptor)
+        .loadMigrationsFrom(descriptor.toFile())
     module.migrate()
     log.info 'Migration initialization done'
   }
@@ -105,11 +108,11 @@ class SilverpeasMigrationTask extends DefaultTask {
   private List<MigrationModule> loadMigrationModules() {
     def status = loadInstalledModuleStatus()
     List<MigrationModule> modules = []
-    new File("${project.silversetup.migrationHome}/modules").listFiles().each { descriptor ->
+    new File(migrationHome, 'modules').listFiles().each { descriptor ->
       if (descriptor.name != MIGRATION_SETTING_MODULE) {
         MigrationModule module = new MigrationModule()
             .withStatus(status)
-            .withSettings(settings)
+            .withSettings(config.settings)
             .withLogger(log)
             .loadMigrationsFrom(descriptor)
         modules << module
@@ -124,7 +127,8 @@ class SilverpeasMigrationTask extends DefaultTask {
     def level = logging.level
     logging.captureStandardOutput(LogLevel.ERROR)
     def status = [:]
-    Sql sql = SilverpeasSetupService.sql;
+    DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider.class)
+    Sql sql = new Sql(dataSourceProvider.dataSource)
     try {
       DatabaseMetaData metaData = sql.getDataSource().getConnection().getMetaData()
       ResultSet tables = metaData.getTables(null, null, 'sr_packages', ['TABLE'] as String[])
@@ -145,7 +149,7 @@ class SilverpeasMigrationTask extends DefaultTask {
     return status
   }
 
-  private def fetchModuleStatusFromDb(Sql sql, def status) {
+  private void fetchModuleStatusFromDb(Sql sql, def status) {
     log.info 'This is an upgrade'
     sql.eachRow('SELECT sr_package, sr_version FROM sr_packages') { row ->
       status[row.sr_package] = row.sr_version

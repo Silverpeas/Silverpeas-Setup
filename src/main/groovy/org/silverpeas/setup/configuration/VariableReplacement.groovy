@@ -67,13 +67,18 @@ class VariableReplacement {
   static final String parseExpression(String expression, Map variables) {
     def matching = expression =~ VARIABLE_PATTERN
     matching.each { token ->
-      if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {
-        if (variables.containsKey(token[1])) {
-          expression = expression.replace(token[0], variables[token[1]])
-        } else {
-          println "Error: no such variable ${token[1]}"
-          throw new StopExecutionException("Error: no such variable ${token[1]}")
+      try {
+        if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {
+          if (variables.containsKey(token[1])) {
+            expression = expression.replace(token[0], variables[token[1]])
+          } else {
+            println "Error: no such variable ${token[1]}"
+            throw new StopExecutionException("Error: no such variable ${token[1]}")
+          }
         }
+      } catch (Exception e) {
+        println "Error: cannot replace token ${token[0]} by value of ${token[1]}: ${variables[token[1]]}"
+        throw e
       }
     }
     return expression

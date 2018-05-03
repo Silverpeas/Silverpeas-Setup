@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -21,26 +21,28 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.silverpeas.setup.test
+package org.silverpeas.setup.api
+
 /**
- * Set up the test environment.
+ * The name of all the tasks the plugin defines.
  * @author mmoquillon
  */
-class TestSetUp {
+enum SilverpeasSetupTaskNames {
 
-  String resourcesDir
-  String migrationHome
+  ASSEMBLE('assemble'),
+  BUILD('build'),
+  CONSTRUCT('construct'),
+  CONFIGURE_JBOSS('configure JBoss'),
+  CONFIGURE_SILVERPEAS('configure Silverpeas'),
+  CONFIGURE('configure'),
+  MIGRATE('migrate'),
+  INSTALL('install')
 
-  private TestSetUp() {
+  final String name
 
+  SilverpeasSetupTaskNames(final String taskName) {
+    this.name = taskName
   }
 
-  static TestSetUp setUp() {
-    Properties properties = new Properties()
-    properties.load(getClass().getResourceAsStream('/test.properties'))
-    TestSetUp testSetUp = new TestSetUp()
-    testSetUp.migrationHome = properties.migrationHome
-    testSetUp.resourcesDir = properties.resourcesDir
-    return testSetUp
-  }
+
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -26,8 +26,9 @@ package org.silverpeas.setup.migration
 import com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
+import org.gradle.api.Project
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
 import javax.xml.XMLConstants
@@ -35,7 +36,6 @@ import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
 import java.nio.file.Path
 import java.nio.file.Paths
-
 /**
  * A migration module. It is described by an XML descriptor located in the directory
  * <code>SILVERPEAS_HOME/migration/modules/</code> and it defines all the migration processes
@@ -54,8 +54,9 @@ class MigrationModule {
   private Integer order
   private List<DatasourceMigration> migrations = []
   def status
-  def settings
-  Logger logger
+  Map settings
+  Project project
+  FileLogger logger
 
   /**
    * The name of this migration module.
@@ -100,7 +101,7 @@ class MigrationModule {
     String result = '[OK]'
     try {
       logger.info "Migration(s) of module ${module}"
-      migrations*.migrate(settings)
+      migrations*.migrate()
     } catch (Exception ex) {
       result = '[FAILURE]'
       throw ex

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -23,12 +23,10 @@
  */
 package org.silverpeas.setup.api
 
-import groovy.sql.Sql
 import org.gradle.api.tasks.StopExecutionException
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.regex.Matcher
 
 /**
@@ -44,23 +42,17 @@ class SilverpeasSetupService {
   // pattern defining the grammar of a property in a properties file and in which we capture the key
   private static final def PROPERTY_PATTERN = /^\s*(\S+)\s*=[\s*\S+\s*]*/
 
- /**
-  * This service extends dynamically the String class with an additional method, String#asPath(),
-  * that returns a Path instance from the path representation of the String. The difference between
-  * this method and {@code Paths#getPath(String)} is that the former takes into account any system
-  * properties or environment variables in the path; if the path contains any system or
-  * environment variables, they are then replaced by their value.
-  * @see SilverpeasSetupService#expanseVariables(java.lang.String)
-  */
-  static {
-    String.metaClass.asPath = { Paths.get(expanseVariables(delegate)) }
-  }
+  final Map settings
 
   /**
-   * The current Silverpeas settings from both the customer configuration properties and the
-   * default configuration properties.
+   * Create a new Silverpeas setup service with the specified Silverpeas settings.
+   * @param settings a Map instance with all the global settings for the installation and
+   * configuration of Silverpeas
    */
-  static Map currentSettings = [:]
+  SilverpeasSetupService(Map settings) {
+    Objects.requireNonNull(settings)
+    this.settings = settings
+  }
 
   /**
    * Updates the specified properties file by replacing each property value by those specified in
@@ -68,7 +60,7 @@ class SilverpeasSetupService {
    * @param propertiesFilePath the path of the properties file.
    * @param properties the properties to put into the file.
    */
-  static final void updateProperties(String propertiesFilePath, properties) {
+  void updateProperties(String propertiesFilePath, properties) {
     def existingProperties = []
     FileWriter updatedPropertiesFile = new FileWriter(propertiesFilePath + '.tmp')
     new FileReader(propertiesFilePath).transformLine(updatedPropertiesFile) { line ->
@@ -125,7 +117,7 @@ class SilverpeasSetupService {
    * value.
    * @return the new expression as the result of the variable replacement.
    */
-  static final String expanseVariables(String expression) {
+  String expanseVariables(String expression) {
     def matching = expression =~ VAR_PATTERN
     matching.each { token ->
       switch (token[1]) {
@@ -134,21 +126,21 @@ class SilverpeasSetupService {
             println "Error: no such system property ${token[2]}"
             throw new StopExecutionException("Error: no such system property ${token[2]}")
           }
-          expression = expression.replace(token[0], SystemWrapper.getProperty(token[2]))
+          expression = expression.replace(token[0], normalizePath(SystemWrapper.getProperty(token[2])))
           break
         case 'env.':
           if (!SystemWrapper.getenv(token[2])) {
             println "Error: no such environment variable ${token[2]}"
             throw new StopExecutionException("Error: no such environment variable ${token[2]}")
           }
-          expression = expression.replace(token[0], SystemWrapper.getenv(token[2]))
+          expression = expression.replace(token[0], normalizePath(SystemWrapper.getenv(token[2])))
           break
         default:
-          if (currentSettings[token[2]] ==  null) {
+          if (settings[token[2]] == null) {
             println "Error: no such variable ${token[2]}"
             throw new StopExecutionException("Error: no such variable ${token[2]}")
           }
-          expression = expanseVariables(expression.replace(token[0], currentSettings[token[2]]))
+          expression = expanseVariables(expression.replace(token[0], settings[token[2]]))
           break
       }
     }
@@ -165,7 +157,7 @@ class SilverpeasSetupService {
    * Windows; in other operating systems any files prefixed by a point is marked as hidden.
    * @return the path of the created directory.
    */
-  static final Path createDirectory(Path path, def attributes) {
+  Path createDirectory(Path path, def attributes) {
     Path dirPath = path
     if (!Files.exists(dirPath)) {
       dirPath = Files.createDirectories(path)
@@ -193,20 +185,12 @@ class SilverpeasSetupService {
    * @param namespace the namespace under which any traces will be written.
    * @return the logger.
    */
-  static final Logger getLogger(String namespace) {
-    return Logger.getLogger(namespace)
-  }
-
-  /**
-   * Gets a SQL engine to execute SQL requests against the datasource configured for Silverpeas.
-   * @return a SQL engine.
-   */
-  static final Sql getSql() {
-    return new Sql(DataSourceProvider.dataSource)
+  FileLogger getLogger(String namespace) {
+    return FileLogger.getLogger(namespace)
   }
 
   private static final String normalizePath(String path) {
-    return path.replaceAll('\\\\', '/');
+    return path.replace('\\', '/');
   }
 
 }

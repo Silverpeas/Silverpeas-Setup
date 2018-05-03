@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2000 - 2017 Silverpeas
+    Copyright (C) 2000 - 2018 Silverpeas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -23,15 +23,15 @@
  */
 package org.silverpeas.setup
 
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-import org.gradle.api.ProjectState
-import org.silverpeas.setup.api.DataSourceProvider
-import org.silverpeas.setup.api.Logger
-import org.silverpeas.setup.api.SilverpeasSetupService
+import org.gradle.api.*
+import org.gradle.api.provider.Property
+import org.silverpeas.setup.api.*
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
 import org.silverpeas.setup.configuration.VariableReplacement
+import org.silverpeas.setup.construction.SilverpeasBuilder
+import org.silverpeas.setup.construction.SilverpeasConstructionTask
+import org.silverpeas.setup.installation.SilverpeasInstallationTask
 import org.silverpeas.setup.migration.SilverpeasMigrationTask
 import org.silverpeas.setup.security.Encryption
 import org.silverpeas.setup.security.EncryptionFactory
@@ -40,56 +40,164 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.*
+
 /**
  * This plugin aims to prepare the configuration and to setup Silverpeas.
  * For doing, it loads both the default and the customer configuration file of Silverpeas and it
  * registers two tasks, one dedicated to configure JBoss/Wildfly for Silverpeas and another to
- * configure Silverpeas..
+ * configure Silverpeas.
+ * <p>
+ * The String class is dynamically extended with an additional method, String#asPath(),
+ * that returns a Path instance from the path representation of the String. The difference between
+ * this method and {@code Paths # getPath ( String )} is that the former takes into account any
+ * system properties or environment variables in the path; if the path contains any system or
+ * environment variables, they are then replaced by their value.
+ * </p>
  */
 class SilverpeasSetupPlugin implements Plugin<Project> {
 
-  private Map settings
+  public static final String EXTENSION = 'silversetup'
+  public static final String JBOSS_OUTPUT_LOG = 'jboss-output.log'
 
   @Override
   void apply(Project project) {
-    project.extensions.create('silversetup', SilverpeasSetupExtension)
-    project.silversetup.extensions.create('logging', SilverpeasLoggingProperties)
+    def extension = project.extensions.create(EXTENSION, SilverpeasSetupExtension, project)
+    initSilverpeasSetupExtention(extension)
 
-    this.settings = loadConfiguration(project.silversetup.configurationHome)
-    completeSettingsForProject(project)
-    encryptAdminPassword()
-    DataSourceProvider.init(settings)
-    SilverpeasSetupService.currentSettings = settings
+    SilverpeasSetupService setupService = new SilverpeasSetupService(extension.config.settings)
+    ManagedBeanContainer.registry()
+        .register(new DataSourceProvider(extension.config.settings))
+        .register(setupService)
+    String.metaClass.asPath = { Paths.get(setupService.expanseVariables(delegate.toString())) }
 
+    Property<JBossServer> jBossServer = project.objects.property(JBossServer)
     project.afterEvaluate { Project currentProject, ProjectState state ->
-      settings.DEV_MODE = currentProject.silversetup.developmentMode as String
-      if (currentProject.silversetup.logging.useLogger) {
-        initLogging(currentProject)
+      SilverpeasSetupExtension silverSetup =
+          (SilverpeasSetupExtension) currentProject.extensions.getByName(EXTENSION)
+      silverSetup.config.settings.DEV_MODE = silverSetup.developmentMode.get() as String
+      if (silverSetup.logging.useLogger) {
+        initLogging(currentProject, silverSetup.logging)
       }
-      settings.SILVERPEAS_VERSION = currentProject.silversetup.silverpeasVersion as String
+      silverSetup.config.settings.SILVERPEAS_VERSION = silverSetup.silverpeasVersion as String
+      jBossServer.set(new JBossServer(extension.jbossHome.path)
+          .redirectOutputTo(new File(extension.logging.logDir, JBOSS_OUTPUT_LOG)))
     }
 
-    project.task('configureJBoss', type: JBossConfigurationTask) {
-      settings = this.settings
+    File driversDir = new File(project.buildDir, 'drivers')
+    Task construction = project.tasks.create(CONSTRUCT.name, SilverpeasConstructionTask) {
+      it.silverpeasHome    = extension.silverpeasHome
+      it.driversDir        = driversDir
+      it.settings          = extension.config.settings
+      it.developmentMode   = extension.developmentMode
+      it.silverpeasBundles = extension.silverpeasBundles
+      it.tiersBundles      = extension.tiersBundles
+      it.destinationDir    = extension.distDir
     }
 
-    project.task('configureSilverpeas', type: SilverpeasConfigurationTask) {
-      settings = this.settings
+    Task jbossConf = project.tasks.create(CONFIGURE_JBOSS.name, JBossConfigurationTask) {
+      it.driversDir   = driversDir
+      it.config       = extension.config
+      it.jboss        = jBossServer
     }
 
-    project.task('migration', type:SilverpeasMigrationTask) {
-      settings = this.settings
+    Task silverpeasConf = project.tasks.create(CONFIGURE_SILVERPEAS.name, SilverpeasConfigurationTask) {
+      it.silverpeasHome = extension.silverpeasHome
+      it.config         = extension.config
+    }.dependsOn(construction)
+
+    Task configuration = project.tasks.create(CONFIGURE.name) {
+      it.description = 'Configures both JBoss and Silverpeas'
+      it.group = 'Build'
+    }.doFirst {
+      ((JBossConfigurationTask) jbossConf).configureJBoss()
+    }.doLast {
+      ((SilverpeasConfigurationTask) silverpeasConf).configureSilverpeas()
+    }.dependsOn(construction)
+
+    Task migration = project.tasks.create(MIGRATE.name, SilverpeasMigrationTask) {
+      it.migrationHome = extension.migrationHome
+      it.config        = extension.config
+    }.dependsOn(configuration)
+
+    project.tasks.create(INSTALL.name, SilverpeasInstallationTask) {
+      it.deploymentDir   = extension.deploymentDir
+      it.distDir         = extension.distDir
+      it.developmentMode = extension.developmentMode
+      it.jboss           = jBossServer
+    }.dependsOn(construction, configuration, migration)
+
+    setUpGradleAssemblingTaskForThisPlugin(project, extension, driversDir)
+    setUpGradleBuildTaskForThisPlugin(project, extension)
+  }
+
+  private void setUpGradleAssemblingTaskForThisPlugin(Project project,
+                                                      SilverpeasSetupExtension extension,
+                                                      File driversDir) {
+    try {
+      Task assemble = project.tasks.getByName(ASSEMBLE.name).doLast {
+        if (!extension.distDir.get().exists()) {
+          extension.distDir.get().mkdirs()
+        }
+        SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
+        builder.driversDir = extension.driversDir
+        builder.silverpeasHome = extension.silverpeasHome
+        builder.settings = extension.config.settings
+        builder.extractSoftwareBundles(extension.silverpeasBundles.files,
+            extension.tiersBundles.files, extension.distDir.get())
+      }
+      assemble.description = 'Assemble all the software bundles that made Silverpeas'
+      assemble.onlyIf { !extension.distDir.get().exists() && !driversDir.exists()}
+      assemble.outputs.upToDateWhen {
+        extension.distDir.get().exists() && driversDir.exists()
+      }
+    } catch (UnknownTaskException e) {
+      // nothing to do
     }
   }
 
-  private Map loadConfiguration(String configurationHome) {
+  private void setUpGradleBuildTaskForThisPlugin(Project project,
+                                                 SilverpeasSetupExtension extension) {
+    try {
+      Task build = project.tasks.getByName(BUILD.name).doLast {
+        SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
+        builder.silverpeasHome = extension.silverpeasHome
+        builder.settings = extension.config.settings
+        builder.developmentMode = extension.developmentMode.get()
+        builder.generateSilverpeasApplication(extension.distDir.get())
+      }
+      build.description = 'Build the Silverpeas Collaborative Web Application'
+      build.onlyIf {
+        extension.distDir.get().exists()
+      }
+      build.outputs.upToDateWhen {
+        boolean ok = extension.distDir.get().exists() &&
+            Files.exists(Paths.get(extension.distDir.get().path, 'WEB-INF', 'web.xml'))
+        if (!extension.developmentMode) {
+          ok = ok && Files.exists(
+              Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))
+        }
+        return ok
+      }
+    }  catch (UnknownTaskException e) {
+      // nothing to do
+    }
+  }
+
+  private void initSilverpeasSetupExtention(SilverpeasSetupExtension silverSetup) {
+    silverSetup.config.settings = loadConfigurationProperties(silverSetup.config.configurationHome)
+    completeSettings(silverSetup.config.settings, silverSetup)
+    encryptAdminPassword(silverSetup.config.settings)
+  }
+
+  private Map loadConfigurationProperties(File configurationHome) {
     Properties properties = new Properties()
     properties.load(getClass().getResourceAsStream('/default_config.properties'))
-    def customConfiguration = new File("${configurationHome}/config.properties")
+    File customConfiguration = new File(configurationHome, 'config.properties')
     // the custom configuration overrides the default configuration
     if (customConfiguration.exists()) {
       Properties customProperties = new Properties()
-      customProperties.load(customConfiguration.newReader())
+      customProperties.load(new StringReader(customConfiguration.text.replace('\\', '/')))
       customProperties.propertyNames().each {
         properties[it] = customProperties[it]
       }
@@ -98,10 +206,16 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     return VariableReplacement.parseParameters(properties, properties)
   }
 
-  private void completeSettingsForProject(Project project) {
-    settings.SILVERPEAS_HOME = normalizePath(project.silversetup.silverpeasHome)
-    settings.MIGRATION_HOME = normalizePath(project.silversetup.migrationHome)
-    settings.CONFIGURATION_HOME = normalizePath(project.silversetup.configurationHome)
+  private void completeSettings(Map settings, SilverpeasSetupExtension silverSetup) {
+    settings.SILVERPEAS_HOME = normalizePath(silverSetup.silverpeasHome.path)
+    settings.MIGRATION_HOME = normalizePath(silverSetup.migrationHome.path)
+    settings.CONFIGURATION_HOME = normalizePath(silverSetup.config.configurationHome.path)
+    settings.SILVERPEAS_DATA_HOME = normalizePath(settings.SILVERPEAS_DATA_HOME)
+    settings.SILVERPEAS_DATA_WEB = normalizePath(settings.SILVERPEAS_DATA_WEB)
+    settings.JCR_HOME = normalizePath(settings.JCR_HOME)
+    settings.SILVERPEAS_TEMP = normalizePath(settings.SILVERPEAS_TEMP)
+    settings.SILVERPEAS_LOG = normalizePath(settings.SILVERPEAS_LOG)
+    settings.HIDDEN_SILVERPEAS_DIR = normalizePath(settings.HIDDEN_SILVERPEAS_DIR)
     settings.DB_DATASOURCE_JNDI = 'java:/datasources/silverpeas'
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
@@ -142,26 +256,25 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     settings.DB_SCHEMA = settings.DB_SERVERTYPE.toLowerCase()
   }
 
-  private void encryptAdminPassword() {
+  private void encryptAdminPassword(Map settings) {
     Encryption encryption = EncryptionFactory.instance.createDefaultEncryption()
     settings.SILVERPEAS_ADMIN_PASSWORD = encryption.encrypt(settings.SILVERPEAS_ADMIN_PASSWORD)
   }
 
-  private void initLogging(Project project) {
+  private void initLogging(Project project, SilverpeasLoggingProperties loggingProperties) {
     String timestamp = new Date().format('yyyyMMdd_HHmmss')
-    File logDir = new File(project.silversetup.logging.logDir)
-    if (!logDir.exists()) {
-      logDir.mkdirs()
+    if (!loggingProperties.logDir.exists()) {
+      loggingProperties.logDir.mkdirs()
     }
-    File logFile = new File("build-${timestamp}.log", logDir)
-    Logger.init(logFile, project.silversetup.logging.defaultLevel)
+    File logFile = new File(loggingProperties.logDir, "build-${timestamp}.log")
+    FileLogger.init(logFile, loggingProperties.defaultLevel)
 
     /* customize the traces writing both on the standard output and on the log file. */
     project.gradle.useLogger(new TaskEventLogging()
-        .withTasks(project.silversetup.logging.scriptTasks))
+        .withTasks(loggingProperties.scriptTasks))
   }
 
-  private String normalizePath(String path) {
-    return path.replaceAll('\\\\', '/')
+  private static String normalizePath(String path) {
+    return path.replace('\\', '/')
   }
 }

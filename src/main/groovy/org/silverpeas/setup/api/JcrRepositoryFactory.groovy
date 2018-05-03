@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -26,14 +26,13 @@ package org.silverpeas.setup.api
 import groovy.xml.XmlUtil
 import org.apache.jackrabbit.core.RepositoryImpl
 import org.apache.jackrabbit.core.config.RepositoryConfig
+import org.gradle.api.Project
 
 import javax.jcr.Repository
 import javax.jcr.RepositoryException
 import javax.naming.InitialContext
 import javax.naming.NameNotFoundException
 import javax.xml.parsers.SAXParserFactory
-import java.nio.file.Files
-
 /**
  * A factory to create instances of JCR Repository from configuration properties.
  * @author mmoquillon
@@ -45,8 +44,9 @@ class JcrRepositoryFactory {
   private static final String JCR_CONFIG_FILE = '/repository.xml'
 
   private File repositoryConf
+  private Project project
 
-  private synchronized File getRepositoryConfiguration() {
+  private synchronized File getRepositoryConfiguration(Map settings) {
     if (!repositoryConf) {
       initJNDIContext()
       File destination = File.createTempFile('repository', 'xml')
@@ -57,11 +57,13 @@ class JcrRepositoryFactory {
           false)
       def jcrRepositoryConf = new XmlSlurper(
           factory.newSAXParser()).parse(getClass().getResourceAsStream(JCR_CONFIG_FILE))
-      jcrRepositoryConf.Workspace.PersistenceManager.@class = SilverpeasSetupService.currentSettings.JACKRABBIT_PERSISTENCE_MANAGER
+      jcrRepositoryConf.Workspace.PersistenceManager.@class =
+          settings.JACKRABBIT_PERSISTENCE_MANAGER
       jcrRepositoryConf.Workspace.PersistenceManager.param.find {
         it.@name == 'schema'
-      }.@value = SilverpeasSetupService.currentSettings.DB_SCHEMA
-      jcrRepositoryConf.Versioning.PersistenceManager.@class = SilverpeasSetupService.currentSettings.JACKRABBIT_PERSISTENCE_MANAGER
+      }.@value = settings.DB_SCHEMA
+      jcrRepositoryConf.Versioning.PersistenceManager.@class =
+          settings.JACKRABBIT_PERSISTENCE_MANAGER
 
       XmlUtil.serialize(jcrRepositoryConf, new FileWriter(destination))
       repositoryConf = destination
@@ -70,12 +72,13 @@ class JcrRepositoryFactory {
   }
 
   private void initJNDIContext() {
+    DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider)
     InitialContext ic = new InitialContext();
     try {
       ic.lookup('java:/datasources/DocumentStore')
     } catch(NameNotFoundException ex) {
       ic.createSubcontext('java:/datasources')
-      ic.bind('java:/datasources/DocumentStore', DataSourceProvider.dataSource);
+      ic.bind('java:/datasources/DocumentStore', dataSourceProvider.dataSource);
     }
   }
 
@@ -83,9 +86,9 @@ class JcrRepositoryFactory {
    * Creates an instance mapping to the JCR repository used by Silverpeas.
    * @return a JCR repository instance.
    */
-  Repository createRepository(def settings) {
+  Repository createRepository(Map settings) {
     try {
-      File repositoryConf = getRepositoryConfiguration()
+      File repositoryConf = getRepositoryConfiguration(settings)
       Properties jcrProperties = new Properties();
       jcrProperties.load(new FileInputStream(
           "${settings.SILVERPEAS_HOME}/properties/org/silverpeas/util/jcr.properties"));

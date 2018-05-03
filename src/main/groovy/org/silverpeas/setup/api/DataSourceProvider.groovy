@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2017 Silverpeas
+  Copyright (C) 2000 - 2018 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -34,9 +34,10 @@ import javax.sql.DataSource
  */
 class DataSourceProvider {
 
-  private static DataSource dataSource
+  private final DataSource dataSource
 
-  static void init(settings) {
+  DataSourceProvider(final Map settings) {
+    Objects.requireNonNull(settings)
     DriverAdapterCPDS cpds = new DriverAdapterCPDS();
     cpds.setDriver(settings.DB_DRIVER);
     cpds.setUrl(settings.DB_URL);
@@ -48,9 +49,5 @@ class DataSourceProvider {
     tds.setMaxTotal(10);
     tds.setDefaultMaxWaitMillis(50);
     dataSource = tds
-  }
-
-  static DataSource getDataSource() {
-    return dataSource
   }
 }

@@ -24,9 +24,10 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
+import org.silverpeas.setup.api.ManagedBeanContainer
+import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.test.DatabaseSetUp
 import org.silverpeas.setup.test.TestSetUp
-
 /**
  * The common class for all test cases about a database migration.
  * @author mmoquillon
@@ -45,6 +46,7 @@ abstract class AbstractDatabaseTest extends GroovyTestCase {
     super.setUp()
     testSetUp = TestSetUp.setUp()
     databaseSetUp = initDatabaseSetUp()
+    ManagedBeanContainer.registry().register(new SilverpeasSetupService([:]))
   }
 
   @Override

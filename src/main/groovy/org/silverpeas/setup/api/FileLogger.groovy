@@ -1,3 +1,26 @@
+/*
+  Copyright (C) 2000 - 2018 Silverpeas
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as
+  published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  As a special exception to the terms and conditions of version 3.0 of
+  the GPL, you may redistribute this Program in connection with Free/Libre
+  Open Source Software ("FLOSS") applications as described in Silverpeas's
+  FLOSS exception.  You should have recieved a copy of the text describing
+  the FLOSS exception, and it is also available here:
+  "http://www.silverpeas.org/docs/core/legal/floss_exception.html"
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.silverpeas.setup.api
 
 import org.gradle.api.logging.LogLevel
@@ -12,11 +35,11 @@ import java.sql.SQLException
  * the standard outputs and doesn't provide any configuration to define new appender or to override
  * this logging behaviour.
  * </p>
- * If this logger isn't initialized by invoking the {@code Logger#init(File, LogLevel)} static
+ * If this logger isn't initialized by invoking the {@code FileLogger#init(File, LogLevel)} static
  * method, then by default the traces will be written into the standard output with INFO as level.
  * @author mmoquillon
  */
-class Logger {
+class FileLogger {
 
   private static def DEFAULT_LOG_HANDLER = System.out
   private static LogLevel DEFAULT_LOG_LEVEL = LogLevel.INFO
@@ -41,8 +64,8 @@ class Logger {
    * @param namespace the namespace within which the traces to output has to belong.
    * @return the logger matching the specified namespace.
    */
-  static Logger getLogger(String namespace) {
-    return new Logger(namespace)
+  static FileLogger getLogger(String namespace) {
+    return new FileLogger(namespace)
   }
 
   /**
@@ -53,8 +76,8 @@ class Logger {
    * @param logHandler the logging handler to use instead of the default one.
    * @return the logger matching the specified namespace.
    */
-  static Logger getLogger(String namespace, logHandler) {
-    Logger logger = new Logger(namespace)
+  static FileLogger getLogger(String namespace, logHandler) {
+    FileLogger logger = new FileLogger(namespace)
     logger.logHandler = logHandler
     return logger
   }
@@ -72,7 +95,7 @@ class Logger {
    * @param newLevel the new logging level to set.
    * @return itself.
    */
-  Logger level(LogLevel newLevel) {
+  FileLogger level(LogLevel newLevel) {
     this.level = newLevel
     return this
   }
@@ -82,7 +105,7 @@ class Logger {
    * @param msg the message to output.
    * @return itself.
    */
-  Logger info(String msg) {
+  FileLogger info(String msg) {
     return formatInfo("\n${msgHeading()} %s", msg)
   }
 
@@ -93,7 +116,7 @@ class Logger {
    * @param args the different arguments to put in the message format.
    * @return itself.
    */
-  Logger formatInfo(String format, Object... args) {
+  FileLogger formatInfo(String format, Object... args) {
     if (this.level <= LogLevel.INFO) {
       formatMsg(format, args)
     }
@@ -105,7 +128,7 @@ class Logger {
    * @param msg the message to output.
    * @return itself.
    */
-  Logger debug(String msg) {
+  FileLogger debug(String msg) {
     return formatDebug("\n${msgHeading()} %s", msg)
   }
 
@@ -115,7 +138,7 @@ class Logger {
    * @param args the different arguments to put in the message format.
    * @return itself.
    */
-  Logger formatDebug(String format, Object... args) {
+  FileLogger formatDebug(String format, Object... args) {
     if (this.level <= LogLevel.DEBUG) {
       formatMsg(format, args)
     }
@@ -127,7 +150,7 @@ class Logger {
    * @param msg the message to output.
    * @return itself.
    */
-  Logger warn(String msg) {
+  FileLogger warn(String msg) {
     return formatWarn("\n${msgHeading()} %s", msg)
   }
 
@@ -138,7 +161,7 @@ class Logger {
    * @param args the different arguments to put in the message format.
    * @return itself.
    */
-  Logger formatWarn(String format, Object... args) {
+  FileLogger formatWarn(String format, Object... args) {
     if (this.level <= LogLevel.WARN) {
       formatMsg(format, args)
     }
@@ -150,7 +173,7 @@ class Logger {
    * @param msg the message to output.
    * @return itself.
    */
-  Logger error(String msg) {
+  FileLogger error(String msg) {
     return formatError("\n${msgHeading()} %s", msg)
   }
 
@@ -159,7 +182,7 @@ class Logger {
    * @param cause the exception as the cause of the error.
    * @return itself.
    */
-  Logger error(Throwable cause) {
+  FileLogger error(Throwable cause) {
     StringWriter stackTrace = new StringWriter()
     cause.printStackTrace(new PrintWriter(stackTrace))
     formatError("\n${msgHeading()} %s\n%s", cause.getMessage(), stackTrace.toString())
@@ -178,7 +201,7 @@ class Logger {
    * @param cause the exception as the cause of the error.
    * @return itself.
    */
-  Logger error(String msg, Throwable cause) {
+  FileLogger error(String msg, Throwable cause) {
     StringWriter stackTrace = new StringWriter()
     cause.printStackTrace(new PrintWriter(stackTrace))
     return formatError("\n${msgHeading()} %s\n%s\n%s", msg, cause.getMessage(), stackTrace.toString())
@@ -191,7 +214,7 @@ class Logger {
    * @param args the different arguments to put in the message format.
    * @return itself.
    */
-  Logger formatError(String format, Object... args) {
+  FileLogger formatError(String format, Object... args) {
     if (this.level <= LogLevel.ERROR) {
       formatMsg(format, args)
     }
@@ -212,7 +235,7 @@ class Logger {
     return this.logHandler == null ? DEFAULT_LOG_HANDLER: this.logHandler;
   }
 
-  private Logger(String namespace) {
+  private FileLogger(String namespace) {
     this.namespace = namespace
   }
 

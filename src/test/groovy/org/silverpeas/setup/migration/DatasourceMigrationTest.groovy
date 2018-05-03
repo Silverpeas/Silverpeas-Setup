@@ -23,16 +23,15 @@
  */
 package org.silverpeas.setup.migration
 
-import org.silverpeas.setup.api.Logger
+import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
 import java.sql.SQLException
 
 import static org.silverpeas.setup.migration.MigrationScriptBuilder.ScriptType.groovy
 import static org.silverpeas.setup.migration.MigrationScriptBuilder.ScriptType.sql
-import static org.silverpeas.setup.test.Assertion.numberOfItemsIn
+import static org.silverpeas.setup.test.Assertion.numberOfItems
 import static org.silverpeas.setup.test.Assertion.versionOfModule
-
 /**
  * Test the case of a database migration for a fresh installation of Silverpeas.
  * @author mmoquillon
@@ -40,7 +39,7 @@ import static org.silverpeas.setup.test.Assertion.versionOfModule
 class DatasourceMigrationTest extends AbstractDatabaseTest {
 
   void testMigrationForAFreshInstallation() {
-    assert versionOfModule('toto') == null
+    assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/002/create_table.sql")
@@ -50,16 +49,16 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .module('toto')
         .toVersion('002')
         .scripts([script])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
-    assert versionOfModule('toto') == '002'
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
   }
 
   void testUpgradeWithOnlySQLScripts() {
     prepareInitialData('toto', '002')
-    assert versionOfModule('toto') == '002'
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
 
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up002/update.sql")
@@ -70,17 +69,17 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('002')
         .toVersion('003')
         .scripts([script])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
-    assert versionOfModule('toto') == '003'
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
   }
 
   void testUpgradeWithOnlyGroovyScripts() {
     prepareInitialData('toto', '003')
-    assert versionOfModule('toto') == '003'
-    assert numberOfItemsIn('Person') == 0
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
@@ -91,18 +90,18 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([script])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
-    assert versionOfModule('toto') == '004'
-    assert numberOfItemsIn('Person') == 1
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
   void testMigrationForAnUpgrade() {
     prepareInitialData('toto', '003')
-    assert versionOfModule('toto') == '003'
-    assert numberOfItemsIn('Person') == 0
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     Script sqlScript = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db/h2/toto/up003/create_table.sql")
@@ -117,16 +116,16 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([sqlScript, groovyScript])
-        .logger(Logger.getLogger(getClass().getSimpleName()))
+        .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
 
-    assert versionOfModule('toto') == '004'
-    assert numberOfItemsIn('Person') == 1
+    assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
+    assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
   void testAnInstallationFailure() {
-    assert versionOfModule('foo') == null
+    assert versionOfModule(databaseSetUp.sql, 'foo') == null
 
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/db//h2/foo/002/create_table.sql")
@@ -138,17 +137,17 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .module('foo')
           .toVersion('002')
           .scripts([script])
-          .logger(Logger.getLogger(getClass().getSimpleName()))
+          .logger(FileLogger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
     }
 
-    assert versionOfModule('foo') == null
+    assert versionOfModule(databaseSetUp.sql, 'foo') == null
   }
 
   void testAnUpgradeFailure() {
     prepareInitialData('foo', '003')
-    assert versionOfModule('foo') == '003'
+    assert versionOfModule(databaseSetUp.sql, 'foo') == '003'
 
     Script script = MigrationScriptBuilder
         .fromScript("${testSetUp.migrationHome}/scripts/foo/up002/update.groovy")
@@ -161,11 +160,11 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .fromVersion('003')
           .toVersion('004')
           .scripts([script])
-          .logger(Logger.getLogger(getClass().getSimpleName()))
+          .logger(FileLogger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
     }
 
-    assert versionOfModule('foo') == '003'
+    assert versionOfModule(databaseSetUp.sql, 'foo') == '003'
   }
 }
