@@ -140,7 +140,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           extension.distDir.get().mkdirs()
         }
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
-        builder.driversDir = extension.driversDir
+        builder.driversDir = driversDir
         builder.silverpeasHome = extension.silverpeasHome
         builder.settings = extension.config.settings
         builder.extractSoftwareBundles(extension.silverpeasBundles.files,

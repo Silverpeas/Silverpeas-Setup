@@ -29,9 +29,8 @@ import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.tasks.TaskState
 import org.silverpeas.setup.api.FileLogger
-import org.silverpeas.setup.api.SilverpeasSetupTaskNames
 import org.silverpeas.setup.api.JBossServer
-
+import org.silverpeas.setup.api.SilverpeasSetupTaskNames
 /**
  * A logger hooking to events from the task execution in order to customize the output of the
  * traces coming from Gradle and to indicates in this plugin's logging system at which tasks the
@@ -50,6 +49,11 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
 
   private buildStarted = false
   private List<String> executedTasks = []
+  private long startTimestamp;
+
+  TaskEventLogging() {
+    startTimestamp = System.currentTimeMillis()
+  }
 
   TaskEventLogging withTasks(tasks) {
     this.tasks.addAll(tasks)
@@ -103,8 +107,10 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
   void buildFinished(final BuildResult result) {
     JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome.path)
     String status = "JBoss is ${jboss.status()}"
+    String buildDuration = "The whole tasks took ${(long)((System.currentTimeMillis() - startTimestamp) / 1000)}s"
     if (buildStarted) {
-      FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n', status)
+      FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n%s\n', status, buildDuration)
+      println "${buildDuration}"
       buildStarted = false
     }
     println()
