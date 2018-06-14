@@ -78,12 +78,13 @@ class JBossServer {
   }
 
   private void assertCommandSucceeds(command) throws AssertionError, InvalidObjectException {
-    if (command.exitValue() != 0) {
-      String message = command.err.text
-      if (!message) {
-        throw new InvalidObjectException(command.in.text)
+    String message = command.in.text
+    if (command.exitValue() != 0 || message.contains('"outcome" => "failed"')) {
+      String error = command.err.text
+      if (!error) {
+        throw new InvalidObjectException(message)
       }
-      throw new AssertionError(message)
+      throw new AssertionError(error)
     }
   }
 
