@@ -130,11 +130,6 @@ class SilverpeasSetupExtension {
   final Property<Boolean> developmentMode
 
   /**
-   * The actual version of Silverpeas to set up and run.
-   */
-  String silverpeasVersion
-
-  /**
    * Constructs a new silverpeas configuration extension. It checks the environment variables
    * SILVERPEAS_HOME and JBOSS_HOME are correctly set.
    */

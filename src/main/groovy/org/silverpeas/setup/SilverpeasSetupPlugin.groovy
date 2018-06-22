@@ -79,7 +79,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       if (silverSetup.logging.useLogger) {
         initLogging(currentProject, silverSetup.logging)
       }
-      silverSetup.config.settings.SILVERPEAS_VERSION = silverSetup.silverpeasVersion as String
+      silverSetup.config.settings.SILVERPEAS_VERSION = currentProject.version as String
       jBossServer.set(new JBossServer(extension.jbossHome.path)
           .redirectOutputTo(new File(extension.logging.logDir, JBOSS_OUTPUT_LOG)))
     }
