@@ -27,6 +27,7 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.SystemUtils
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeoutException
 import java.util.regex.Matcher
@@ -337,9 +338,11 @@ class JBossServer {
 
   /**
    * Adds the artifact located at the specified path into the deployment repository of this JBoss
-   * server under the specified name and deploys it by using the Management API. If it is already
-   * registered, nothing is done.
-   * Once added, the artifact can be undeployed and deployed again on demand.
+   * server and deploys it by using the Management API. The unique name with which the artifact
+   * will be identified is the name of the artifact itself. The name of the runtime context under
+   * which the artifact could be accessed once deployed is the name of the artifact itself.
+   * If it is already registered, nothing is done.
+   * Once added, the artifact can be deployed and undeployed again on demand.
    * A JBoss/Wildfly instance should be running.
    * @param artifactPath the path of the artifact to add.
    * @throws RuntimeException if the adding of the artifact failed.
@@ -351,27 +354,46 @@ class JBossServer {
 
   /**
    * Adds the artifact located at the specified path into the deployment repository of this JBoss
-   * server under the specified name and deploys it by using the Management API. If it is already
-   * registered, nothing is done.
+   * server under the specified runtime context by using the Management API. The unique name with
+   * which the artifact will be identified is the name of the artifact itself.
+   * If it is already  registered, nothing is done.
    * Once added, the artifact can be undeployed and deployed again on demand.
    * A JBoss/Wildfly instance should be running.
    * @param artifactPath the path of the artifact to add.
+   * @param context the runtime context under which the artifact could be accessed once deployed.
    * @throws RuntimeException if the adding of the artifact failed.
    */
-  void add(String artifactPath, String artifactName) throws RuntimeException {
-    String unixArtifactPath = FilenameUtils.separatorsToUnix(artifactPath);
-    boolean archive = Files.isRegularFile(Paths.get(unixArtifactPath))
-    if (!isInDeployments(artifactName)) {
+  void add(String artifactPath, String context) throws RuntimeException {
+    String artifactName = FilenameUtils.getName(artifactPath)
+    add(artifactPath, artifactName, context)
+  }
+
+  /**
+   * Adds the artifact located at the specified path into the deployment repository of this JBoss
+   * server under the specified runtime context and with the specified unique name by using the
+   * Management API. If it
+   * is already  registered, nothing is done.
+   * Once added, the artifact can be undeployed and deployed again on demand.
+   * A JBoss/Wildfly instance should be running.
+   * @param artifactPath the path of the artifact to add.
+   * @param context the runtime context under which the artifact will be deployed into this server.
+   * @throws RuntimeException if the adding of the artifact failed.
+   */
+  void add(String artifactPath, String name, String context) throws RuntimeException {
+    String normalizedArtifactPath = FilenameUtils.separatorsToUnix(artifactPath);
+    Path artifactTruePath = Paths.get(normalizedArtifactPath)
+    boolean archive = Files.isRegularFile(artifactTruePath)
+    if (!isInDeployments(name)) {
       Process proc = executeCliCommand(
-          "/deployment=${artifactName}:add(runtime-name=${artifactName},content=[{path=>${unixArtifactPath},archive=${archive}}])",
+          "/deployment=${name}:add(runtime-name=${context},content=[{path=>${normalizedArtifactPath},archive=${archive}}])",
           SystemUtils.IS_OS_WINDOWS);
       proc.waitFor()
-      if (proc.exitValue() != 0 || !isInDeployments(artifactName)) {
-        throw new RuntimeException("Adding of ${artifactName} in JBoss failed with exit code " +
+      if (proc.exitValue() != 0 || !isInDeployments(name)) {
+        throw new RuntimeException("Adding of ${name} in JBoss failed with exit code " +
             "${proc.exitValue()} and message ${proc.in.text}")
       }
     } else {
-      logger.info "${artifactName} is already added in JBoss"
+      logger.info "${name} is already added in JBoss"
     }
   }
 
