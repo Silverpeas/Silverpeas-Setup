@@ -96,17 +96,17 @@ class SilverpeasInstallationTask extends DefaultTask {
   }
 
   private void installSilverpeas(final JBossServer server) {
-    String message = '(Re)Installation of silverpeas.war'
+    String name = 'silverpeas.war'
     String context = settings.SILVERPEAS_CONTEXT + '.war'
     File silverpeas = new File(deploymentDir.path, SILVERPEAS_WAR)
     if (developmentMode.get()) {
-      message += ' as exploded (dev mode)'
+      name += ' as exploded (dev mode)'
       silverpeas = distDir.get()
     }
-    log.info message
+    log.info "(Re)Installation of ${name}"
     server.remove(SILVERPEAS_WAR)
     server.add(silverpeas.path, SILVERPEAS_WAR, context)
     server.deploy(SILVERPEAS_WAR)
-    log.info message + ': [OK]'
+    log.info "(Re)Installation of ${name}: [OK]"
   }
 }
