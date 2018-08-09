@@ -122,6 +122,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
 
     project.tasks.create(INSTALL.name, SilverpeasInstallationTask) {
       it.deploymentDir   = extension.deploymentDir
+      it.settings        = extension.config.settings
       it.distDir         = extension.distDir
       it.developmentMode = extension.developmentMode
       it.jboss           = jBossServer

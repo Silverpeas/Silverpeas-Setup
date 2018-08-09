@@ -5,6 +5,7 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.silverpeas.setup.test.TestSetUp
 
 import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.CONFIGURE_SILVERPEAS
+
 /**
  * Test the case of the configuration of Silverpeas performed by a dedicated Gradle task.
  * @author mmoquillon

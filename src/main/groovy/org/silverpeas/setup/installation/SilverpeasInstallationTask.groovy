@@ -32,7 +32,6 @@ import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 
 import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVERPEAS_WAR
-
 /**
  * A Gradle task to install the Web archive of the Silverpeas application into the JEE application
  * server.
@@ -44,6 +43,7 @@ class SilverpeasInstallationTask extends DefaultTask {
   File deploymentDir
   final Property<File> distDir = project.objects.property(File)
   final Property<Boolean> developmentMode = project.objects.property(Boolean)
+  Map settings
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasInstallationTask() {
@@ -76,22 +76,37 @@ class SilverpeasInstallationTask extends DefaultTask {
       it.into deploymentDir
     }
     try {
-      deploymentDir.listFiles().sort().each { artifact ->
-        log.info "(Re)Installation of ${artifact.name}"
-        server.remove(artifact.name)
-        server.add(artifact.path)
-        server.deploy(artifact.name)
-        log.info "(Re)Installation of ${artifact.name}: [OK]"
-      }
-      if (developmentMode.get()) {
-        log.info '(Re)Installation of silverpeas.war as exploded (dev mode)'
-        server.remove(SILVERPEAS_WAR)
-        server.add(distDir.get().path, SILVERPEAS_WAR)
-        server.deploy(SILVERPEAS_WAR)
-        log.info '(Re)Installation of silverpeas.war as exploded (dev mode): [OK]'
-      }
+      installAdditionalArtifacts(server)
+      installSilverpeas(server)
     } finally {
       server.stop()
     }
+  }
+
+  private void installAdditionalArtifacts(final JBossServer server) {
+    deploymentDir.listFiles().sort().findAll { artifact ->
+      artifact.name != SILVERPEAS_WAR
+    }.each { artifact ->
+      log.info "(Re)Installation of ${artifact.name}"
+      server.remove(artifact.name)
+      server.add(artifact.path)
+      server.deploy(artifact.name)
+      log.info "(Re)Installation of ${artifact.name}: [OK]"
+    }
+  }
+
+  private void installSilverpeas(final JBossServer server) {
+    String name = 'silverpeas.war'
+    String context = settings.SILVERPEAS_CONTEXT + '.war'
+    File silverpeas = new File(deploymentDir.path, SILVERPEAS_WAR)
+    if (developmentMode.get()) {
+      name += ' as exploded (dev mode)'
+      silverpeas = distDir.get()
+    }
+    log.info "(Re)Installation of ${name}"
+    server.remove(SILVERPEAS_WAR)
+    server.add(silverpeas.path, SILVERPEAS_WAR, context)
+    server.deploy(SILVERPEAS_WAR)
+    log.info "(Re)Installation of ${name}: [OK]"
   }
 }
