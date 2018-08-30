@@ -38,6 +38,8 @@ import static org.silverpeas.setup.test.Assertion.versionOfModule
  */
 class DatasourceMigrationTest extends AbstractDatabaseTest {
 
+  def settings = ['SIVLERPEAS_HOME': '/home/silverpeas']
+
   void testMigrationForAFreshInstallation() {
     assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
@@ -49,6 +51,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .module('toto')
         .toVersion('002')
         .scripts([script])
+        .settings(settings)
         .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
@@ -69,6 +72,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('002')
         .toVersion('003')
         .scripts([script])
+        .settings(settings)
         .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
@@ -90,6 +94,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([script])
+        .settings(settings)
         .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
@@ -116,6 +121,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .fromVersion('003')
         .toVersion('004')
         .scripts([sqlScript, groovyScript])
+        .settings(settings)
         .logger(FileLogger.getLogger(getClass().getSimpleName()))
         .build()
     migration.migrate()
@@ -137,6 +143,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .module('foo')
           .toVersion('002')
           .scripts([script])
+          .settings(settings)
           .logger(FileLogger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()
@@ -160,6 +167,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
           .fromVersion('003')
           .toVersion('004')
           .scripts([script])
+          .settings(settings)
           .logger(FileLogger.getLogger(getClass().getSimpleName()))
           .build()
       migration.migrate()

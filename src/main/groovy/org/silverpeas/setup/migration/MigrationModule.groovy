@@ -141,6 +141,7 @@ class MigrationModule {
             .fromVersion(versionIn3Digits)
             .toVersion(String.format("%03d", version + 1))
             .scripts(scripts)
+            .settings(settings)
             .logger(logger)
             .build()
       }
@@ -155,6 +156,7 @@ class MigrationModule {
           .module(module)
           .toVersion(toVersion)
           .scripts(scripts)
+          .settings(settings)
           .logger(logger)
           .build()
     }

@@ -1,5 +1,6 @@
 import java.sql.SQLException
 
+assert settings != null && settings != [:]
 int count = sql.executeUpdate('INSERT INTO Person (id, firstName, lastName, age) VALUES (:id, :firstName, :lastName, :age)',
   [id: 100, firstName: 'Toto', lastName: 'Chez-les-Papoos', age: 32])
 if (count != 1) {
