@@ -22,13 +22,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.silverpeas.setup.api
+
+import org.silverpeas.setup.SilverpeasSetupPlugin
+
 /**
  * A Groovy script. It wraps the actual referred script file and it manages its execution.
  * @author mmoquillon
  */
 class GroovyScript extends AbstractScript {
 
-  private static GroovyScriptEngine engine = new GroovyScriptEngine('')
+  private static GroovyScriptEngine engine = new GroovyScriptEngine('',
+      SilverpeasSetupPlugin.getClassLoader())
 
   /**
    * Constructs a new GroovyScript instance that refers the script located at the specified path.
