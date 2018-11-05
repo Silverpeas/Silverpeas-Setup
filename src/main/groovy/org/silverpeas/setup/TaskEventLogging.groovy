@@ -31,6 +31,7 @@ import org.gradle.api.tasks.TaskState
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.api.SilverpeasSetupTaskNames
+
 /**
  * A logger hooking to events from the task execution in order to customize the output of the
  * traces coming from Gradle and to indicates in this plugin's logging system at which tasks the

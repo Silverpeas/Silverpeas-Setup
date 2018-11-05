@@ -26,7 +26,11 @@ package org.silverpeas.setup.api
 import org.gradle.api.logging.LogLevel
 
 import java.sql.SQLException
+import java.time.LocalTime
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.ResolverStyle
 
+import static java.time.temporal.ChronoField.*
 /**
  * The logger to be used in the plugin execution context to trace processing information into a
  * log file.
@@ -40,6 +44,16 @@ import java.sql.SQLException
  * @author mmoquillon
  */
 class FileLogger {
+
+  private static final TIME_FORMAT = new DateTimeFormatterBuilder()
+      .appendValue(HOUR_OF_DAY, 2)
+      .appendLiteral(':')
+      .appendValue(MINUTE_OF_HOUR, 2)
+      .appendLiteral(':')
+      .appendValue(SECOND_OF_MINUTE, 2)
+      .appendFraction(NANO_OF_SECOND, 3, 9, true)
+      .toFormatter()
+      .withResolverStyle(ResolverStyle.STRICT)
 
   private static def DEFAULT_LOG_HANDLER = System.out
   private static LogLevel DEFAULT_LOG_LEVEL = LogLevel.INFO
@@ -222,7 +236,8 @@ class FileLogger {
   }
 
   private String msgHeading() {
-    return "[${namespace}]"
+    LocalTime time = LocalTime.now()
+    return " ${time.format(TIME_FORMAT)} [${namespace}]"
   }
 
   private void formatMsg(String format, Object... args) {
