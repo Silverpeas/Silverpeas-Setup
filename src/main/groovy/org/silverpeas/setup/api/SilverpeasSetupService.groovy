@@ -40,7 +40,7 @@ class SilverpeasSetupService {
   private static final def VAR_PATTERN = /\$\{(env\.|sys\.)?(\w+)\}/
   private static final def SCRIPT_PATTERN = /\$\{eval:([:.\w \{\}\$]+)\}/
   // pattern defining the grammar of a property in a properties file and in which we capture the key
-  private static final def PROPERTY_PATTERN = /^\s*(\S+)\s*=[\s*\S+\s*]*/
+  private static final def PROPERTY_PATTERN = /^\s*([\w\d._-]+)\s*=\s*[\S+\s*]*$/
 
   final Map settings
 
@@ -68,12 +68,11 @@ class SilverpeasSetupService {
       if (m.matches()) {
         // it is a property definition, then capture the key
         String currentKey = m.group(1)
-        properties.each() { key, value ->
-          if (key == currentKey) {
-            existingProperties << key
-            value = Matcher.quoteReplacement(value.replaceAll('\\\\', '\\\\\\\\')).trim()
-            line = line.replaceFirst('=.*', "=  ${value}")
-          }
+        def property = properties.find { key, value -> key == currentKey }
+        if (property != null) {
+          existingProperties << property.key
+          String value = Matcher.quoteReplacement(property.value.replaceAll('\\\\', '\\\\\\\\')).trim()
+          line = line.replaceFirst('=.*', "=  ${value}")
         }
       }
       line
