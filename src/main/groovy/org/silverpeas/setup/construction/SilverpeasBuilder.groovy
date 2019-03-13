@@ -232,6 +232,7 @@ class SilverpeasBuilder {
 
     File mainWebXmlFile = mainWebXmlFiles.get(0)
     GPathResult mainWebXml = new XmlSlurper(false, false).parse(mainWebXmlFile)
+    mainWebXml.'session-config'.'cookie-config'.'secure' = settings.SERVER_SECURED == 'true'
     new File(sourceDir, 'WEB-INF').listFiles(new FilenameFilter() {
       boolean accept(File f, String fileName) {
         return fileName.startsWith(WEB_XML_PREFIX) && fileName.endsWith('war.xml') &&
