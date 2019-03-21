@@ -54,7 +54,12 @@ project.configure(project) {
 
 repositories {
   maven {
+    name 'silverpeas'
     url 'http://www.silverpeas.org/nexus/content/groups/silverpeas'
+  }
+  maven {
+    name 'gradle-plugins'
+    url 'https://plugins.gradle.org/m2/'
   }
   mavenLocal()
 }
