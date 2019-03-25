@@ -23,16 +23,33 @@
  */
 import org.apache.tools.ant.filters.ReplaceTokens
 
+buildscript {
+  dependencies {
+    classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
+  }
+  repositories {
+    maven {
+      url 'http://www.silverpeas.org/nexus/content/groups/silverpeas'
+    }
+    jcenter()
+    mavenLocal()
+  }
+}
+
+plugins {
+  id 'org.ajoberstar.grgit' version '3.0.0' apply true
+  id 'idea'
+  id 'maven'
+  id 'maven-publish'
+  id 'groovy'
+}
+
+apply plugin: 'maven-publish-auth'
+
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
 version = '6.1-SNAPSHOT'
 
-apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: 'maven-publish-auth'
-apply plugin: 'groovy'
-apply plugin: 'org.ajoberstar.grgit'
 
 /* cache management
 configurations {
@@ -87,19 +104,6 @@ publishing {
   }
 }
 
-buildscript {
-  dependencies {
-    classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
-    classpath 'org.ajoberstar.grgit:grgit-gradle:3.0.0'
-  }
-  repositories {
-    maven {
-      url 'http://www.silverpeas.org/nexus/content/groups/silverpeas'
-    }
-    jcenter()
-    mavenLocal()
-  }
-}
 
 dependencies {
   compile gradleApi()
