@@ -71,7 +71,7 @@ class SilverpeasSetupService {
         def property = properties.find { key, value -> key == currentKey }
         if (property != null) {
           existingProperties << property.key
-          String value = Matcher.quoteReplacement(property.value.replaceAll('\\\\', '\\\\\\\\')).trim()
+          String value = normalizePropsValue(property.value)
           line = line.replaceFirst('=.*', "=  ${value}")
         }
       }
@@ -188,8 +188,30 @@ class SilverpeasSetupService {
     return FileLogger.getLogger(namespace)
   }
 
-  private static final String normalizePath(String path) {
+  private static String normalizePath(String path) {
     return path.replace('\\', '/');
+  }
+
+  private static String normalizePropsValue(String value) {
+    StringBuilder replacement = new StringBuilder()
+    int i = 0
+    while(i < value.length()) {
+      char entry = value.charAt(i)
+      if (entry == '\\' && i < value.length() && value.charAt(i + 1).toLowerCase() != 'u') {
+        i++
+        replacement.append('\\').append(entry)
+      } else if (entry == '\r') {
+        replacement.append('\\ \r\n')
+        i += 2
+      } else if (entry == '\n') {
+        replacement.append('\\ \n')
+        i++
+      } else {
+        replacement.append(entry)
+        i++
+      }
+    }
+    return Matcher.quoteReplacement(replacement.toString()).trim()
   }
 
 }
