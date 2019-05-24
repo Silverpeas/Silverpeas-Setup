@@ -201,10 +201,10 @@ class SilverpeasSetupService {
         i++
         replacement.append('\\').append(entry)
       } else if (entry == '\r') {
-        replacement.append('\\ \r\n')
+        replacement.append('\\\r\n')
         i += 2
       } else if (entry == '\n') {
-        replacement.append('\\ \n')
+        replacement.append('\\\n')
         i++
       } else {
         replacement.append(entry)
