@@ -5,7 +5,6 @@
   <fileset root="${SILVERPEAS_HOME}/properties/org/silverpeas/">
 
     <configfile name="authentication/autDomainSQL.properties">
-      <parameter key="fallbackType">${FALLBACK_TYPE}</parameter>
       <parameter key="autServer0.SQLJDBCUrl">${DB_URL}</parameter>
       <parameter key="autServer0.SQLAccessLogin">${DB_USER}</parameter>
       <parameter key="autServer0.SQLAccessPasswd">${DB_PASSWORD}</parameter>
