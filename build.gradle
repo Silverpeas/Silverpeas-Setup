@@ -48,7 +48,7 @@ apply plugin: 'maven-publish-auth'
 
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
-version = '6.1-SNAPSHOT'
+version = '6.1-rc1-SNAPSHOT'
 
 
 /* cache management
