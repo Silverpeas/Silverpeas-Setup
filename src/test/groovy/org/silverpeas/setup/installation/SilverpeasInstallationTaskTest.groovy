@@ -4,7 +4,7 @@ import groovy.mock.interceptor.MockFor
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.silverpeas.setup.api.JBossServer
-import org.silverpeas.setup.test.TestSetUp
+import org.silverpeas.setup.test.TestContext
 
 import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.INSTALL
 /**
@@ -14,16 +14,13 @@ import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.INSTALL
 class SilverpeasInstallationTaskTest extends GroovyTestCase {
 
   private Project project
-  protected TestSetUp testSetUp
+  protected TestContext context
 
   @Override
   void setUp() {
     super.setUp()
 
-    testSetUp = TestSetUp.setUp()
-
-    System.setProperty('SILVERPEAS_HOME', testSetUp.resourcesDir)
-    System.setProperty('JBOSS_HOME', testSetUp.resourcesDir)
+    context = TestContext.create().setUpSystemEnv()
 
     project = ProjectBuilder.builder().build()
     project.apply plugin: 'silversetup'

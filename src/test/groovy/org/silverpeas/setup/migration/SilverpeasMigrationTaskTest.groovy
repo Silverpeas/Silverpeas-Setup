@@ -6,6 +6,7 @@ import org.silverpeas.setup.test.DatabaseSetUp
 
 import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.MIGRATE
 import static org.silverpeas.setup.test.Assertion.versionOfModule
+
 /**
  * Test the case of the migration of the data sources performed by a dedicated Gradle task.
  * @author mmoquillon
@@ -22,8 +23,7 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
   @Override
   void setUp() {
     super.setUp()
-    System.setProperty('SILVERPEAS_HOME', testSetUp.resourcesDir)
-    System.setProperty('JBOSS_HOME', testSetUp.resourcesDir)
+    context.setUpSystemEnv()
 
     project = ProjectBuilder.builder().build()
     project.apply plugin: 'silversetup'

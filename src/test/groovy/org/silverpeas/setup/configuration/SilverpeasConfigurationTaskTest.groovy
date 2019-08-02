@@ -1,10 +1,11 @@
 package org.silverpeas.setup.configuration
 
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
-import org.silverpeas.setup.test.TestSetUp
 
-import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.CONFIGURE_SILVERPEAS
+import org.silverpeas.setup.test.TestContext
+
+import java.time.LocalDate
+
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 /**
  * Test the case of the configuration of Silverpeas performed by a dedicated Gradle task.
@@ -12,39 +13,39 @@ import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.CONFIGURE_SILVER
  */
 class SilverpeasConfigurationTaskTest extends GroovyTestCase {
 
-  private TestSetUp testSetUp
-  private Project project
+  private TestContext context
 
   @Override
   void setUp() {
     super.setUp()
-    testSetUp = TestSetUp.setUp()
+    context = TestContext.create().setUpSystemEnv().initGradleProject()
+  }
 
-    System.setProperty('SILVERPEAS_HOME', testSetUp.resourcesDir)
-    System.setProperty('JBOSS_HOME', testSetUp.resourcesDir)
-
-    project = ProjectBuilder.builder().build()
-    project.apply plugin: 'silversetup'
-
-    project.silversetup.logging.logDir = new File(project.buildDir, 'log')
-    project.silversetup.logging.useLogger = false
+  @Override
+  void tearDown() throws Exception {
+    super.tearDown()
+    context.cleanUp()
   }
 
   void testSilverpeasConfiguration() {
-    TestContext context = new TestContext().before()
+    TestProperties testProperties = new TestProperties().before()
 
-    project.tasks.findByPath(CONFIGURE_SILVERPEAS.name).configureSilverpeas()
+    def result = context.getGradleRunner(true)
+        .withArguments('configure_silverpeas')
+        .build()
+    assert result.task(':configure_silverpeas').outcome == SUCCESS
 
-    context.after()
+    testProperties.after()
 
-    assertThePropertiesFileAreCorrectlyConfigured(context)
-    assertTheCustomerWorkflowIsCorrectlyConfigured(context)
-    assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(context)
+    assertThePropertiesFileAreCorrectlyConfigured(testProperties)
+    assertTheCustomerWorkflowIsCorrectlyConfigured(testProperties)
+    assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(testProperties)
+    assertTheConfigContextIsCorrectlySaved(testProperties)
   }
 
-  void assertTheCustomerWorkflowIsCorrectlyConfigured(TestContext context) {
-    def before = context.xmlconf.before
-    def after = context.xmlconf.after
+  void assertTheCustomerWorkflowIsCorrectlyConfigured(TestProperties props) {
+    def before = props.xmlconf.before
+    def after = props.xmlconf.after
     assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
           .consequences.consequence.find { it.@value == 'achats'}
           .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
@@ -106,14 +107,14 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
           .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
   }
 
-  void assertThePropertiesFileAreCorrectlyConfigured(TestContext context) {
-    def before = context.settings.before
-    def after = context.settings.after
+  void assertThePropertiesFileAreCorrectlyConfigured(TestProperties props) {
+    def before = props.settings.before
+    def after = props.settings.after
 
     assert after.autDomainSQL['fallbackType'] == 'always' &&
         after.autDomainSQL['fallbackType'] == before.autDomainSQL['fallbackType']
     assert after.autDomainSQL['autServer0.SQLJDBCUrl'] ==
-        "jdbc:h2:file:${testSetUp.resourcesDir}/h2/test;MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" &&
+        "jdbc:h2:file:${context.resourcesDir}/h2/test;MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" &&
         after.autDomainSQL['autServer0.SQLJDBCUrl'] != before.autDomainSQL['autServer0.SQLJDBCUrl']
     assert after.autDomainSQL['autServer0.SQLAccessLogin'] == 'sa' &&
         after.autDomainSQL['autServer0.SQLAccessLogin'] != before.autDomainSQL['autServer0.SQLAccessLogin']
@@ -129,10 +130,10 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
         !after.castorSettings['CastorJDODatabaseFileURL'].empty
   }
 
-  void assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(TestContext context) {
+  void assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(TestProperties props) {
     // the JDO Castor doesn't support H2, so the engine is set up by default to postgresql
-    def before = context.xmlconf.before
-    def after = context.xmlconf.after
+    def before = props.xmlconf.before
+    def after = props.xmlconf.after
 
     assert after.workflowDatabaseConf.@engine == 'postgresql' &&
         after.workflowDatabaseConf.@engine.text() != before.workflowDatabaseConf.@engine.text()
@@ -145,6 +146,13 @@ class SilverpeasConfigurationTaskTest extends GroovyTestCase {
         after.workflowFastDatabaseConf.@engine.text() != before.workflowFastDatabaseConf.@engine.text()
     assert after.workflowFastDatabaseConf.mapping.@href.text() ==
         "file:///${System.getProperty('SILVERPEAS_HOME')}/resources/instanceManager/fast_mapping.xml"
+  }
+
+  void assertTheConfigContextIsCorrectlySaved(TestProperties props) {
+    assert props.configContext.before['status is'] == props.configContext.after['status is']
+    assert props.configContext.before['installed at'] == props.configContext.after['installed at']
+    assert props.configContext.before['updated at'] == props.configContext.after['updated at']
+    assert props.configContext.after['context handled at'] == LocalDate.now().toString()
   }
 
 }

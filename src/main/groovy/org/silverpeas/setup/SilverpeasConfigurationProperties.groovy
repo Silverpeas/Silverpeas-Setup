@@ -26,6 +26,7 @@ package org.silverpeas.setup
 import org.gradle.api.Project
 
 import javax.inject.Inject
+import java.nio.file.Files
 
 /**
  * Properties for the configuration of Silverpeas. Such properties include the location of the
@@ -73,15 +74,62 @@ class SilverpeasConfigurationProperties {
    */
   final Map settings = [:]
 
+  /**
+   * Context of a configuration process of Silverpeas: it is a set of context properties left to the
+   * discretion of the different steps executed in the configuration. The context is serialized so
+   * that it can be retrieved in the next configuration process by the different steps so that they
+   * can adapt their behaviour according to the properties they have set.
+   */
+  final Context context
+
   @Inject
   SilverpeasConfigurationProperties(Project project, File silverpeasHome) {
     configurationHome = project.file("${silverpeasHome.path}/configuration")
     jbossConfigurationDir = project.file("${silverpeasHome.path}/configuration/jboss")
     silverpeasConfigurationDir = project.file("${silverpeasHome.path}/configuration/silverpeas")
     jbossModulesDir = project.file("${jbossConfigurationDir.path}/modules")
+    context = new Context(configurationHome, settings)
   }
 
   void setSettings(final Map configProperties) {
     this.settings.putAll(configProperties)
+  }
+
+  /**
+   * Context of a configuration process. It sets in the settings variable (that is shared by all
+   * the steps implied within a configuration of Silverpeas) the peculiar <code>context</code>
+   * attribute that is a dictionary of all the context properties the steps can set for their usage.
+   */
+  static class Context {
+    final private File file
+    final private Map props = [:]
+
+    /**
+     * Constructs a new configuration context.
+     * @param storageDir the directory into which the context will be saved.
+     * @param settings the dictionary to use to store the context properties. A peculiar
+     * <code>context</code> key will be put with as values a Map object.
+     */
+    private Context(File storageDir, final Map settings) {
+      file = new File(storageDir, '.context')
+      settings.context = props
+      if (Files.exists(file.toPath())) {
+        file.text.eachLine { line ->
+          String[] keyValue = line.trim().split(':')
+          props[keyValue[0].trim()] = keyValue[1].trim()
+        }
+      }
+    }
+
+    void save() {
+      if (!Files.exists(file.toPath())) {
+        Files.createFile(file.toPath())
+      }
+      file.withWriter('UTF-8') { w ->
+        props.each { k, v ->
+          w.println("${k}: ${v}")
+        }
+      }
+    }
   }
 }

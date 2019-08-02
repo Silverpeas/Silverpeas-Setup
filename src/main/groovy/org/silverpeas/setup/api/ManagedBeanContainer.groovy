@@ -32,7 +32,7 @@ class ManagedBeanContainer {
   static class Registry {
 
     Registry register(def bean, String name) {
-      beans.put(name, bean)
+      beans.putIfAbsent(name, bean)
       return this
     }
 

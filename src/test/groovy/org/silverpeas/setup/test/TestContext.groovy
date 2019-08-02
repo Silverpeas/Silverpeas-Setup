@@ -22,25 +22,72 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.silverpeas.setup.test
+
+import org.gradle.testkit.runner.GradleRunner
+
+import java.nio.file.Files
+import java.nio.file.Paths
+
 /**
  * Set up the test environment.
  * @author mmoquillon
  */
-class TestSetUp {
+class TestContext {
 
   String resourcesDir
   String migrationHome
 
-  private TestSetUp() {
+  private TestContext() {
 
   }
 
-  static TestSetUp setUp() {
+  /**
+   * Creates a new test context.
+   * @return a new TestContext instance
+   */
+  static TestContext create() {
     Properties properties = new Properties()
     properties.load(getClass().getResourceAsStream('/test.properties'))
-    TestSetUp testSetUp = new TestSetUp()
+    TestContext testSetUp = new TestContext()
     testSetUp.migrationHome = properties.migrationHome
     testSetUp.resourcesDir = properties.resourcesDir
     return testSetUp
+  }
+
+  TestContext setUpSystemEnv() {
+    System.setProperty('SILVERPEAS_HOME',resourcesDir)
+    System.setProperty('JBOSS_HOME', resourcesDir)
+    return this
+  }
+
+  void cleanUp() {
+    Files.deleteIfExists(Paths.get(resourcesDir, 'build.gradle'))
+  }
+
+  TestContext initGradleProject() {
+    Files.createDirectories(Paths.get(resourcesDir, 'build', 'drivers'))
+    Files.createDirectories(Paths.get(resourcesDir, 'build', 'dist'))
+    Files.createFile(Paths.get(resourcesDir, 'build.gradle'))
+        .toFile()
+        .text = """
+plugins {
+  id 'silversetup'
+}
+
+silversetup {
+  logging {
+    logDir = file("\${project.buildDir}/log")
+    useLogger = false
+  }
+}
+"""
+    return this
+  }
+
+  GradleRunner getGradleRunner(boolean debug = false) {
+    GradleRunner.create()
+        .withProjectDir(new File(resourcesDir))
+        .withPluginClasspath()
+        .withDebug(debug)
   }
 }

@@ -39,10 +39,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
     MigrationModule module = new MigrationModule()
-        .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+        .withSettings([MIGRATION_HOME: context.migrationHome, DB_SERVERTYPE: 'H2'])
         .withStatus([:])
         .withLogger(FileLogger.getLogger(getClass().getSimpleName()))
-        .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
+        .loadMigrationsFrom(new File("${context.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
     assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
@@ -54,10 +54,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     MigrationModule module = new MigrationModule()
-        .withSettings([MIGRATION_HOME: testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+        .withSettings([MIGRATION_HOME: context.migrationHome, DB_SERVERTYPE: 'H2'])
         .withStatus(['toto':'002'])
         .withLogger(FileLogger.getLogger(getClass().getSimpleName()))
-        .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
+        .loadMigrationsFrom(new File("${context.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
     assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
@@ -70,10 +70,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     MigrationModule module = new MigrationModule()
-        .withSettings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+        .withSettings([MIGRATION_HOME:context.migrationHome, DB_SERVERTYPE: 'H2'])
         .withStatus(['toto':'003'])
         .withLogger(FileLogger.getLogger(getClass().getSimpleName()))
-        .loadMigrationsFrom(new File("${testSetUp.migrationHome}/modules/toto-migration.xml"))
+        .loadMigrationsFrom(new File("${context.migrationHome}/modules/toto-migration.xml"))
     module.migrate()
 
     assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
@@ -83,10 +83,10 @@ class MigrationModuleTest extends AbstractDatabaseTest{
   void testAMalformedMigrationDescriptor() {
     shouldFail(SAXParseException) {
       new MigrationModule()
-          .withSettings([MIGRATION_HOME:testSetUp.migrationHome, DB_SERVERTYPE: 'H2'])
+          .withSettings([MIGRATION_HOME:context.migrationHome, DB_SERVERTYPE: 'H2'])
           .withStatus(['toto':'003'])
           .withLogger(FileLogger.getLogger(getClass().getSimpleName()))
-          .loadMigrationsFrom(new File("${testSetUp.migrationHome}/malformed-migration.xml"))
+          .loadMigrationsFrom(new File("${context.migrationHome}/malformed-migration.xml"))
     }
   }
 
