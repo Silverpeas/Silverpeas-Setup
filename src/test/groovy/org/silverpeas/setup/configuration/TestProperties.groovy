@@ -3,10 +3,10 @@ package org.silverpeas.setup.configuration
 import groovy.util.slurpersupport.GPathResult
 
 /**
- * A context of a unit test on the Silverpeas configuration.
+ * A set of properties to use in the tests on the Silverpeas configuration.
  * @author mmoquillon
  */
-class TestContext {
+class TestProperties {
 
   def settings = [
       before: [
@@ -38,10 +38,15 @@ class TestContext {
       ]
   ]
 
-  TestContext() {
+  def configContext = [
+      before: [:],
+      after: [:]
+  ]
+
+  TestProperties() {
   }
 
-  TestContext before() {
+  TestProperties before() {
     settings.before.autDomainSQL = loadPropertiesFrom('authentication/autDomainSQL.properties')
     settings.before.system = loadPropertiesFrom('systemSettings.properties')
     settings.before.scheduler = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
@@ -51,10 +56,12 @@ class TestContext {
     xmlconf.before.adefCreateProduct = loadXmlFileFrom('/data/workflowRepository/ADEFCreateProduct.xml')
     xmlconf.before.workflowDatabaseConf = loadXmlFileFrom('/resources/instanceManager/database.xml')
     xmlconf.before.workflowFastDatabaseConf = loadXmlFileFrom('/resources/instanceManager/fast_database.xml')
+
+    configContext.before = loadKeyValuesFileFrom('/configuration/.context')
     return this
   }
 
-  TestContext after() {
+  TestProperties after() {
     settings.after.autDomainSQL = loadPropertiesFrom('authentication/autDomainSQL.properties')
     settings.after.system = loadPropertiesFrom('systemSettings.properties')
     settings.after.scheduler = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
@@ -64,6 +71,8 @@ class TestContext {
     xmlconf.after.adefCreateProduct = loadXmlFileFrom('/data/workflowRepository/ADEFCreateProduct.xml')
     xmlconf.after.workflowDatabaseConf = loadXmlFileFrom('/resources/instanceManager/database.xml')
     xmlconf.after.workflowFastDatabaseConf = loadXmlFileFrom('/resources/instanceManager/fast_database.xml')
+
+    configContext.after = loadKeyValuesFileFrom('/configuration/.context')
     return this
   }
 
@@ -80,5 +89,14 @@ class TestContext {
     GPathResult result = new XmlSlurper().parse(is)
     is.close()
     return result
+  }
+
+  private Map loadKeyValuesFileFrom(String path) {
+    final Map keyValuePairs = [:]
+    getClass().getResourceAsStream(path).text.eachLine { line ->
+      String[] keyValue = line.trim().split(':')
+      keyValuePairs[keyValue[0].trim()] = keyValue[1].trim()
+    }
+    return keyValuePairs
   }
 }
