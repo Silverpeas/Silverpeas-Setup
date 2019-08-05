@@ -29,9 +29,11 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
+import org.silverpeas.setup.SilverpeasMigrationProperties
 import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.ManagedBeanContainer
+import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -55,12 +57,11 @@ import java.sql.SQLException
  * MS-SQL, and Oracle).
  * @author mmoquillon
  */
-class SilverpeasMigrationTask extends DefaultTask {
+class SilverpeasMigrationTask extends SilverpeasSetupTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
-  File migrationHome
-  SilverpeasConfigurationProperties config
+  SilverpeasMigrationProperties migration
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasMigrationTask() {
@@ -91,10 +92,10 @@ class SilverpeasMigrationTask extends DefaultTask {
   private Map<String, String> initMigrationTask() {
     log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
-    Path descriptor = Paths.get(migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
+    Path descriptor = Paths.get(migration.homeDir.get().path, 'modules', MIGRATION_SETTING_MODULE)
     MigrationModule module = new MigrationModule()
         .withStatus(status)
-        .withSettings(config.settings)
+        .withSettings(settings)
         .withLogger(log)
         .loadMigrationsFrom(descriptor.toFile())
     module.migrate()
@@ -112,11 +113,11 @@ class SilverpeasMigrationTask extends DefaultTask {
    */
   private List<MigrationModule> loadMigrationModules(Map<String, String> status) {
     List<MigrationModule> modules = []
-    new File(migrationHome, 'modules').listFiles().each { descriptor ->
+    new File(migration.homeDir.get(), 'modules').listFiles().each { descriptor ->
       if (descriptor.name != MIGRATION_SETTING_MODULE) {
         MigrationModule module = new MigrationModule()
             .withStatus(status)
-            .withSettings(config.settings)
+            .withSettings(settings)
             .withLogger(log)
             .loadMigrationsFrom(descriptor)
         modules << module

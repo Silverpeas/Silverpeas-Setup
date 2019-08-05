@@ -28,10 +28,12 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectState
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskAction
+import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 
 import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVERPEAS_WAR
+
 /**
  * A Gradle task to install the Web archive of the Silverpeas application into the JEE application
  * server.
@@ -40,9 +42,7 @@ import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVE
 class SilverpeasInstallationTask extends DefaultTask {
 
   Property<JBossServer> jboss = project.objects.property(JBossServer)
-  File deploymentDir
-  final Property<File> distDir = project.objects.property(File)
-  final Property<Boolean> developmentMode = project.objects.property(Boolean)
+  SilverpeasInstallationProperties installation
   Map settings
   final FileLogger log = FileLogger.getLogger(this.name)
 
@@ -59,7 +59,8 @@ class SilverpeasInstallationTask extends DefaultTask {
 
   @TaskAction
   void install() {
-    JBossServer server = jboss.get()
+    final JBossServer server = jboss.get()
+    final File deploymentDir = installation.deploymentDir.get()
     if (server.isStartingOrRunning()) {
       server.stop()
     }
@@ -76,14 +77,14 @@ class SilverpeasInstallationTask extends DefaultTask {
       it.into deploymentDir
     }
     try {
-      installAdditionalArtifacts(server)
-      installSilverpeas(server)
+      installAdditionalArtifacts(server, deploymentDir)
+      installSilverpeas(server, deploymentDir)
     } finally {
       server.stop()
     }
   }
 
-  private void installAdditionalArtifacts(final JBossServer server) {
+  private void installAdditionalArtifacts(final JBossServer server, final File deploymentDir) {
     deploymentDir.listFiles().sort().findAll { artifact ->
       artifact.name != SILVERPEAS_WAR
     }.each { artifact ->
@@ -95,13 +96,13 @@ class SilverpeasInstallationTask extends DefaultTask {
     }
   }
 
-  private void installSilverpeas(final JBossServer server) {
+  private void installSilverpeas(final JBossServer server, final File deploymentDir) {
     String name = 'silverpeas.war'
     String context = settings.SILVERPEAS_CONTEXT + '.war'
     File silverpeas = new File(deploymentDir.path, SILVERPEAS_WAR)
-    if (developmentMode.get()) {
+    if (installation.developmentMode.get()) {
       name += ' as exploded (dev mode)'
-      silverpeas = distDir.get()
+      silverpeas = installation.distDir.get()
     }
     log.info "(Re)Installation of ${name}"
     server.remove(SILVERPEAS_WAR)

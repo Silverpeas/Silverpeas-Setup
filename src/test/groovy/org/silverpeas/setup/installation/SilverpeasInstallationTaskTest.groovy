@@ -52,7 +52,7 @@ class SilverpeasInstallationTaskTest extends GroovyTestCase {
   void testInstall() {
     SilverpeasInstallationTask task = project.tasks.findByPath(INSTALL.name)
 
-    File jackrabbit = new File(task.deploymentDir, 'jackrabbit-jca.rar')
+    File jackrabbit = new File(task.installation.deploymentDir.get(), 'jackrabbit-jca.rar')
     jackrabbit.createNewFile()
 
     def mock = new MockFor(JBossServer)

@@ -25,9 +25,8 @@ package org.silverpeas.setup
 
 import org.gradle.api.Action
 import org.gradle.api.Project
-import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Property
+import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.api.SystemWrapper
 /**
  * Extension of the plugin in which are defined the different properties required by the plugin to
@@ -64,43 +63,21 @@ class SilverpeasSetupExtension {
   final File jbossHome
 
   /**
-   * The distribution directory. It is the directory that contains all the content of the
-   * constructed Silverpeas collaborative application. Defaulted into the build directory. Set a
-   * different location is pertinent only for development mode as in this mode the distribution
-   * directory is deployed as such in the JBoss/Wildfly application server.
-   * environment variable.
-   */
-  final Property<File> distDir
-
-  /**
-   * The properties to access the configuration if Silverpeas in order to apply it to the
-   * current Silverpeas distribution.
+   * The properties required by the configuration execution of a Silverpeas distribution.
    */
   final SilverpeasConfigurationProperties config
 
   /**
-   * The directory in which are all located both the data source migration descriptors
-   * and the scripts to create or to update the schema of the database to be used by Silverpeas.
-   * It is expected to contain two kinds of subdirectories:
-   * <ul>
-   *   <li><em><code>modules</code></em> in which are provided the XML descriptor of each migration
-   *   module. These descriptors refers the scripts to use to create or to update the
-   *   database schema for a given Silverpeas module;</li>
-   *   <li><em><code>db</code></em> in which are located per database type and per module the
-   *   different SQL scripts to create or to upgrade the schema of the database;</li>
-   *   <li><em><code>scripts</code></em> in which are located per module the different programming
-   *   scripts (currently, only Groovy is supported) to perform complex tasks on the database or
-   *   any other data sources used by Silverpeas (like the JCR for example).
-   *   </li>
-   * </ul>
+   * The properties required by the build of a given version of Silverpeas and its deployment
+   * in a JBoss server.
    */
-  final File migrationHome
+  final SilverpeasInstallationProperties installation
 
   /**
-   * Directory that have to contain all the application or resource archives to deploy into
-   * JBoss/Wildfly.
+   * The properties required to perform a data source migration when upgrading Silverpeas to a newer
+   * version or when installing a fresh Silverpeas version.
    */
-  final File deploymentDir
+  final SilverpeasMigrationProperties migration
 
   /**
    * The properties to configure the logging. They define the location of the logging file, the
@@ -109,25 +86,16 @@ class SilverpeasSetupExtension {
   final SilverpeasLoggingProperties logging
 
   /**
-   * All the software bundles that made Silverpeas. Those bundles are usually downloaded from our
-   * own Software Repository by the Silverpeas installer. They are required to assemble and build
-   * the final Silverpeas Web Application. The Jar libraries other than the supported JDBC drivers
-   * aren't taken in charge.
+   * The time out when waiting JBoss answering to our requests. Defaulted to 5mn.
    */
-  final ConfigurableFileCollection silverpeasBundles
+  final Property<Long> timeout
 
   /**
-   * Any tiers bundles to add into the Silverpeas Application being built. The tiers bundles are
-   * processed differently by the plugin: only the JAR libraries are taken in charge.
+   * The Silverpeas settings as defined in the <code>config.properties</code> file.
+   * Some of them are computed from the properties in the file <code>config.properties</code>.
+   * Tasks can overwrite some of the settings as well as add their own properties.
    */
-  final ConfigurableFileCollection tiersBundles
-
-  /**
-   * Is in development mode ? (In this case, some peculiar configuration are applied to support the
-   * dev mode in the application server.) This is a property and hence can be set by the user input
-   * from the build script.
-   */
-  final Property<Boolean> developmentMode
+  final Map settings = [:]
 
   /**
    * Constructs a new silverpeas configuration extension. It checks the environment variables
@@ -148,24 +116,17 @@ class SilverpeasSetupExtension {
       println 'The path referred by SILVERPEAS_HOME or by JBOSS_HOME doesn\'t exist or isn\'t a directory!'
       throw new IllegalStateException()
     }
-    migrationHome = project.file("${silverpeasHome.path}/migrations")
-    deploymentDir = project.file("${silverpeasHome.path}/deployments")
-    distDir = project.objects.property(File)
-    distDir.set(new File(project.buildDir, "dist"))
     config  = project.objects.newInstance(SilverpeasConfigurationProperties, project, silverpeasHome)
+    installation = project.objects.newInstance(SilverpeasInstallationProperties, project, silverpeasHome)
+    migration = project.objects.newInstance(SilverpeasMigrationProperties, project, silverpeasHome)
     logging = project.objects.newInstance(SilverpeasLoggingProperties)
-    silverpeasBundles = project.files()
-    tiersBundles = project.files();
-    developmentMode = project.objects.property(Boolean)
-    developmentMode.set(false)
+    timeout = project.objects.property(Long)
+    timeout.set(300000l)
+    JBossServer.DEFAULT_TIMEOUT = timeout.get()
   }
 
-  void setSilverpeasBundles(FileCollection bundles) {
-    this.silverpeasBundles.setFrom(bundles)
-  }
-
-  void setTiersBundles(FileCollection bundles) {
-    this.tiersBundles.setFrom(bundles)
+  void setSettings(final Map configProperties) {
+    this.settings.putAll(configProperties)
   }
 
   void logging(Action<? extends SilverpeasLoggingProperties> action) {
@@ -174,5 +135,13 @@ class SilverpeasSetupExtension {
 
   void config(Action<? extends SilverpeasConfigurationProperties> action) {
     action.execute(config)
+  }
+
+  void installation(Action<? extends SilverpeasInstallationProperties> action) {
+    action.execute(installation)
+  }
+
+  void migration(Action<? extends SilverpeasMigrationProperties> action) {
+    action.execute(migration)
   }
 }

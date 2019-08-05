@@ -23,21 +23,23 @@
  */
 package org.silverpeas.setup.configuration
 
-import org.gradle.api.DefaultTask
+
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
+import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Files
 import java.nio.file.Paths
+
 /**
  * This task aims to configure Silverpeas from the Silverpeas configuration file, from some XML
  * configuration rules and from Groovy scripts.
  * @author mmoquillon
  */
-class SilverpeasConfigurationTask extends DefaultTask {
+class SilverpeasConfigurationTask extends SilverpeasSetupTask {
 
   File silverpeasHome
   SilverpeasConfigurationProperties config
@@ -58,7 +60,7 @@ class SilverpeasConfigurationTask extends DefaultTask {
 
   @TaskAction
   void configureSilverpeas() {
-    config.silverpeasConfigurationDir.listFiles(new FileFilter() {
+    config.silverpeasConfigurationDir.get().listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
         return child.isFile()
@@ -70,7 +72,7 @@ class SilverpeasConfigurationTask extends DefaultTask {
         Script script = ConfigurationScriptBuilder.fromScript(configurationFile.path).build()
         script
             .useLogger(log)
-            .useSettings(config.settings)
+            .useSettings(settings)
             .run()
       } catch (Exception ex) {
         log.error("Error while processing the configuration file ${configurationFile.path}", ex)

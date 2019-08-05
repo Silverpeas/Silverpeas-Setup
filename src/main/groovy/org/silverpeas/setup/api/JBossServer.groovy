@@ -43,6 +43,8 @@ import java.util.regex.Matcher
  */
 class JBossServer {
 
+  static long DEFAULT_TIMEOUT = 120000
+
   private String cli
 
   private String starter
@@ -51,7 +53,7 @@ class JBossServer {
 
   private File redirection = null
 
-  private long timeout = 120000
+  private long timeout = DEFAULT_TIMEOUT
 
   private FileLogger logger = FileLogger.getLogger(getClass().getSimpleName(), System.out)
 
@@ -165,7 +167,7 @@ class JBossServer {
    * @return itself.
    */
   JBossServer withStartingTimeout(long timeout) {
-    if (this.timeout!= null && this.timeout > 0) {
+    if (this.timeout != null && this.timeout > 0) {
       this.timeout = timeout
     }
     return this
