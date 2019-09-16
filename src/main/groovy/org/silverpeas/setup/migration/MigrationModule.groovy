@@ -26,7 +26,6 @@ package org.silverpeas.setup.migration
 import com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
-import org.gradle.api.Project
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
@@ -53,9 +52,8 @@ class MigrationModule {
   private String module
   private Integer order
   private List<DatasourceMigration> migrations = []
-  def status
+  Map<String, String> status
   Map settings
-  Project project
   FileLogger logger
 
   /**
@@ -119,8 +117,8 @@ class MigrationModule {
     logger.info "Load migration descriptor ${descriptor.name}"
     validateDescriptor(descriptor)
     def migrationDescriptor = new XmlSlurper().parse(descriptor)
-    module = migrationDescriptor.@module.text()
-    order = migrationDescriptor.@order?.text() ? migrationDescriptor.@order.text() as int : UNORDERED
+    this.module =  migrationDescriptor.@module.text()
+    this.order = migrationDescriptor.@order?.text() ? migrationDescriptor.@order.text() as int : UNORDERED
     String actualVersion = status[module]
     String toVersion = migrationDescriptor.current.@version.text()
     if (actualVersion) {

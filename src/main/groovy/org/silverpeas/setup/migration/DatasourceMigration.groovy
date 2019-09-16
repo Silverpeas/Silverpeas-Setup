@@ -111,7 +111,7 @@ class DatasourceMigration {
   }
 
   private void performUpgrade(Sql sql, Map settings) throws Exception {
-    logger.info "  Upgrade of the module ${module} to version ${toVersion}"
+    logger.info "  Upgrade of the module ${module} from version ${fromVersion} to version ${toVersion}"
     String status = 'OK'
     try {
       sql.withTransaction {

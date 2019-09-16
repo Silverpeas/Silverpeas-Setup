@@ -70,8 +70,8 @@ class SilverpeasMigrationTask extends DefaultTask {
 
   @TaskAction
   void performMigration() {
-    initMigrationTask()
-    loadMigrationModules().each { module ->
+    Map<String, String> modulesStatus = initMigrationTask()
+    loadMigrationModules(modulesStatus).each { module ->
       try {
         module.migrate()
       } catch (Exception ex) {
@@ -82,13 +82,13 @@ class SilverpeasMigrationTask extends DefaultTask {
   }
 
   /**
-   * Initializes the migration task first by loading the settings of the migration process, then by
-   * performing any migration of these settings if it is required.
-   * </p>
-   * The migration settings are also persisted in a data source and they could be subject to a
-   * migration before doing anything.
+   * Initializes the migration task first by loading the actual status of each modules in Silverpeas
+   * and then by migrating, if needed, the migration process module itself (the status of this
+   * module is also persisted into the Silverpeas data source).
+   * @return the status of each module in a dictionary; in each entry, the key is the name of the
+   * module and the value the actual version of the module.
    */
-  private void initMigrationTask() {
+  private Map<String, String> initMigrationTask() {
     log.info 'Migration initialization...'
     def status = loadInstalledModuleStatus()
     Path descriptor = Paths.get(migrationHome.path, 'modules', MIGRATION_SETTING_MODULE)
@@ -99,14 +99,18 @@ class SilverpeasMigrationTask extends DefaultTask {
         .loadMigrationsFrom(descriptor.toFile())
     module.migrate()
     log.info 'Migration initialization done'
+    return status
   }
 
   /**
-   * Loads all the available migration modules in Silverpeas.
+   * Loads all of the available migration modules in Silverpeas from their descriptor and the
+   * specified status. The descriptor of each module is an XML file located in a predefined
+   * folder of the Silverpeas distribution home directory.
+   * @param status the status of all the modules from which each module will know what migration
+   * it has to do.
    * @return a list of the available migration modules.
    */
-  private List<MigrationModule> loadMigrationModules() {
-    def status = loadInstalledModuleStatus()
+  private List<MigrationModule> loadMigrationModules(Map<String, String> status) {
     List<MigrationModule> modules = []
     new File(migrationHome, 'modules').listFiles().each { descriptor ->
       if (descriptor.name != MIGRATION_SETTING_MODULE) {
@@ -123,10 +127,17 @@ class SilverpeasMigrationTask extends DefaultTask {
     }
   }
 
-  private def loadInstalledModuleStatus() {
+  /**
+   * Loads from the Silverpeas data source the status of all of the currently installed modules.
+   * If it is a fresh installation, then the returned status will be empty as there will be no
+   * modules yet installed.
+   * @return the status of all of the modules actually installed. It is a dictionary with, for each
+   * entry, the name of the module as the key and the actual version of that module as value.
+   */
+  private Map<String, String> loadInstalledModuleStatus() {
     def level = logging.level
     logging.captureStandardOutput(LogLevel.ERROR)
-    def status = [:]
+    Map<String, String> status = [:]
     DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider.class)
     Sql sql = new Sql(dataSourceProvider.dataSource)
     try {
