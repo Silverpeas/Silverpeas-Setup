@@ -44,7 +44,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
     Script script = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/db/h2/toto/002/create_table.sql")
+        .fromScript("${context.migrationHome}/db/h2/toto/002/create_table.sql")
         .ofType(sql)
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
@@ -64,7 +64,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
 
     Script script = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/db/h2/toto/up002/update.sql")
+        .fromScript("${context.migrationHome}/db/h2/toto/up002/update.sql")
         .ofType(sql)
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
@@ -86,7 +86,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     Script script = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
+        .fromScript("${context.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
@@ -109,11 +109,11 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert numberOfItems(databaseSetUp.sql, 'Person') == 0
 
     Script sqlScript = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/db/h2/toto/up003/create_table.sql")
+        .fromScript("${context.migrationHome}/db/h2/toto/up003/create_table.sql")
         .ofType(sql)
         .build()
     Script groovyScript = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/scripts/toto/up003/update.groovy")
+        .fromScript("${context.migrationHome}/scripts/toto/up003/update.groovy")
         .ofType(groovy)
         .build()
     DatasourceMigration migration = DatasourceMigration.builder()
@@ -134,7 +134,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'foo') == null
 
     Script script = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/db//h2/foo/002/create_table.sql")
+        .fromScript("${context.migrationHome}/db//h2/foo/002/create_table.sql")
         .ofType(sql)
         .build()
 
@@ -157,7 +157,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'foo') == '003'
 
     Script script = MigrationScriptBuilder
-        .fromScript("${testSetUp.migrationHome}/scripts/foo/up002/update.groovy")
+        .fromScript("${context.migrationHome}/scripts/foo/up002/update.groovy")
         .ofType(groovy)
         .build()
 

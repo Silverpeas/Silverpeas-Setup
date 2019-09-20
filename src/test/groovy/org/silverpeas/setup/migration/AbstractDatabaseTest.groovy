@@ -27,7 +27,7 @@ import groovy.sql.Sql
 import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.test.DatabaseSetUp
-import org.silverpeas.setup.test.TestSetUp
+import org.silverpeas.setup.test.TestContext
 /**
  * The common class for all test cases about a database migration.
  * @author mmoquillon
@@ -35,7 +35,7 @@ import org.silverpeas.setup.test.TestSetUp
 abstract class AbstractDatabaseTest extends GroovyTestCase {
 
   protected DatabaseSetUp databaseSetUp
-  protected TestSetUp testSetUp
+  protected TestContext context
 
   DatabaseSetUp initDatabaseSetUp() {
     return DatabaseSetUp.setUp(withDatasource: true).createSrPackagesTable()
@@ -44,7 +44,7 @@ abstract class AbstractDatabaseTest extends GroovyTestCase {
   @Override
   void setUp() {
     super.setUp()
-    testSetUp = TestSetUp.setUp()
+    context = TestContext.create()
     databaseSetUp = initDatabaseSetUp()
     ManagedBeanContainer.registry().register(new SilverpeasSetupService([:]))
   }
@@ -57,7 +57,7 @@ abstract class AbstractDatabaseTest extends GroovyTestCase {
 
   def prepareInitialData(String module, String version) {
     databaseSetUp.prepare { Sql sql ->
-      sql.executeScript("${testSetUp.migrationHome}/db/h2/${module}/${version}/create_table.sql")
+      sql.executeScript("${context.migrationHome}/db/h2/${module}/${version}/create_table.sql")
       sql.executeUpdate("INSERT INTO sr_packages (sr_package, sr_version) VALUES (:module, :version)",
           [module: module, version: version])
     }

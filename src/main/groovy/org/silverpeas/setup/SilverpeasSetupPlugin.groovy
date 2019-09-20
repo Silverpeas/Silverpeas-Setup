@@ -65,6 +65,10 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     def extension = project.extensions.create(EXTENSION, SilverpeasSetupExtension, project)
     initSilverpeasSetupExtention(extension)
 
+    project.gradle.buildFinished {
+      extension.config.context.save()
+    }
+
     SilverpeasSetupService setupService = new SilverpeasSetupService(extension.config.settings)
     ManagedBeanContainer.registry()
         .register(new DataSourceProvider(extension.config.settings))
@@ -118,7 +122,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     Task migration = project.tasks.create(MIGRATE.name, SilverpeasMigrationTask) {
       it.migrationHome = extension.migrationHome
       it.config        = extension.config
-    }.dependsOn(configuration)
+    }.dependsOn(construction)
 
     project.tasks.create(INSTALL.name, SilverpeasInstallationTask) {
       it.deploymentDir   = extension.deploymentDir

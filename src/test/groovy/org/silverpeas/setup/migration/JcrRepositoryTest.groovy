@@ -2,13 +2,11 @@ package org.silverpeas.setup.migration
 
 import org.silverpeas.setup.api.JcrRepositoryFactory
 import org.silverpeas.setup.test.DatabaseSetUp
-import org.silverpeas.setup.test.TestSetUp
+import org.silverpeas.setup.test.TestContext
 
 import javax.jcr.Repository
 import javax.jcr.Session
 import javax.jcr.SimpleCredentials
-import javax.naming.InitialContext
-import javax.naming.NameNotFoundException
 
 /**
  * Test case on the JCR repository fetching.
@@ -17,18 +15,23 @@ import javax.naming.NameNotFoundException
 class JcrRepositoryTest extends GroovyTestCase {
 
   private DatabaseSetUp databaseSetUp
-  private TestSetUp testSetUp
+  private TestContext context
 
   @Override
   void setUp() {
     super.setUp()
-    testSetUp = TestSetUp.setUp()
+    context = TestContext.create()
     databaseSetUp = DatabaseSetUp.setUp(withDatasource: true)
+  }
+
+  @Override
+  void tearDown() {
+    databaseSetUp.dropAll()
   }
 
   void testRepositoryAccess() {
     Repository repository =
-        JcrRepositoryFactory.instance.createRepository([SILVERPEAS_HOME: testSetUp.resourcesDir])
+        JcrRepositoryFactory.instance.createRepository([SILVERPEAS_HOME: context.resourcesDir])
     assert repository != null
 
     Session session = repository.login(new SimpleCredentials("admin", "admin".toCharArray()))
