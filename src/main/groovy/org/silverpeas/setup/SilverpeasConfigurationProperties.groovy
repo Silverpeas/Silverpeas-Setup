@@ -63,12 +63,6 @@ class SilverpeasConfigurationProperties {
   final Property<File> jbossModulesDir
 
   /**
-   * The Silverpeas settings as defined in the <code>config.properties</code> file.
-   * Some of them are computed from the properties in the file <code>config.properties</code>.
-   */
-  final Map settings = [:]
-
-  /**
    * Context of a configuration process of Silverpeas: it is a set of context properties left to the
    * discretion of the different steps executed in the configuration. The context is serialized so
    * that it can be retrieved in the next configuration process by the different steps so that they
@@ -90,17 +84,11 @@ class SilverpeasConfigurationProperties {
     jbossModulesDir = project.objects.property(File)
     jbossModulesDir.set(new File(jbossConfigurationDir.get(), 'modules'))
 
-    context = new Context(configurationHome.get(), settings)
-  }
-
-  void setSettings(final Map configProperties) {
-    this.settings.putAll(configProperties)
+    context = new Context(configurationHome.get())
   }
 
   /**
-   * Context of a configuration process. It sets in the settings variable (that is shared by all
-   * the steps implied within a configuration of Silverpeas) the peculiar <code>context</code>
-   * attribute that is a dictionary of all the context properties the steps can set for their usage.
+   * Context of a configuration process.
    */
   static class Context {
     final private File file
@@ -109,18 +97,19 @@ class SilverpeasConfigurationProperties {
     /**
      * Constructs a new configuration context.
      * @param storageDir the directory into which the context will be saved.
-     * @param settings the dictionary to use to store the context properties. A peculiar
-     * <code>context</code> key will be put with as values a Map object.
      */
-    private Context(File storageDir, final Map settings) {
+    private Context(File storageDir) {
       file = new File(storageDir, '.context')
-      settings.context = props
       if (Files.exists(file.toPath())) {
         file.text.eachLine { line ->
           String[] keyValue = line.trim().split(':')
           props[keyValue[0].trim()] = keyValue[1].trim()
         }
       }
+    }
+
+    Map properties() {
+      return props
     }
 
     void save() {

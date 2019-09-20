@@ -43,7 +43,7 @@ import java.util.regex.Matcher
  */
 class JBossServer {
 
-  static long DEFAULT_TIMEOUT = 120000
+  static long DEFAULT_TIMEOUT = 300000l
 
   private String cli
 

@@ -99,7 +99,10 @@ class SilverpeasSetupExtension {
 
   /**
    * Constructs a new silverpeas configuration extension. It checks the environment variables
-   * SILVERPEAS_HOME and JBOSS_HOME are correctly set.
+   * SILVERPEAS_HOME and JBOSS_HOME are correctly set and it sets in the settings variable
+   * (that is shared by all the steps implied within a configuration of Silverpeas) the peculiar
+   * <code>context</code> attribute that is a dictionary of all the context properties the steps
+   * in a configuration process can set for their usage.
    */
   SilverpeasSetupExtension(Project project) {
     String silverpeasHomePath = SystemWrapper.getenv('SILVERPEAS_HOME')
@@ -121,8 +124,8 @@ class SilverpeasSetupExtension {
     migration = project.objects.newInstance(SilverpeasMigrationProperties, project, silverpeasHome)
     logging = project.objects.newInstance(SilverpeasLoggingProperties)
     timeout = project.objects.property(Long)
-    timeout.set(300000l)
-    JBossServer.DEFAULT_TIMEOUT = timeout.get()
+    timeout.set(JBossServer.DEFAULT_TIMEOUT)
+    settings.context = config.context.properties()
   }
 
   void setSettings(final Map configProperties) {
