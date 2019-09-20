@@ -292,7 +292,7 @@ class SilverpeasBuilder {
     final File dataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_HOME))
     final File webDataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_WEB))
 
-    if (webDataDestinationDir.path != silverpeasWebDataHome.path) {
+    if (webDataDestinationDir != silverpeasWebDataHome) {
       logger.info "Move content of ${silverpeasWebDataHome.path} into ${webDataDestinationDir.path}"
       if (!webDataDestinationDir.exists()) {
         webDataDestinationDir.mkdirs()
@@ -303,7 +303,7 @@ class SilverpeasBuilder {
         }
       }
     }
-    if (dataDestinationDir.path != silverpeasDataHome.path) {
+    if (dataDestinationDir != silverpeasDataHome) {
       logger.info "Move content of ${silverpeasDataHome.path} into ${dataDestinationDir.path}"
       if (!dataDestinationDir.exists()) {
         dataDestinationDir.mkdirs()
