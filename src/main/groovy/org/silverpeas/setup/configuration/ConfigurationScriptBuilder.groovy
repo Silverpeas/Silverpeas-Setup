@@ -75,7 +75,7 @@ class ConfigurationScriptBuilder {
     switch(type.toLowerCase()) {
       case 'cli':
         if (cliScript) {
-          cliScript.toFile() << new File(scriptPath).text
+          cliScript.toFile() << new File(scriptPath).text + '\n'
           script = cliScript
         } else {
           script = new JBossCliScript(scriptPath)

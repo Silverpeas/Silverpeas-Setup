@@ -146,6 +146,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
             (driver.name.startsWith('ojdbc') && settings.DB_SERVERTYPE == 'ORACLE')) {
           settings.DB_DRIVER_NAME = driver.name
           try {
+            server.remove(settings.DB_DRIVER_NAME)
             server.add(Paths.get(driversDir.path, settings.DB_DRIVER_NAME).toString())
             server.deploy(settings.DB_DRIVER_NAME)
           } catch (Exception ex) {

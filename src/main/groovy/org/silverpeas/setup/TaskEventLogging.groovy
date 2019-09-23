@@ -68,15 +68,16 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
         buildStarted = true
         SilverpeasSetupExtension silverSetup =
             (SilverpeasSetupExtension) task.project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
+        String javaHome = System.getenv('JAVA_HOME')
         FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
             "SILVERPEAS SETUP: ${task.project.version}",
             "SILVERPEAS HOME:  ${silverSetup.silverpeasHome.path}",
             "JBOSS HOME:       ${silverSetup.jbossHome.path}",
             "JCR HOME:         ${silverSetup.settings.JCR_HOME.asPath().toString()}",
-            "JAVA HOME:        ${System.getenv('JAVA_HOME')}",
+            "JAVA HOME:        ${javaHome != null ? javaHome : 'not set'}",
             "DATABASE:         ${silverSetup.settings.DB_SERVERTYPE.toLowerCase()}",
             "OPERATING SYSTEM: ${System.getProperty('os.name')}",
-            "PRODUCTION MODE:  ${!silverSetup.installation.developmentMode}")
+            "PRODUCTION MODE:  ${!silverSetup.installation.developmentMode.get()}")
       }
       FileLogger log = FileLogger.getLogger(task.name)
       String taskTitle = unformat(task.name)

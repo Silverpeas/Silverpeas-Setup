@@ -175,7 +175,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       build.outputs.upToDateWhen {
         boolean ok = extension.installation.distDir.get().exists() &&
             Files.exists(Paths.get(extension.installation.distDir.get().path, 'WEB-INF', 'web.xml'))
-        if (!extension.installation.developmentMode) {
+        if (!extension.installation.developmentMode.get()) {
           ok = ok && Files.exists(
               Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))
         }

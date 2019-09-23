@@ -81,13 +81,14 @@ class JBossServer {
   }
 
   private void assertCommandSucceeds(command) throws AssertionError, InvalidObjectException {
-    String message = command.in.text
-    if (command.exitValue() != 0 || message.contains('"outcome" => "failed"')) {
-      String error = command.err.text
-      if (!error) {
-        throw new InvalidObjectException(message)
+    String result = command.in.text
+    if (command.exitValue() != 0 || result.contains('"outcome" => "failed"')) {
+      boolean rollBacked = result.contains('"rolled-back" => true')
+      String msg = "Execution Output: \n${result}"
+      if (!rollBacked) {
+        throw new InvalidObjectException(msg)
       }
-      throw new AssertionError(error)
+      throw new AssertionError(msg)
     }
   }
 
@@ -503,6 +504,7 @@ class JBossServer {
       logger.warn "Invalid resource. ${e.message}"
     } catch (AssertionError | Exception e) {
       logger.info "${commandsFile.name} processing: [FAILURE]"
+      logger.error e.message
       throw e
     }
   }
