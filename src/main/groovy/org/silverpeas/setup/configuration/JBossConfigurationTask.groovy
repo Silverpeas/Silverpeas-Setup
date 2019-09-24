@@ -23,7 +23,7 @@
  */
 package org.silverpeas.setup.configuration
 
-import org.gradle.api.DefaultTask
+
 import org.gradle.api.Project
 import org.gradle.api.ProjectState
 import org.gradle.api.provider.Property
@@ -33,17 +33,17 @@ import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.api.Script
+import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.regex.Matcher
-
 /**
  * A Gradle task to configure a JBoss/Wildfly instance from some CLI scripts to be ready to run
  * Silverpeas.
  * @author mmoquillon
  */
-class JBossConfigurationTask extends DefaultTask {
+class JBossConfigurationTask extends SilverpeasSetupTask {
 
   File driversDir
   SilverpeasConfigurationProperties config
@@ -98,11 +98,11 @@ class JBossConfigurationTask extends DefaultTask {
     }).each { conf ->
       String jvmOpts; def regexp
       if (conf.name.endsWith('.bat')) {
-        jvmOpts = "set \"JAVA_OPTS=-Xmx${config.settings.JVM_RAM_MAX} ${config.settings.JVM_OPTS}"
+        jvmOpts = "set \"JAVA_OPTS=-Xmx${settings.JVM_RAM_MAX} ${settings.JVM_OPTS}"
         regexp = /\s*set\s+"JAVA_OPTS=-Xm.+/
       } else {
         jvmOpts =
-            "JAVA_OPTS=\"-Xmx${config.settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${config.settings.JVM_OPTS}"
+            "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}"
         regexp = /\s*JAVA_OPTS="-Xm.+/
       }
       jvmOpts += '"'
@@ -127,29 +127,30 @@ class JBossConfigurationTask extends DefaultTask {
   private void installAdditionalModules() {
     log.info 'Additional modules installation'
     project.copy {
-      it.from config.jbossModulesDir.toPath()
+      it.from config.jbossModulesDir.get().toPath()
       it.into Paths.get(jboss.get().jbossHome, 'modules')
     }
   }
 
   private void setUpJDBCDriver() throws Exception {
-    log.info "Install database driver for ${config.settings.DB_SERVERTYPE}"
+    log.info "Install database driver for ${settings.DB_SERVERTYPE}"
     JBossServer server = jboss.get()
-    if (config.settings.DB_SERVERTYPE == 'H2') {
+    if (settings.DB_SERVERTYPE == 'H2') {
       // H2 is already available by default in JBoss/Wildfly
-      config.settings.DB_DRIVER_NAME = 'h2'
+      settings.DB_DRIVER_NAME = 'h2'
     } else {
       // install the required driver other than H2
       driversDir.listFiles().each { driver ->
-        if ((driver.name.startsWith('postgresql') && config.settings.DB_SERVERTYPE == 'POSTGRESQL') ||
-            (driver.name.startsWith('jtds') && config.settings.DB_SERVERTYPE == 'MSSQL') ||
-            (driver.name.startsWith('ojdbc') && config.settings.DB_SERVERTYPE == 'ORACLE')) {
-          config.settings.DB_DRIVER_NAME = driver.name
+        if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
+            (driver.name.startsWith('jtds') && settings.DB_SERVERTYPE == 'MSSQL') ||
+            (driver.name.startsWith('ojdbc') && settings.DB_SERVERTYPE == 'ORACLE')) {
+          settings.DB_DRIVER_NAME = driver.name
           try {
-            server.add(Paths.get(driversDir.path, config.settings.DB_DRIVER_NAME).toString())
-            server.deploy(config.settings.DB_DRIVER_NAME)
+            server.remove(settings.DB_DRIVER_NAME)
+            server.add(Paths.get(driversDir.path, settings.DB_DRIVER_NAME).toString())
+            server.deploy(settings.DB_DRIVER_NAME)
           } catch (Exception ex) {
-            log.error("Error: cannot deploy ${config.settings.DB_DRIVER_NAME}", ex)
+            log.error("Error: cannot deploy ${settings.DB_DRIVER_NAME}", ex)
             throw ex
           }
         }
@@ -162,7 +163,7 @@ class JBossConfigurationTask extends DefaultTask {
         Files.createTempFile('jboss-configuration-', '.cli').toString())
     log.info "CLI configuration scripts will be merged into ${cliScript.toFile().name}"
     Set<Script> scripts = new HashSet<>()
-    config.jbossConfigurationDir.listFiles(new FileFilter() {
+    config.jbossConfigurationDir.get().listFiles(new FileFilter() {
       @Override
       boolean accept(final File child) {
         return child.isFile()
@@ -177,7 +178,7 @@ class JBossConfigurationTask extends DefaultTask {
       scripts.each { aScript ->
         aScript
             .useLogger(log)
-            .useSettings(config.settings)
+            .useSettings(settings)
             .run(jboss: jboss.get())
       }
     } catch(Exception ex) {

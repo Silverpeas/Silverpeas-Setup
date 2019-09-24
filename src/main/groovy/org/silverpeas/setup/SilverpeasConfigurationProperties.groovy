@@ -24,6 +24,7 @@
 package org.silverpeas.setup
 
 import org.gradle.api.Project
+import org.gradle.api.provider.Property
 
 import javax.inject.Inject
 import java.nio.file.Files
@@ -38,41 +39,28 @@ class SilverpeasConfigurationProperties {
 
   /**
    * The home configuration directory of Silverpeas. It should contain both the global
-   * configuration properties, the Silverpeas and the JBoss configuration directory. It is expected
-   * to contain two subdirectories:
-   * <ul>
-   *   <li><code>jboss</code> with the scripts to configure JBoss/Wildfly for Silverpeas;</li>
-   *   <li><code>silverpeas</code> with the scripts to configure Silverpeas itself.</li>
-   * </ul>
-   * By default, the configuration home directory is expected to be
-   * <code>SILVERPEAS_HOME/configuration</code> where <code>SILVERPEAS_HOME</code> is the
-   * Silverpeas installation directory.
+   * configuration properties, the Silverpeas and the JBoss configuration directory. By default
+   * SILVERPEAS_HOME/configuration.
    */
-  File configurationHome
+  final Property<File> configurationHome
 
   /**
    * The directory that contains all the configuration scripts to configure JBoss/Wildfly for
-   * Silverpeas.
+   * Silverpeas. By default SILVERPEAS_HOME/configuration/jboss.
    */
-  final File jbossConfigurationDir
+  final Property<File> jbossConfigurationDir
 
   /**
    * The directory that contains all the configuration scripts to configure specifically the
-   * Silverpeas web portal and components.
+   * Silverpeas web portal and components. By default SILVERPEAS_HOME/configuration/silverpeas.
    */
-  final File silverpeasConfigurationDir
+  final Property<File> silverpeasConfigurationDir
 
   /**
    * The directory that contains the additional JBoss/Wildfly modules to install in JBoss/Wildfy
-   * for Silverpeas
+   * for Silverpeas. By default SILVERPEAS_HOME/configuration/jboss/modules.
    */
-  final File jbossModulesDir
-
-  /**
-   * The Silverpeas settings as defined in the <code>config.properties</code> file.
-   * Some of them are computed from the properties in the file <code>config.properties</code>.
-   */
-  final Map settings = [:]
+  final Property<File> jbossModulesDir
 
   /**
    * Context of a configuration process of Silverpeas: it is a set of context properties left to the
@@ -84,21 +72,23 @@ class SilverpeasConfigurationProperties {
 
   @Inject
   SilverpeasConfigurationProperties(Project project, File silverpeasHome) {
-    configurationHome = project.file("${silverpeasHome.path}/configuration")
-    jbossConfigurationDir = project.file("${silverpeasHome.path}/configuration/jboss")
-    silverpeasConfigurationDir = project.file("${silverpeasHome.path}/configuration/silverpeas")
-    jbossModulesDir = project.file("${jbossConfigurationDir.path}/modules")
-    context = new Context(configurationHome, settings)
-  }
+    configurationHome = project.objects.property(File)
+    configurationHome.set(new File(silverpeasHome, 'configuration'))
 
-  void setSettings(final Map configProperties) {
-    this.settings.putAll(configProperties)
+    jbossConfigurationDir = project.objects.property(File)
+    jbossConfigurationDir.set(new File(configurationHome.get(), 'jboss'))
+
+    silverpeasConfigurationDir = project.objects.property(File)
+    silverpeasConfigurationDir.set(new File(configurationHome.get(), 'silverpeas'))
+
+    jbossModulesDir = project.objects.property(File)
+    jbossModulesDir.set(new File(jbossConfigurationDir.get(), 'modules'))
+
+    context = new Context(configurationHome.get())
   }
 
   /**
-   * Context of a configuration process. It sets in the settings variable (that is shared by all
-   * the steps implied within a configuration of Silverpeas) the peculiar <code>context</code>
-   * attribute that is a dictionary of all the context properties the steps can set for their usage.
+   * Context of a configuration process.
    */
   static class Context {
     final private File file
@@ -107,18 +97,19 @@ class SilverpeasConfigurationProperties {
     /**
      * Constructs a new configuration context.
      * @param storageDir the directory into which the context will be saved.
-     * @param settings the dictionary to use to store the context properties. A peculiar
-     * <code>context</code> key will be put with as values a Map object.
      */
-    private Context(File storageDir, final Map settings) {
+    private Context(File storageDir) {
       file = new File(storageDir, '.context')
-      settings.context = props
       if (Files.exists(file.toPath())) {
         file.text.eachLine { line ->
           String[] keyValue = line.trim().split(':')
           props[keyValue[0].trim()] = keyValue[1].trim()
         }
       }
+    }
+
+    Map properties() {
+      return props
     }
 
     void save() {

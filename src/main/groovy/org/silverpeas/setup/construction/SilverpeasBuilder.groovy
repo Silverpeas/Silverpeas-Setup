@@ -27,6 +27,7 @@ import groovy.util.slurpersupport.GPathResult
 import groovy.xml.XmlUtil
 import org.gradle.api.Project
 import org.gradle.util.GFileUtils
+import org.silverpeas.setup.SoftwareBundles
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.SilverpeasSetupService
@@ -66,16 +67,16 @@ class SilverpeasBuilder {
    * Extracts all the specified software bundles into the specified destination directory. The
    * way the bundles are extracted follows the guide rules of the Silverpeas Portal Application
    * construction.
-   * @param silverpeasBundles a collection of the software bundles that makes Silverpeas.
-   * @param tiersBundles a collection of tiers bundles to add to Silverpeas. This bundles are
-   * processed differently than the Silverpeas ones.
+   * @param bundles collections of software bundles that makes Silverpeas.
    * @param destinationDir the destination directory into which the bundles will be extracted
    */
   void extractSoftwareBundles(
-      final Collection<File> silverpeasBundles,
-      final Collection<File> tiersBundles, final File destinationDir) {
+      final SoftwareBundles bundles,
+      final File destinationDir) {
     Objects.requireNonNull(silverpeasHome)
     Objects.requireNonNull(driversDir)
+    final Collection<File> silverpeasBundles = bundles.silverpeas.files
+    final Collection<File> tiersBundles = bundles.tiers.files
     def isAWar = { File f ->
       f.name.endsWith('.war') && !f.name.startsWith(CORE_WAR_BUNDLE_ID)
     }

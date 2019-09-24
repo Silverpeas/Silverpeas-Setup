@@ -43,6 +43,8 @@ import java.util.regex.Matcher
  */
 class JBossServer {
 
+  static long DEFAULT_TIMEOUT = 300000l
+
   private String cli
 
   private String starter
@@ -51,7 +53,7 @@ class JBossServer {
 
   private File redirection = null
 
-  private long timeout = 120000
+  private long timeout = DEFAULT_TIMEOUT
 
   private FileLogger logger = FileLogger.getLogger(getClass().getSimpleName(), System.out)
 
@@ -79,13 +81,14 @@ class JBossServer {
   }
 
   private void assertCommandSucceeds(command) throws AssertionError, InvalidObjectException {
-    String message = command.in.text
-    if (command.exitValue() != 0 || message.contains('"outcome" => "failed"')) {
-      String error = command.err.text
-      if (!error) {
-        throw new InvalidObjectException(message)
+    String result = command.in.text
+    if (command.exitValue() != 0 || result.contains('"outcome" => "failed"')) {
+      boolean rollBacked = result.contains('"rolled-back" => true')
+      String msg = "Execution Output: \n${result}"
+      if (!rollBacked) {
+        throw new InvalidObjectException(msg)
       }
-      throw new AssertionError(error)
+      throw new AssertionError(msg)
     }
   }
 
@@ -165,7 +168,7 @@ class JBossServer {
    * @return itself.
    */
   JBossServer withStartingTimeout(long timeout) {
-    if (this.timeout!= null && this.timeout > 0) {
+    if (this.timeout != null && this.timeout > 0) {
       this.timeout = timeout
     }
     return this
@@ -501,6 +504,7 @@ class JBossServer {
       logger.warn "Invalid resource. ${e.message}"
     } catch (AssertionError | Exception e) {
       logger.info "${commandsFile.name} processing: [FAILURE]"
+      logger.error e.message
       throw e
     }
   }

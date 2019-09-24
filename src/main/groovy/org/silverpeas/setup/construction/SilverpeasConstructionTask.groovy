@@ -23,12 +23,11 @@
  */
 package org.silverpeas.setup.construction
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.FileCollection
-import org.gradle.api.provider.Property
+
 import org.gradle.api.tasks.TaskAction
+import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -38,17 +37,12 @@ import java.nio.file.Paths
  * Silverpeas. It gathers both the assembling and the build tasks.
  * @author mmoquillon
  */
-class SilverpeasConstructionTask extends DefaultTask {
+class SilverpeasConstructionTask extends SilverpeasSetupTask {
 
   public static final String SILVERPEAS_WAR = 'silverpeas.war'
 
   File silverpeasHome
-  File driversDir
-  Map settings
-  final Property<File> destinationDir = project.objects.property(File)
-  final ConfigurableFileCollection silverpeasBundles = project.files()
-  final ConfigurableFileCollection tiersBundles = project.files()
-  final Property<Boolean> developmentMode = project.objects.property(Boolean)
+  SilverpeasInstallationProperties installation
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasConstructionTask() {
@@ -63,40 +57,32 @@ class SilverpeasConstructionTask extends DefaultTask {
   }
 
   boolean precondition() {
-    !destinationDir.get().exists() && !driversDir.exists()
+    !installation.distDir.get().exists() && !installation.dsDriversDir.get().exists()
   }
 
   boolean isUpToDate() {
-    boolean ok = destinationDir.get().exists() && driversDir.exists()
-    if (!developmentMode.get()) {
+    boolean ok = installation.distDir.get().exists() && installation.dsDriversDir.get().exists()
+    if (!installation.developmentMode.get()) {
       ok = ok && Files.exists(Paths.get(project.buildDir.path, SILVERPEAS_WAR))
     }
     return ok
   }
 
-  void setSilverpeasBundles(FileCollection bundles) {
-    this.silverpeasBundles.setFrom(bundles)
-  }
-
-  void setTiersBundles(FileCollection bundles) {
-    this.tiersBundles.setFrom(bundles)
-  }
-
   @TaskAction
   void construct() {
-    if (!destinationDir.get().exists()) {
-      destinationDir.get().mkdirs()
+    if (!installation.distDir.get().exists()) {
+      installation.distDir.get().mkdirs()
     }
-    if (!driversDir.exists()) {
-      driversDir.mkdirs()
+    if (!installation.dsDriversDir.get().exists()) {
+      installation.dsDriversDir.get().mkdirs()
     }
     SilverpeasBuilder builder = new SilverpeasBuilder(project, log)
-    builder.driversDir = driversDir
+    builder.driversDir = installation.dsDriversDir.get()
     builder.silverpeasHome = silverpeasHome
-    builder.developmentMode = developmentMode.get()
+    builder.developmentMode = installation.developmentMode.get()
     builder.settings = settings
-    builder.extractSoftwareBundles(silverpeasBundles.files, tiersBundles.files, destinationDir.get())
-    builder.generateSilverpeasApplication(destinationDir.get())
+    builder.extractSoftwareBundles(installation.bundles, installation.distDir.get())
+    builder.generateSilverpeasApplication(installation.distDir.get())
   }
 
 }

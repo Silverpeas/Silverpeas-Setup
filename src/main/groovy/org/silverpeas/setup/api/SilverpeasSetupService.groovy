@@ -45,7 +45,8 @@ class SilverpeasSetupService {
   final Map settings
 
   /**
-   * Create a new Silverpeas setup service with the specified Silverpeas settings.
+   * Create a new Silverpeas setup service with the specified Silverpeas settings and configuration
+   * context.
    * @param settings a Map instance with all the global settings for the installation and
    * configuration of Silverpeas
    */

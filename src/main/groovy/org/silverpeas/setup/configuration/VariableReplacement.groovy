@@ -25,6 +25,8 @@ package org.silverpeas.setup.configuration
 
 import org.gradle.api.tasks.StopExecutionException
 
+import java.util.regex.Matcher
+
 /**
  * A replacement of any variable declarations by their value obtained from a map of key-values.
  * The environment variables and the system properties aren't taken in charge; they won't be then
@@ -35,7 +37,7 @@ import org.gradle.api.tasks.StopExecutionException
  */
 class VariableReplacement {
 
-  private static final def VARIABLE_PATTERN = /\$\{(\w+)\}/
+  private static final def VARIABLE_PATTERN = /\$\{(\w+)(:([^}]+))?\}/
 
   /**
    * Parses the values of the specified parameters and for each of them, replace any variable
@@ -57,31 +59,39 @@ class VariableReplacement {
 
   /**
    * Parses any variable declaration in the specified expression and replace them by their value
-   * from the specified variables. If a variable, present in
-   * the parameter value, isn't among the given variables, then an exception is thrown.
+   * from the specified variables. A default value can be defined in a variable declaration in the
+   * case the variable isn't found in the variables passed in the arguments of the method. A default
+   * value can be specified in a variable declaration by declaring it just after the variable name,
+   * separated with the ':' character. For example: <code>${TOTO:32}</code> declares the variable
+   * TOTO with 32 as default value and <code>${TOTO}</code> defines the variable TOTO without any
+   * default value. If a variable in the expression isn't declared among the given variables and
+   * doesn't define a default value then an exception is thrown.
    * @param expression the expression to parse.
    * @param variables a map of key-value whose the key is a variable identifier and the value the
    * variable value.
    * @return the specified expression with any variable declaration replaced by their value.
    */
   static final String parseExpression(String expression, Map variables) {
-    def matching = expression =~ VARIABLE_PATTERN
-    matching.each { token ->
+    String parsedExpression = expression
+    Matcher matching = expression =~ VARIABLE_PATTERN
+    matching.each { List<String> token ->
+      String varName = token[1]
+      String varValue = variables.containsKey(varName) ? variables[varName] : token[3]
       try {
-        if (!token[1].startsWith('env') && !token[1].startsWith('sys')) {
-          if (variables.containsKey(token[1])) {
-            expression = expression.replace(token[0], variables[token[1]])
+        if (!varName.startsWith('env') && !varName.startsWith('sys')) {
+          if (varValue != null) {
+            parsedExpression = expression.replace(token[0], varValue)
           } else {
-            println "Error: no such variable ${token[1]}"
-            throw new StopExecutionException("Error: no such variable ${token[1]}")
+            println "Error: no such variable ${varName}"
+            throw new StopExecutionException("Error: no such variable ${varName}")
           }
         }
       } catch (Exception e) {
-        println "Error: cannot replace token ${token[0]} by value of ${token[1]}: ${variables[token[1]]}"
+        println "Error: cannot replace token ${token[0]} by value of ${varName} that is ${varValue}"
         throw e
       }
     }
-    return expression
+    return parsedExpression
   }
 
 }
