@@ -80,7 +80,7 @@ class VariableReplacement {
       try {
         if (!varName.startsWith('env') && !varName.startsWith('sys')) {
           if (varValue != null) {
-            parsedExpression = expression.replace(token[0], varValue)
+            parsedExpression = parsedExpression.replace(token[0], varValue)
           } else {
             println "Error: no such variable ${varName}"
             throw new StopExecutionException("Error: no such variable ${varName}")
