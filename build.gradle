@@ -29,7 +29,7 @@ buildscript {
   }
   repositories {
     maven {
-      url 'http://www.silverpeas.org/nexus/content/groups/silverpeas'
+      url 'https://www.silverpeas.org/nexus/content/groups/silverpeas'
     }
     jcenter()
     mavenLocal()
