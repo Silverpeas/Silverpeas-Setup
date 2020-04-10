@@ -24,11 +24,9 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
-import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
-import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.SilverpeasMigrationProperties
 import org.silverpeas.setup.api.DataSourceProvider
 import org.silverpeas.setup.api.FileLogger
@@ -156,6 +154,8 @@ class SilverpeasMigrationTask extends SilverpeasSetupTask {
       }
     } catch (SQLException ex) {
       // the database isn't set up
+      log.error "Error while loading status of modules: ${ex.message}"
+      throw new TaskExecutionException(this, ex)
     }
     logging.captureStandardOutput(level)
     return status

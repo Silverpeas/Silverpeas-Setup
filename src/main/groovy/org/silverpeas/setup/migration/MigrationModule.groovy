@@ -121,6 +121,8 @@ class MigrationModule {
     this.order = migrationDescriptor.@order?.text() ? migrationDescriptor.@order.text() as int : UNORDERED
     String actualVersion = status[module]
     String toVersion = migrationDescriptor.current.@version.text()
+    logger.debug "  Module ${module}: actual version is '${actualVersion}'."
+    logger.debug "  Module ${module}: expected version is '${toVersion}'"
     if (actualVersion) {
       for (int version = (actualVersion as int); version < (toVersion as int); version++) {
         String versionIn3Digits = String.format("%03d", version)

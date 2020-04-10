@@ -131,7 +131,7 @@ class FileLogger {
    * @return itself.
    */
   FileLogger formatInfo(String format, Object... args) {
-    if (this.level <= LogLevel.INFO) {
+    if (level() <= LogLevel.INFO) {
       formatMsg(format, args)
     }
     return this
@@ -153,7 +153,7 @@ class FileLogger {
    * @return itself.
    */
   FileLogger formatDebug(String format, Object... args) {
-    if (this.level <= LogLevel.DEBUG) {
+    if (level() <= LogLevel.DEBUG) {
       formatMsg(format, args)
     }
     return this
@@ -176,7 +176,7 @@ class FileLogger {
    * @return itself.
    */
   FileLogger formatWarn(String format, Object... args) {
-    if (this.level <= LogLevel.WARN) {
+    if (level() <= LogLevel.WARN) {
       formatMsg(format, args)
     }
     return this
@@ -229,7 +229,7 @@ class FileLogger {
    * @return itself.
    */
   FileLogger formatError(String format, Object... args) {
-    if (this.level <= LogLevel.ERROR) {
+    if (level() <= LogLevel.ERROR) {
       formatMsg(format, args)
     }
     return this
