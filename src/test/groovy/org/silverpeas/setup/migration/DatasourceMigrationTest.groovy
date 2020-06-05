@@ -23,6 +23,9 @@
  */
 package org.silverpeas.setup.migration
 
+import groovy.test.GroovyAssert
+import org.junit.Before
+import org.junit.Test
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
 
@@ -40,6 +43,12 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
 
   def settings = ['SIVLERPEAS_HOME': '/home/silverpeas']
 
+  @Before
+  void prepareTest() {
+    mockSilverpeasSetupService()
+  }
+
+  @Test
   void testMigrationForAFreshInstallation() {
     assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
@@ -59,6 +68,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
   }
 
+  @Test
   void testUpgradeWithOnlySQLScripts() {
     prepareInitialData('toto', '002')
     assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
@@ -80,6 +90,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
   }
 
+  @Test
   void testUpgradeWithOnlyGroovyScripts() {
     prepareInitialData('toto', '003')
     assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
@@ -103,6 +114,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
+  @Test
   void testMigrationForAnUpgrade() {
     prepareInitialData('toto', '003')
     assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
@@ -130,6 +142,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
+  @Test
   void testAnInstallationFailure() {
     assert versionOfModule(databaseSetUp.sql, 'foo') == null
 
@@ -138,7 +151,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .ofType(sql)
         .build()
 
-    shouldFail(SQLException) {
+    GroovyAssert.shouldFail(SQLException) {
       DatasourceMigration migration = DatasourceMigration.builder()
           .module('foo')
           .toVersion('002')
@@ -152,6 +165,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'foo') == null
   }
 
+  @Test
   void testAnUpgradeFailure() {
     prepareInitialData('foo', '003')
     assert versionOfModule(databaseSetUp.sql, 'foo') == '003'
@@ -161,7 +175,7 @@ class DatasourceMigrationTest extends AbstractDatabaseTest {
         .ofType(groovy)
         .build()
 
-    shouldFail(SQLException) {
+    GroovyAssert.shouldFail(SQLException) {
       DatasourceMigration migration = DatasourceMigration.builder()
           .module('foo')
           .fromVersion('003')

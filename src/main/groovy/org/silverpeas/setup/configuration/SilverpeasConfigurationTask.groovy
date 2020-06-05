@@ -23,7 +23,9 @@
  */
 package org.silverpeas.setup.configuration
 
-
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
@@ -33,7 +35,6 @@ import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Files
 import java.nio.file.Paths
-
 /**
  * This task aims to configure Silverpeas from the Silverpeas configuration file, from some XML
  * configuration rules and from Groovy scripts.
@@ -41,8 +42,11 @@ import java.nio.file.Paths
  */
 class SilverpeasConfigurationTask extends SilverpeasSetupTask {
 
+  @InputDirectory
   File silverpeasHome
+  @Nested
   SilverpeasConfigurationProperties config
+  @Internal
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasConfigurationTask() {

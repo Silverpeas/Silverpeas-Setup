@@ -3,6 +3,9 @@ package org.silverpeas.setup
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.OutputDirectory
 
 import javax.inject.Inject
 /**
@@ -18,18 +21,21 @@ class SilverpeasInstallationProperties {
    * directory is deployed as such in the JBoss/Wildfly application server.
    * environment variable.
    */
+  @OutputDirectory
   final Property<File> distDir
 
   /**
    * Directory that have to contain all the application or resource archives to deploy into
    * JBoss/Wildfly. Defaulted in the SILVERPEAS_HOME/deployments directory.
    */
+  @OutputDirectory
   final Property<File> deploymentDir
 
   /**
    * Directory that have to contain all the drivers required by Silverpeas and the Silverpeas Setup
    * plugin to access the data source of Silverpeas.
    */
+  @OutputDirectory
   final Property<File> dsDriversDir
 
   /**
@@ -37,6 +43,7 @@ class SilverpeasInstallationProperties {
    * dev mode in the application server.) This is a property and hence can be set by the user input
    * from the build script.
    */
+  @Input
   final Property<Boolean> developmentMode
 
   /**
@@ -44,6 +51,7 @@ class SilverpeasInstallationProperties {
    * will be downloaded from our software repository server (provided by our Nexus service) and then
    * unpacked to a given directory in order to generate the final application.
    */
+  @Nested
   final SoftwareBundles bundles
 
   @Inject

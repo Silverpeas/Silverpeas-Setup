@@ -2,6 +2,7 @@ package org.silverpeas.setup
 
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.InputDirectory
 
 import javax.inject.Inject
 
@@ -29,6 +30,7 @@ class SilverpeasMigrationProperties {
    *   </li>
    * </ul>
    */
+  @InputDirectory
   final Property<File> homeDir
 
   @Inject

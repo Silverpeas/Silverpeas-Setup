@@ -3,6 +3,7 @@ package org.silverpeas.setup
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.InputFiles
 
 import javax.inject.Inject
 
@@ -20,12 +21,14 @@ class SoftwareBundles {
    * the final Silverpeas Web Application. The Jar libraries other than the supported JDBC drivers
    * aren't taken in charge.
    */
+  @InputFiles
   final ConfigurableFileCollection silverpeas
 
   /**
    * Any tiers bundles to add into the Silverpeas Application being built. The tiers bundles are
    * processed differently by the plugin: only the JAR libraries are taken in charge.
    */
+  @InputFiles
   final ConfigurableFileCollection tiers
 
   @Inject

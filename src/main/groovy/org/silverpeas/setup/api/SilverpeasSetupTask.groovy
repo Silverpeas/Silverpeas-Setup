@@ -1,6 +1,7 @@
 package org.silverpeas.setup.api
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Internal
 
 /**
  * Common definition of a task in the Silverpeas Setup plugin.
@@ -14,5 +15,6 @@ abstract class SilverpeasSetupTask extends DefaultTask {
    * additional properties in order to share information with other tasks. Usually, the settings
    * should be injected in the scripts that are executed by a task.
    */
+  @Internal
   Map settings
 }

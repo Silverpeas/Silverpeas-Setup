@@ -26,14 +26,14 @@ package org.silverpeas.setup.installation
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.ProjectState
-import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 
 import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVERPEAS_WAR
-
 /**
  * A Gradle task to install the Web archive of the Silverpeas application into the JEE application
  * server.
@@ -41,9 +41,13 @@ import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVE
  */
 class SilverpeasInstallationTask extends DefaultTask {
 
-  Property<JBossServer> jboss = project.objects.property(JBossServer)
+  @Nested
   SilverpeasInstallationProperties installation
+  @Internal
+  JBossServer jboss
+  @Internal
   Map settings
+  @Internal
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasInstallationTask() {
@@ -52,14 +56,14 @@ class SilverpeasInstallationTask extends DefaultTask {
 
     project.afterEvaluate { Project currentProject, ProjectState state ->
       if (state.executed) {
-        jboss.get().useLogger(log)
+        jboss.useLogger(log)
       }
     }
   }
 
   @TaskAction
   void install() {
-    final JBossServer server = jboss.get()
+    final JBossServer server = jboss
     final File deploymentDir = installation.deploymentDir.get()
     if (server.isStartingOrRunning()) {
       server.stop()

@@ -1,12 +1,12 @@
 package org.silverpeas.setup.migration
 
 import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
+import org.junit.Before
+import org.junit.Test
 import org.silverpeas.setup.test.DatabaseSetUp
 
 import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.MIGRATE
 import static org.silverpeas.setup.test.Assertion.versionOfModule
-
 /**
  * Test the case of the migration of the data sources performed by a dedicated Gradle task.
  * @author mmoquillon
@@ -20,15 +20,13 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
     return DatabaseSetUp.setUp(withDatasource: true)
   }
 
-  @Override
-  void setUp() {
-    super.setUp()
+  @Before
+  void prepareTest() {
     context.setUpSystemEnv()
-
-    project = ProjectBuilder.builder().build()
-    project.apply plugin: 'silversetup'
+    project = context.createGradleProject()
   }
 
+  @Test
   void testSilverpeasInstallation() {
     assert versionOfModule(databaseSetUp.sql, 'toto') == null
     assert versionOfModule(databaseSetUp.sql, 'busCore') == null
@@ -39,6 +37,7 @@ class SilverpeasMigrationTaskTest extends AbstractDatabaseTest {
     assert versionOfModule(databaseSetUp.sql, 'busCore') == '032'
   }
 
+  @Test
   void testSilverpeasUpgrade() {
     databaseSetUp.createSrPackagesTable()
     prepareInitialData('toto', '002')

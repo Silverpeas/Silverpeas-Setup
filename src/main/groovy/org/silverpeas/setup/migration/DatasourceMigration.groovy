@@ -78,11 +78,11 @@ class DatasourceMigration {
     }
   }
 
-  boolean isAnInstallation() {
+  private def isAnInstallation() {
     return fromVersion == null
   }
 
-  boolean isAnUpgrade() {
+  private def isAnUpgrade() {
     return fromVersion != null && (fromVersion as int) < (toVersion as int)
   }
 

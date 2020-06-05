@@ -25,6 +25,8 @@ package org.silverpeas.setup
 
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
 
 import javax.inject.Inject
 import java.nio.file.Files
@@ -42,24 +44,28 @@ class SilverpeasConfigurationProperties {
    * configuration properties, the Silverpeas and the JBoss configuration directory. By default
    * SILVERPEAS_HOME/configuration.
    */
+  @InputDirectory
   final Property<File> configurationHome
 
   /**
    * The directory that contains all the configuration scripts to configure JBoss/Wildfly for
    * Silverpeas. By default SILVERPEAS_HOME/configuration/jboss.
    */
+  @InputDirectory
   final Property<File> jbossConfigurationDir
 
   /**
    * The directory that contains all the configuration scripts to configure specifically the
    * Silverpeas web portal and components. By default SILVERPEAS_HOME/configuration/silverpeas.
    */
+  @InputDirectory
   final Property<File> silverpeasConfigurationDir
 
   /**
    * The directory that contains the additional JBoss/Wildfly modules to install in JBoss/Wildfy
    * for Silverpeas. By default SILVERPEAS_HOME/configuration/jboss/modules.
    */
+  @InputDirectory
   final Property<File> jbossModulesDir
 
   /**
@@ -68,6 +74,7 @@ class SilverpeasConfigurationProperties {
    * that it can be retrieved in the next configuration process by the different steps so that they
    * can adapt their behaviour according to the properties they have set.
    */
+  @Internal
   final Context context
 
   @Inject

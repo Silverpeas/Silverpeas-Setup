@@ -23,12 +23,9 @@
  */
 package org.silverpeas.setup.configuration
 
-
 import org.gradle.api.Project
 import org.gradle.api.ProjectState
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskExecutionException
+import org.gradle.api.tasks.*
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
@@ -45,9 +42,13 @@ import java.util.regex.Matcher
  */
 class JBossConfigurationTask extends SilverpeasSetupTask {
 
+  @InputDirectory
   File driversDir
+  @Nested
   SilverpeasConfigurationProperties config
-  Property<JBossServer> jboss = project.objects.property(JBossServer)
+  @Internal
+  JBossServer jboss
+  @Internal
   final FileLogger log = FileLogger.getLogger(this.name)
 
   JBossConfigurationTask() {
@@ -59,7 +60,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
 
     project.afterEvaluate { Project currentProject, ProjectState state ->
       if (state.executed) {
-        jboss.get().useLogger(log)
+        jboss.useLogger(log)
       }
     }
   }
@@ -70,7 +71,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
 
   @TaskAction
   void configureJBoss() {
-    JBossServer server = jboss.get()
+    JBossServer server = jboss
     try {
       if (server.isStartingOrRunning()) {
         server.stop()
@@ -90,7 +91,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
 
   private void setUpJVMOptions() {
     log.info 'JVM options setting'
-    new File(jboss.get().jbossHome, 'bin').listFiles(new FilenameFilter() {
+    new File(jboss.jbossHome, 'bin').listFiles(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
         return name.endsWith('.conf') || name.endsWith('.conf.bat')
@@ -128,13 +129,13 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
     log.info 'Additional modules installation'
     project.copy {
       it.from config.jbossModulesDir.get().toPath()
-      it.into Paths.get(jboss.get().jbossHome, 'modules')
+      it.into Paths.get(jboss.jbossHome, 'modules')
     }
   }
 
   private void setUpJDBCDriver() throws Exception {
     log.info "Install database driver for ${settings.DB_SERVERTYPE}"
-    JBossServer server = jboss.get()
+    JBossServer server = jboss
     if (settings.DB_SERVERTYPE == 'H2') {
       // H2 is already available by default in JBoss/Wildfly
       settings.DB_DRIVER_NAME = 'h2'
@@ -179,7 +180,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
         aScript
             .useLogger(log)
             .useSettings(settings)
-            .run(jboss: jboss.get())
+            .run(jboss: jboss)
       }
     } catch(Exception ex) {
       log.error("Error while running cli script: ${ex.message}", ex)
