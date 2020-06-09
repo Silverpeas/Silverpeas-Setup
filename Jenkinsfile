@@ -6,7 +6,7 @@ node {
         checkout scm
       }
       stage('Build and deployment') {
-        sh "./gradlew clean test install publish -Djava.awt.headless=true"
+        sh "./gradlew clean build publish -Djava.awt.headless=true"
       }
     }
   }

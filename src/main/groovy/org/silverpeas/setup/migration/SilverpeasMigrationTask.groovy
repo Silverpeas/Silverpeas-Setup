@@ -25,6 +25,8 @@ package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasMigrationProperties
@@ -59,7 +61,9 @@ class SilverpeasMigrationTask extends SilverpeasSetupTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'
 
+  @Nested
   SilverpeasMigrationProperties migration
+  @Internal
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasMigrationTask() {

@@ -1,6 +1,8 @@
 package org.silverpeas.setup.configuration
 
-
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import org.silverpeas.setup.test.TestContext
 
 import java.time.LocalDate
@@ -11,22 +13,21 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
  * Test the case of the configuration of Silverpeas performed by a dedicated Gradle task.
  * @author mmoquillon
  */
-class SilverpeasConfigurationTaskTest extends GroovyTestCase {
+class SilverpeasConfigurationTaskTest {
 
   private TestContext context
 
-  @Override
+  @Before
   void setUp() {
-    super.setUp()
     context = TestContext.create().setUpSystemEnv().initGradleProject()
   }
 
-  @Override
+  @After
   void tearDown() throws Exception {
-    super.tearDown()
     context.cleanUp()
   }
 
+  @Test
   void testSilverpeasConfiguration() {
     TestProperties testProperties = new TestProperties().before()
 

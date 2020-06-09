@@ -24,15 +24,21 @@
 package org.silverpeas.setup.migration
 
 import groovy.sql.Sql
+import org.gradle.api.Project
+import org.junit.After
+import org.junit.Before
+import org.silverpeas.setup.SilverpeasSetupExtension
+import org.silverpeas.setup.SilverpeasSetupPlugin
 import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.SilverpeasSetupService
 import org.silverpeas.setup.test.DatabaseSetUp
 import org.silverpeas.setup.test.TestContext
+
 /**
  * The common class for all test cases about a database migration.
  * @author mmoquillon
  */
-abstract class AbstractDatabaseTest extends GroovyTestCase {
+abstract class AbstractDatabaseTest {
 
   protected DatabaseSetUp databaseSetUp
   protected TestContext context
@@ -41,18 +47,19 @@ abstract class AbstractDatabaseTest extends GroovyTestCase {
     return DatabaseSetUp.setUp(withDatasource: true).createSrPackagesTable()
   }
 
-  @Override
+  @Before
   void setUp() {
-    super.setUp()
     context = TestContext.create()
     databaseSetUp = initDatabaseSetUp()
-    ManagedBeanContainer.registry().register(new SilverpeasSetupService([:]))
   }
 
-  @Override
+  @After
   void tearDown() {
-    super.tearDown()
     databaseSetUp.dropAll()
+  }
+
+  def mockSilverpeasSetupService() {
+    ManagedBeanContainer.registry().register(new SilverpeasSetupService([:]))
   }
 
   def prepareInitialData(String module, String version) {

@@ -23,6 +23,9 @@
  */
 package org.silverpeas.setup.migration
 
+import groovy.test.GroovyAssert
+import org.junit.Before
+import org.junit.Test
 import org.silverpeas.setup.api.FileLogger
 import org.xml.sax.SAXParseException
 
@@ -35,6 +38,12 @@ import static org.silverpeas.setup.test.Assertion.versionOfModule
  */
 class MigrationModuleTest extends AbstractDatabaseTest{
 
+  @Before
+  void prepareTest() {
+    mockSilverpeasSetupService()
+  }
+
+  @Test
   void testAFreshInstallation() {
     assert versionOfModule(databaseSetUp.sql, 'toto') == null
 
@@ -48,6 +57,7 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert versionOfModule(databaseSetUp.sql, 'toto') == '004'
   }
 
+  @Test
   void testAnUpgradeFrom002To004() {
     prepareInitialData('toto', '002')
     assert versionOfModule(databaseSetUp.sql, 'toto') == '002'
@@ -64,6 +74,7 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
+  @Test
   void testAnUpgradeFrom003To004() {
     prepareInitialData('toto', '003')
     assert versionOfModule(databaseSetUp.sql, 'toto') == '003'
@@ -80,8 +91,9 @@ class MigrationModuleTest extends AbstractDatabaseTest{
     assert numberOfItems(databaseSetUp.sql, 'Person') == 1
   }
 
+  @Test
   void testAMalformedMigrationDescriptor() {
-    shouldFail(SAXParseException) {
+    GroovyAssert.shouldFail(SAXParseException) {
       new MigrationModule()
           .withSettings([MIGRATION_HOME:context.migrationHome, DB_SERVERTYPE: 'H2'])
           .withStatus(['toto':'003'])

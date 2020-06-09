@@ -23,7 +23,9 @@
  */
 package org.silverpeas.setup.construction
 
-
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
@@ -41,8 +43,11 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
 
   public static final String SILVERPEAS_WAR = 'silverpeas.war'
 
+  @InputDirectory
   File silverpeasHome
+  @Nested
   SilverpeasInstallationProperties installation
+  @Internal
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasConstructionTask() {
@@ -56,11 +61,11 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
     }
   }
 
-  boolean precondition() {
+  def precondition() {
     !installation.distDir.get().exists() && !installation.dsDriversDir.get().exists()
   }
 
-  boolean isUpToDate() {
+  def isUpToDate() {
     boolean ok = installation.distDir.get().exists() && installation.dsDriversDir.get().exists()
     if (!installation.developmentMode.get()) {
       ok = ok && Files.exists(Paths.get(project.buildDir.path, SILVERPEAS_WAR))

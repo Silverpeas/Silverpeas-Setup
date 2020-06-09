@@ -1,5 +1,8 @@
 package org.silverpeas.setup.migration
 
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import org.silverpeas.setup.api.JcrRepositoryFactory
 import org.silverpeas.setup.test.DatabaseSetUp
 import org.silverpeas.setup.test.TestContext
@@ -12,23 +15,23 @@ import javax.jcr.SimpleCredentials
  * Test case on the JCR repository fetching.
  * @author mmoquillon
  */
-class JcrRepositoryTest extends GroovyTestCase {
+class JcrRepositoryTest {
 
   private DatabaseSetUp databaseSetUp
   private TestContext context
 
-  @Override
+  @Before
   void setUp() {
-    super.setUp()
     context = TestContext.create()
     databaseSetUp = DatabaseSetUp.setUp(withDatasource: true)
   }
 
-  @Override
+  @After
   void tearDown() {
     databaseSetUp.dropAll()
   }
 
+  @Test
   void testRepositoryAccess() {
     Repository repository =
         JcrRepositoryFactory.instance.createRepository([SILVERPEAS_HOME: context.resourcesDir])

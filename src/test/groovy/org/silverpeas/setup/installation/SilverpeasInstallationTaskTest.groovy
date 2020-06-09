@@ -1,8 +1,10 @@
 package org.silverpeas.setup.installation
 
 import groovy.mock.interceptor.MockFor
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
+import org.junit.Before
+import org.junit.Test
 import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.test.TestContext
 
@@ -11,24 +13,18 @@ import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.INSTALL
  * Test the case of the installation of Silverpeas performed by a dedicated Gradle task.
  * @author mmoquillon
  */
-class SilverpeasInstallationTaskTest extends GroovyTestCase {
+class SilverpeasInstallationTaskTest {
 
   private Project project
-  protected TestContext context
+  private TestContext context
 
-  @Override
+  @Before
   void setUp() {
-    super.setUp()
-
     context = TestContext.create().setUpSystemEnv()
-
-    project = ProjectBuilder.builder().build()
-    project.apply plugin: 'silversetup'
-
-    project.silversetup.logging.logDir = new File(project.buildDir, 'log')
-    project.silversetup.logging.useLogger = false
+    project = context.createGradleProject()
   }
 
+  @Test
   void testInstallJustSilverpeas() {
     SilverpeasInstallationTask task = project.tasks.findByPath(INSTALL.name)
     def mock = new MockFor(JBossServer)
@@ -43,12 +39,13 @@ class SilverpeasInstallationTaskTest extends GroovyTestCase {
     }
 
     def jboss = mock.proxyInstance()
-    task.jboss.set(jboss)
+    task.jboss = jboss
     task.install()
 
     mock.verify(jboss)
   }
 
+  @Test
   void testInstall() {
     SilverpeasInstallationTask task = project.tasks.findByPath(INSTALL.name)
 
@@ -72,8 +69,10 @@ class SilverpeasInstallationTaskTest extends GroovyTestCase {
     }
 
     def jboss = mock.proxyInstance()
-    task.jboss.set(jboss)
+    task.jboss = jboss
     task.install()
+
+    FileUtils.deleteQuietly(jackrabbit)
 
     mock.verify(jboss)
   }
