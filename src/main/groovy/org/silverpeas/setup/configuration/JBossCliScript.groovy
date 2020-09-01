@@ -64,7 +64,9 @@ class JBossCliScript extends AbstractScript {
       new FileReader(script).transformLine(new FileWriter(cli.toString())) { line ->
         VariableReplacement.parseExpression(line, settings)
       }
-      jboss.processCommandFile(cli.toFile())
+      jboss.doWhenRunning {
+        jboss.processCommandFile(cli.toFile())
+      }
     } catch (Exception ex) {
       throw new RuntimeException(ex)
     }

@@ -101,8 +101,8 @@ class JBossServer {
     logger.formatInfo(' %s', '.')
     String status = this.status()
     long start = System.currentTimeMillis();
-    while(status != 'running') {
-      if (status == 'reload-required') {
+    while(!running(status)) {
+      if (reloadRequired(status)) {
         this.reload()
       }
       Thread.sleep(1000)
@@ -121,21 +121,18 @@ class JBossServer {
    * @return the result value of the closure if any.
    */
   void doWhenRunning(Closure action) {
-    switch (status()) {
-      case 'stopped':
-        logger.info 'JBoss not started, so start it'
-        start()
-        break
-      case 'starting':
-        logger.info 'JBoss is starting, so wait for it is running'
-        waitUntilRunning()
-        break
-      case 'reload-required':
-        logger.info 'JBoss asks for reload, so reloads it'
-        def proc = """${cli} --connect --command=:reload""".execute()
-        proc.waitFor()
-        waitUntilRunning()
-        break
+    String status = status()
+    if (stopped(status)) {
+      logger.info 'JBoss not started, so start it'
+      start()
+    } else if (starting(status)) {
+      logger.info 'JBoss is starting, so wait for it is running'
+      waitUntilRunning()
+    } else if (reloadRequired(status)) {
+      logger.info 'JBoss asks for reload, so reloads it'
+      def proc = """${cli} --connect --command=:reload""".execute()
+      proc.waitFor()
+      waitUntilRunning()
     }
     action.call()
   }
@@ -204,6 +201,10 @@ class JBossServer {
    */
   void start(Map params = null) {
     boolean adminOnly = (params != null && params.adminOnly ? params.adminOnly:false)
+    if (reloadRequired()) {
+      reload()
+      stop()
+    }
     if (!isStartingOrRunning()) {
       ProcessBuilder process
       if (adminOnly) {
@@ -233,6 +234,10 @@ class JBossServer {
    * 5005 will be used.
    */
   void debug(int port = 5005) {
+    if (reloadRequired()) {
+      reload()
+      stop()
+    }
     if (!isStartingOrRunning()) {
       String p = (port <= 1000 ? '5005':String.valueOf(port))
       ProcessBuilder process =
@@ -276,12 +281,28 @@ class JBossServer {
     proc.waitFor()
   }
 
+  private boolean running(String status) {
+    return status == 'running'
+  }
+
+  private boolean starting(String status) {
+    return status == 'starting'
+  }
+
+  private boolean stopped(String status) {
+    return status == 'stopped'
+  }
+
+  private boolean reloadRequired(String status) {
+    return status == 'reload-required'
+  }
+
   /**
    * Is a JBoss/Wildfly instance running?
    * @return true if an instance of JBoss/Wildfly is running, false otherwise.
    */
   boolean isRunning() {
-    return status() == 'running'
+    return running(status())
   }
 
   /**
@@ -289,7 +310,7 @@ class JBossServer {
    * @return true if an instance of JBoss/Wildfly is being starting, false otherwise.
    */
   boolean isStarting() {
-    return status() == 'starting'
+    return starting(status())
   }
 
   /**
@@ -299,7 +320,7 @@ class JBossServer {
    */
   boolean isStartingOrRunning() {
     String status = status()
-    return status == 'starting' || status == 'running'
+    return starting(status) || running(status)
   }
 
   /**
@@ -307,7 +328,7 @@ class JBossServer {
    * @return true if an instance of JBoss/Wildfly is stopped, false otherwise.
    */
   boolean isStopped() {
-    return status() == 'stopped'
+    return stopped(status())
   }
 
   /**
