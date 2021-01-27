@@ -1,6 +1,6 @@
 node {
   catchError {
-    docker.image('silverpeas/silverbuild')
+    docker.image('silverpeas/silverbuild:6.2')
         .inside('-u root -v $HOME/.m2/settings.xml:/root/.m2/settings.xml -v $HOME/.m2/settings-security.xml:/root/.m2/settings-security.xml -v $HOME/.gitconfig:/root/.gitconfig -v $HOME/.ssh:/root/.ssh -v $HOME/.gnupg:/root/.gnupg') {
       stage('Preparation') {
         checkout scm
