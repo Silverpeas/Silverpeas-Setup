@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2000 - 2020 Silverpeas
+    Copyright (C) 2000 - 2021 Silverpeas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -28,24 +28,31 @@ buildscript {
     maven {
       url 'https://www.silverpeas.org/nexus/content/groups/silverpeas'
     }
-    jcenter()
     mavenLocal()
   }
 }
 
 plugins {
   id 'java-gradle-plugin'
-  id 'org.ajoberstar.grgit' version '4.0.2' apply true
+  id 'org.ajoberstar.grgit' version '4.1.0' apply true
   id 'idea'
   id 'maven-publish'
+  id 'net.linguica.maven-settings' version '0.5'
   id 'groovy'
-  id "net.linguica.maven-settings" version "0.5"
 }
 
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
 version = '6.3-SNAPSHOT'
 
+gradlePlugin {
+  plugins {
+    silversetup {
+      id = 'silversetup'
+      implementationClass = 'org.silverpeas.setup.SilverpeasSetupPlugin'
+    }
+  }
+}
 
 /* cache management
 configurations {
@@ -78,8 +85,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
   withSourcesJar()
 }
 
@@ -106,22 +113,22 @@ publishing {
 
 dependencies {
   api gradleApi()
-  api 'org.apache.commons:commons-lang3:3.10'
-  api 'commons-io:commons-io:2.7'
-  api 'org.apache.commons:commons-dbcp2:2.7.0'
-  api 'commons-codec:commons-codec:1.14'
+  api 'org.apache.commons:commons-lang3:3.12.0'
+  api 'commons-io:commons-io:2.8.0'
+  api 'org.apache.commons:commons-dbcp2:2.8.0'
+  api 'commons-codec:commons-codec:1.15'
   api 'javax.jcr:jcr:2.0'
-  api 'org.apache.jackrabbit:jackrabbit-core:2.18.4'
-  runtimeOnly 'org.eclipse.jetty:jetty-jndi:9.4.29.v20200521'
-  runtimeOnly 'org.eclipse.jetty:jetty-util:9.4.29.v20200521'
+  api 'org.apache.jackrabbit:jackrabbit-core:2.20.2'
+  runtimeOnly 'org.eclipse.jetty:jetty-jndi:11.0.2'
+  runtimeOnly 'org.eclipse.jetty:jetty-util:11.0.2'
   runtimeOnly 'com.h2database:h2:1.4.200'
-  runtimeOnly 'org.postgresql:postgresql:42.2.12'
+  runtimeOnly 'org.postgresql:postgresql:42.2.19'
   runtimeOnly 'net.sourceforge.jtds:jtds:1.3.1'
   testImplementation gradleTestKit()
-  testImplementation 'junit:junit:4.13'
-  testImplementation('org.spockframework:spock-core:1.3-groovy-2.4') {
-    exclude module: 'groovy-all'
-  }
+  testImplementation platform("org.spockframework:spock-bom:2.0-M5-groovy-3.0")
+  testImplementation 'org.spockframework:spock-core'
+  testImplementation 'org.spockframework:spock-junit4'
+  testImplementation 'junit:junit:4.13.2'
 }
 
 ext {
@@ -135,7 +142,6 @@ jar {
         "Git-Commit": grgit.head().abbreviatedId)
   }
 }
-
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allSource

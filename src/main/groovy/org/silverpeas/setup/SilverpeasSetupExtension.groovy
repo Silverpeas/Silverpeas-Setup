@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2000 - 2020 Silverpeas
+    Copyright (C) 2000 - 2021 Silverpeas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -116,8 +116,9 @@ class SilverpeasSetupExtension {
     jbossHome = project.file(jbossHomePath)
     if (!(silverpeasHome.exists() && silverpeasHome.isDirectory()) ||
         !(jbossHome.exists() && jbossHome.isDirectory())) {
-      println 'The path referred by SILVERPEAS_HOME or by JBOSS_HOME doesn\'t exist or isn\'t a directory!'
-      throw new IllegalStateException()
+      String msg = 'The path referred by SILVERPEAS_HOME or by JBOSS_HOME doesn\'t exist or isn\'t a directory!'
+      println msg
+      throw new IllegalStateException(msg)
     }
     config  = project.objects.newInstance(SilverpeasConfigurationProperties, project, silverpeasHome)
     installation = project.objects.newInstance(SilverpeasInstallationProperties, project, silverpeasHome)
