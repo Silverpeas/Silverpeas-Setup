@@ -49,7 +49,7 @@ class GroovyScript extends AbstractScript {
    * @throws RuntimeException if an error occurs during the execution of the script.
   */
   @Override
-  void run(Map args) throws RuntimeException {
+  void run(Map<String, ?> args) throws RuntimeException {
     logger.info "${script.name} processing..."
     Binding parameters = new Binding()
     parameters.setVariable('settings', settings)

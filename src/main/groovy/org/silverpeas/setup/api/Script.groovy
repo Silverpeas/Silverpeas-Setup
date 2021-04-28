@@ -35,7 +35,7 @@ interface Script {
    * which the key is the variable name and the value its value.
    * @throws RuntimeException if an error occurs during the execution of the script.
    */
-  void run(Map args) throws RuntimeException
+  void run(Map<String, ?> args) throws RuntimeException
 
   /**
    * Uses the specified logger to trace the execution of this script.
@@ -49,5 +49,5 @@ interface Script {
    * @param settings a collection of key-value pairs defining all the settings.
    * @return itself.
    */
-  Script useSettings(Map settings)
+  Script useSettings(Map<String, String> settings)
 }

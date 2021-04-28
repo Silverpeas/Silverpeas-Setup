@@ -80,7 +80,7 @@ class JBossServer {
     }
   }
 
-  private void assertCommandSucceeds(command) throws AssertionError, InvalidObjectException {
+  private static void assertCommandSucceeds(command) throws AssertionError, InvalidObjectException {
     String result = command.in.text
     if (command.exitValue() != 0 || result.contains('"outcome" => "failed"')) {
       boolean rollBacked = result.contains('"rolled-back" => true')
@@ -100,7 +100,7 @@ class JBossServer {
   private void waitUntilRunning() {
     logger.formatInfo(' %s', '.')
     String status = this.status()
-    long start = System.currentTimeMillis();
+    long start = System.currentTimeMillis()
     while(status != 'running') {
       if (status == 'reload-required') {
         this.reload()
@@ -168,7 +168,7 @@ class JBossServer {
    * @return itself.
    */
   JBossServer withStartingTimeout(long timeout) {
-    if (this.timeout != null && this.timeout > 0) {
+    if (this.timeout > 0) {
       this.timeout = timeout
     }
     return this
@@ -383,13 +383,13 @@ class JBossServer {
    * @throws RuntimeException if the adding of the artifact failed.
    */
   void add(String artifactPath, String name, String context) throws RuntimeException {
-    String normalizedArtifactPath = FilenameUtils.separatorsToUnix(artifactPath);
+    String normalizedArtifactPath = FilenameUtils.separatorsToUnix(artifactPath)
     Path artifactTruePath = Paths.get(normalizedArtifactPath)
     boolean archive = Files.isRegularFile(artifactTruePath)
     if (!isInDeployments(name)) {
       Process proc = executeCliCommand(
           "/deployment=${name}:add(runtime-name=${context},content=[{path=>${normalizedArtifactPath},archive=${archive}}])",
-          SystemUtils.IS_OS_WINDOWS);
+          SystemUtils.IS_OS_WINDOWS)
       proc.waitFor()
       if (proc.exitValue() != 0 || !isInDeployments(name)) {
         throw new RuntimeException("Adding of ${name} in JBoss failed with exit code " +
@@ -516,9 +516,9 @@ class JBossServer {
    * @return the instance of the process which handles the CLI command execution.
    */
   Process executeCliCommand(String commands, boolean wrapIntoDoubleQuotes = false) {
-    String finalCommands = commands;
+    String finalCommands = commands
     if (wrapIntoDoubleQuotes) {
-      finalCommands = "\"" + finalCommands + "\"";
+      finalCommands = "\"" + finalCommands + "\""
     }
     return new ProcessBuilder(cli, '--connect', finalCommands)
         .redirectErrorStream(true)

@@ -23,7 +23,11 @@
  */
 package org.silverpeas.setup.configuration
 
-import org.gradle.api.tasks.*
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script
@@ -39,7 +43,7 @@ import java.nio.file.Paths
  */
 class SilverpeasConfigurationTask extends SilverpeasSetupTask {
 
-  @Input
+  @Internal
   File silverpeasHome
   @Nested
   SilverpeasConfigurationProperties config

@@ -50,7 +50,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
 
   private buildStarted = false
   private List<String> executedTasks = []
-  private long startTimestamp;
+  private long startTimestamp
 
   TaskEventLogging() {
     startTimestamp = System.currentTimeMillis()
@@ -120,7 +120,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     result.rethrowFailure()
   }
 
-  private String unformat(String name) {
+  private static String unformat(String name) {
     StringBuilder str = new StringBuilder()
     str.append(name.charAt(0).toUpperCase())
     for (int i = 1; i < name.length(); i++) {
@@ -133,7 +133,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     return str.toString()
   }
 
-  private void outputTask(String taskTitle) {
+  private static void outputTask(String taskTitle) {
     StringBuilder result = new StringBuilder("${taskTitle}... ")
     int charToAdd = 20 - result.length()
     for (int i = 0; i < charToAdd; i++) {
@@ -142,7 +142,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     print result.toString()
   }
 
-  private void outputStatus(String status) {
+  private static void outputStatus(String status) {
     println "       ${status}"
   }
 }

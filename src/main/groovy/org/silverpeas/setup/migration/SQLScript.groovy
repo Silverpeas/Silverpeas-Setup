@@ -50,7 +50,7 @@ class SQLScript extends AbstractScript {
    * @throws SQLException if an error occurs during the execution of this script.
    */
   @Override
-  void run(Map args) throws SQLException {
+  void run(Map<String, ?> args) throws SQLException {
     Sql sql = args.sql
     List<String> statements = loadSqlStatements()
     sql.withBatch { batch ->
@@ -61,7 +61,7 @@ class SQLScript extends AbstractScript {
   }
 
   private List<String> loadSqlStatements() {
-    SilverpeasSetupService service = new ManagedBeanContainer().get(SilverpeasSetupService)
+    SilverpeasSetupService service = ManagedBeanContainer.get(SilverpeasSetupService)
     List<String> statements = []
     String scriptContent = script.getText('UTF-8')
     scriptContent.split(';').each { String aStatement ->

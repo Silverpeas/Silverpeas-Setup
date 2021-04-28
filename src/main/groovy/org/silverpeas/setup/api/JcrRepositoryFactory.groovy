@@ -26,7 +26,6 @@ package org.silverpeas.setup.api
 import groovy.xml.XmlUtil
 import org.apache.jackrabbit.core.RepositoryImpl
 import org.apache.jackrabbit.core.config.RepositoryConfig
-import org.gradle.api.Project
 
 import javax.jcr.Repository
 import javax.jcr.RepositoryException
@@ -44,14 +43,13 @@ class JcrRepositoryFactory {
   private static final String JCR_CONFIG_FILE = '/repository.xml'
 
   private File repositoryConf
-  private Project project
 
   private synchronized File getRepositoryConfiguration(Map settings) {
     if (!repositoryConf) {
       initJNDIContext()
       File destination = File.createTempFile('repository', 'xml')
 
-      SAXParserFactory factory = javax.xml.parsers.SAXParserFactory.newInstance()
+      SAXParserFactory factory = SAXParserFactory.newInstance()
       factory.validating = false
       factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
           false)
@@ -71,14 +69,14 @@ class JcrRepositoryFactory {
     return repositoryConf
   }
 
-  private void initJNDIContext() {
+  private static void initJNDIContext() {
     DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider)
-    InitialContext ic = new InitialContext();
+    InitialContext ic = new InitialContext()
     try {
       ic.lookup('java:/datasources/DocumentStore')
-    } catch(NameNotFoundException ex) {
+    } catch(NameNotFoundException e) {
       ic.createSubcontext('java:/datasources')
-      ic.bind('java:/datasources/DocumentStore', dataSourceProvider.dataSource);
+      ic.bind('java:/datasources/DocumentStore', dataSourceProvider.dataSource)
     }
   }
 
@@ -89,15 +87,15 @@ class JcrRepositoryFactory {
   Repository createRepository(Map settings) {
     try {
       File repositoryConf = getRepositoryConfiguration(settings)
-      Properties jcrProperties = new Properties();
+      Properties jcrProperties = new Properties()
       jcrProperties.load(new FileInputStream(
-          "${settings.SILVERPEAS_HOME}/properties/org/silverpeas/util/jcr.properties"));
-      String jcrHomePath = jcrProperties[JCR_HOME];
+          "${settings.SILVERPEAS_HOME}/properties/org/silverpeas/util/jcr.properties"))
+      String jcrHomePath = jcrProperties[JCR_HOME]
 
-      RepositoryConfig config = RepositoryConfig.create(repositoryConf.path, jcrHomePath);
-      return RepositoryImpl.create(config);
+      RepositoryConfig config = RepositoryConfig.create(repositoryConf.path, jcrHomePath)
+      return RepositoryImpl.create(config)
     } catch (IOException | RepositoryException ex) {
-      throw new RuntimeException(ex.getMessage(), ex);
+      throw new RuntimeException(ex.getMessage(), ex)
     }
   }
 }
