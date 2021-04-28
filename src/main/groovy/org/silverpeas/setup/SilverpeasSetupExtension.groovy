@@ -95,7 +95,7 @@ class SilverpeasSetupExtension {
    * Some of them are computed from the properties in the file <code>config.properties</code>.
    * Tasks can overwrite some of the settings as well as add their own properties.
    */
-  final Map settings = [:]
+  final Map<String, String> settings = [:]
 
   /**
    * Constructs a new silverpeas configuration extension. It checks the environment variables
@@ -129,7 +129,7 @@ class SilverpeasSetupExtension {
     settings.context = config.context.properties()
   }
 
-  void setSettings(final Map configProperties) {
+  void setSettings(final Map<String, String> configProperties) {
     this.settings.putAll(configProperties)
   }
 

@@ -16,5 +16,5 @@ abstract class SilverpeasSetupTask extends DefaultTask {
    * should be injected in the scripts that are executed by a task.
    */
   @Internal
-  Map settings
+  Map<String, String> settings
 }

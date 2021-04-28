@@ -37,16 +37,16 @@ class XmlSettingsScript extends AbstractScript {
    * @throws RuntimeException if an error occurs during the execution of the script.
    */
   @Override
-  void run(Map args) throws RuntimeException {
+  void run(Map<String, ?> args) throws RuntimeException {
     SilverpeasSetupService service = ManagedBeanContainer.get(SilverpeasSetupService)
     def settingsStatements = new XmlSlurper().parse(script)
     logger.info "${script.name} scanning..."
     settingsStatements.test.each { GPathResult test ->
       test.parameter.each { GPathResult parameter ->
-        String settingName = parameter.@key.text();
+        String settingName = parameter.@key.text()
         if (settings[settingName] == null || settings[settingName].trim().isEmpty()) {
           throw new RuntimeException(
-              "The parameter '${settingName}' is not defined or not valued in config.properties");
+              "The parameter '${settingName}' is not defined or not valued in config.properties")
         }
       }
     }
@@ -80,7 +80,7 @@ class XmlSettingsScript extends AbstractScript {
 
   private void updateConfigurationFile(SilverpeasSetupService service, String configurationFilePath,
                                        GPathResult parameters) {
-    def properties = [:]
+    Map<String, String> properties = [:]
     parameters.each { GPathResult parameter ->
       properties[parameter.@key.text()] = service.expanseVariables(parameter.text())
     }

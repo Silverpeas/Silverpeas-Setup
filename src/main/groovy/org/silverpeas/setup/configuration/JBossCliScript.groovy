@@ -55,7 +55,7 @@ class JBossCliScript extends AbstractScript {
    * @throws RuntimeException if an error occurs during the execution of the script.
    */
   @Override
-  void run(Map args) throws RuntimeException {
+  void run(Map<String, ?> args) throws RuntimeException {
     try {
       JBossServer jboss = args.jboss
       String fileBaseName = FilenameUtils.getBaseName(script.name)

@@ -247,7 +247,7 @@ class FileLogger {
   }
 
   private def getLogHandler() {
-    return this.logHandler == null ? DEFAULT_LOG_HANDLER: this.logHandler;
+    return this.logHandler == null ? DEFAULT_LOG_HANDLER: this.logHandler
   }
 
   private FileLogger(String namespace) {

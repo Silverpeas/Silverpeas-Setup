@@ -46,7 +46,7 @@ class MigrationGroovyScript extends GroovyScript {
    * @throws SQLException if an error occurs during the execution of this script.
    */
   @Override
-  void run(Map args) throws SQLException {
+  void run(Map<String, ?> args) throws SQLException {
     try {
       super.run(sql: args.sql)
     } catch(Exception ex) {

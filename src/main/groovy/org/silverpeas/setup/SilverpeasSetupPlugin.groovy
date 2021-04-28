@@ -81,14 +81,14 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     Task jbossConf = project.tasks.create(CONFIGURE_JBOSS.name, JBossConfigurationTask) {
       it.driversDir = extension.installation.dsDriversDir.get()
       it.config = extension.config
-      it.jboss        = jBossServer
-      it.settings     = extension.settings
+      it.jboss = jBossServer
+      it.settings = extension.settings
     }
 
     Task silverpeasConf = project.tasks.create(CONFIGURE_SILVERPEAS.name, SilverpeasConfigurationTask) {
       it.silverpeasHome = extension.silverpeasHome
-      it.config         = extension.config
-      it.settings       = extension.settings
+      it.config = extension.config
+      it.settings = extension.settings
     }.dependsOn(construction)
 
     Task configuration = project.tasks.create(CONFIGURE.name) {
@@ -101,8 +101,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     }.dependsOn(construction)
 
     Task migration = project.tasks.create(MIGRATE.name, SilverpeasMigrationTask) {
-      it.migration        = extension.migration
-      it.settings         = extension.settings
+      it.migration = extension.migration
+      it.settings = extension.settings
     }.dependsOn(configuration)
 
     project.tasks.create(INSTALL.name, SilverpeasInstallationTask) {
@@ -121,8 +121,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param project the Gradle project that uses the plugin
    * @param extension the project extension of the plugin
    */
-  private void setUpGradleAssemblingTaskForThisPlugin(Project project,
-                                                      SilverpeasSetupExtension extension) {
+  private static void setUpGradleAssemblingTaskForThisPlugin(Project project,
+                                                             SilverpeasSetupExtension extension) {
     try {
       Task assemble = project.tasks.getByName(ASSEMBLE.name).doLast {
         if (!extension.installation.distDir.get().exists()) {
@@ -130,14 +130,15 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         }
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.driversDir = extension.installation.dsDriversDir.get()
-        builder.silverpeasHome = extension.silverpeasHome
+        builder.silverpeasHome = extension.silverpeasHome.get()
         builder.settings = extension.settings
         builder.extractSoftwareBundles(extension.installation.bundles,
             extension.installation.distDir.get())
       }
       assemble.description = 'Assemble all the software bundles that made Silverpeas'
-      assemble.onlyIf { !extension.installation.distDir.get().exists() &&
-          !extension.installation.dsDriversDir.get().exists()
+      assemble.onlyIf {
+        !extension.installation.distDir.get().exists() &&
+            !extension.installation.dsDriversDir.get().exists()
       }
       assemble.outputs.upToDateWhen {
         extension.installation.distDir.get().exists() &&
@@ -145,6 +146,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       }
     } catch (UnknownTaskException e) {
       // nothing to do
+      println e.message
     }
   }
 
@@ -155,12 +157,12 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param project the Gradle project
    * @param extension the project extension of the plugin
    */
-  private void setUpGradleBuildTaskForThisPlugin(Project project,
-                                                 SilverpeasSetupExtension extension) {
+  private static void setUpGradleBuildTaskForThisPlugin(Project project,
+                                                        SilverpeasSetupExtension extension) {
     try {
       Task build = project.tasks.getByName(BUILD.name).doLast {
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
-        builder.silverpeasHome = extension.silverpeasHome
+        builder.silverpeasHome = extension.silverpeasHome.get()
         builder.settings = extension.settings
         builder.developmentMode = extension.installation.developmentMode.get()
         builder.generateSilverpeasApplication(extension.installation.distDir.get())
@@ -180,6 +182,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       }
     } catch (UnknownTaskException e) {
       // nothing to do
+      println e.message
     }
   }
 
@@ -190,7 +193,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @return the project extension of the plugin
    */
   private SilverpeasSetupExtension createSilverpeasSetupExtention(Project project) {
-    def extension = project.extensions.create(EXTENSION, SilverpeasSetupExtension, project)
+    SilverpeasSetupExtension extension = project.extensions.create(EXTENSION, SilverpeasSetupExtension, project)
     extension.settings = loadConfigurationProperties(extension.config.configurationHome.get())
     completeSettings(extension.settings, extension)
     encryptAdminPassword(extension.settings)
@@ -205,8 +208,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param jBossServer the JBoss server wrapper to initialize with some of the plugin's input
    * properties exposed to the project.
    */
-  private void initializePluginParameters(Project project,
-                                          JBossServer jBossServer) {
+  private static void initializePluginParameters(Project project,
+                                                 JBossServer jBossServer) {
     project.afterEvaluate { Project currentProject, ProjectState state ->
       SilverpeasSetupExtension extension =
           (SilverpeasSetupExtension) currentProject.extensions.getByName(EXTENSION)
@@ -228,7 +231,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * the String value.
    * @param extension the project extension of the plugin
    */
-  private void registerManagedBeansForScripts(SilverpeasSetupExtension extension) {
+  private static void registerManagedBeansForScripts(SilverpeasSetupExtension extension) {
     SilverpeasSetupService setupService = new SilverpeasSetupService(extension.settings)
     String.metaClass.asPath = { Paths.get(setupService.expanseVariables(delegate.toString())) }
     ManagedBeanContainer.registry()
@@ -266,7 +269,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param settings the settings to complete/
    * @param extension the project extension of the plugin
    */
-  private void completeSettings(Map settings, SilverpeasSetupExtension extension) {
+  private static void completeSettings(Map<String, String> settings, SilverpeasSetupExtension extension) {
     settings.SILVERPEAS_HOME = normalizePath(extension.silverpeasHome.path)
     settings.MIGRATION_HOME = normalizePath(extension.migration.homeDir.get().path)
     settings.CONFIGURATION_HOME = normalizePath(extension.config.configurationHome.get().path)
@@ -320,7 +323,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * Replaces the administrator password set in the specified settings by its encrypted counterpart.
    * @param settings the settings with the administrator password.
    */
-  private void encryptAdminPassword(Map settings) {
+  private static void encryptAdminPassword(Map<String, String> settings) {
     Encryption encryption = EncryptionFactory.instance.createDefaultEncryption()
     settings.SILVERPEAS_ADMIN_PASSWORD = encryption.encrypt(settings.SILVERPEAS_ADMIN_PASSWORD)
   }
@@ -330,7 +333,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param project the Gradle project
    * @param loggingProperties the logging properties.
    */
-  private void initLogging(Project project, SilverpeasLoggingProperties loggingProperties) {
+  private static void initLogging(Project project, SilverpeasLoggingProperties loggingProperties) {
     String timestamp = new Date().format('yyyyMMdd_HHmmss')
     if (!loggingProperties.logDir.exists()) {
       loggingProperties.logDir.mkdirs()

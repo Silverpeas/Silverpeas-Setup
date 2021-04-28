@@ -32,7 +32,7 @@ abstract class AbstractScript implements Script {
 
   protected File script
   protected FileLogger logger
-  protected Map settings
+  protected Map<String, String> settings
 
   /**
    * Constructs a new script instance that refers the script located at the specified path.
@@ -59,7 +59,7 @@ abstract class AbstractScript implements Script {
    * @return itself.
    */
   @Override
-  AbstractScript useSettings(final Map settings) {
+  AbstractScript useSettings(final Map<String, String> settings) {
     this.settings = settings
     return this
   }
@@ -160,6 +160,6 @@ abstract class AbstractScript implements Script {
    */
   @Override
   boolean equals(final Object obj) {
-    return (obj.class.name.equals(this.class.name) && obj.hashCode() == this.hashCode())
+    return (obj.class.name == this.class.name && obj.hashCode() == this.hashCode())
   }
 }
