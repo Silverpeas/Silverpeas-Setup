@@ -50,7 +50,7 @@ class VariableReplacement {
    * @return the specified parameters with any variable declaration in their value replaced by
    * the variable value.
    */
-  static final def parseParameters(def parameters, Map variables) {
+  static final Map parseParameters(Map parameters, Map variables) {
     parameters.each { key, value ->
       parameters[key] = parseExpression(value as String, variables)
     }

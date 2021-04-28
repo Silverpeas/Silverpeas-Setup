@@ -17,7 +17,7 @@ class ManagedBeanContainer {
     return new Registry()
   }
 
-  static def get(String name, Class type) {
+  static <T> T get(String name, Class<T> type) {
     def bean = beans.get(name)
     if (!bean) {
       throw new RuntimeException("The bean ${name} isn't found!")
@@ -25,7 +25,7 @@ class ManagedBeanContainer {
     return type.cast(bean)
   }
 
-  static def get(Class type) {
+  static <T> T get(Class<T> type) {
     get(type.simpleName, type)
   }
 

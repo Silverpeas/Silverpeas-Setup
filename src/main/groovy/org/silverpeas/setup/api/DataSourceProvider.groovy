@@ -36,18 +36,18 @@ class DataSourceProvider {
 
   private final DataSource dataSource
 
-  DataSourceProvider(final Map settings) {
+  DataSourceProvider(final Map<String, String> settings) {
     Objects.requireNonNull(settings)
-    DriverAdapterCPDS cpds = new DriverAdapterCPDS();
-    cpds.setDriver(settings.DB_DRIVER);
-    cpds.setUrl(settings.DB_URL);
-    cpds.setUser(settings.DB_USER);
-    cpds.setPassword(settings.DB_PASSWORD);
+    DriverAdapterCPDS cpds = new DriverAdapterCPDS()
+    cpds.setDriver(settings.DB_DRIVER)
+    cpds.setUrl(settings.DB_URL)
+    cpds.setUser(settings.DB_USER)
+    cpds.setPassword(settings.DB_PASSWORD)
 
-    SharedPoolDataSource tds = new SharedPoolDataSource();
-    tds.setConnectionPoolDataSource(cpds);
-    tds.setMaxTotal(10);
-    tds.setDefaultMaxWaitMillis(50);
+    SharedPoolDataSource tds = new SharedPoolDataSource()
+    tds.setConnectionPoolDataSource(cpds)
+    tds.setMaxTotal(10)
+    tds.setDefaultMaxWaitMillis(50)
     dataSource = tds
   }
 }

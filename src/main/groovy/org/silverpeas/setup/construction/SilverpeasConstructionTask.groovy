@@ -23,6 +23,7 @@
  */
 package org.silverpeas.setup.construction
 
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
@@ -43,7 +44,7 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
 
   public static final String SILVERPEAS_WAR = 'silverpeas.war'
 
-  @Input
+  @Internal
   File silverpeasHome
   @Nested
   SilverpeasInstallationProperties installation
