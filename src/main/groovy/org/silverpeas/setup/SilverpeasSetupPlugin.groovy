@@ -111,8 +111,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       it.jboss = jBossServer
     }.dependsOn(construction, configuration, migration)
 
-    setUpGradleAssemblingTaskForThisPlugin(project, extension)
-    setUpGradleBuildTaskForThisPlugin(project, extension)
+    initializePredefinedTasks(project, extension)
   }
 
   /**
@@ -130,7 +129,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         }
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
         builder.driversDir = extension.installation.dsDriversDir.get()
-        builder.silverpeasHome = extension.silverpeasHome.get()
+        builder.silverpeasHome = extension.silverpeasHome
         builder.settings = extension.settings
         builder.extractSoftwareBundles(extension.installation.bundles,
             extension.installation.distDir.get())
@@ -162,7 +161,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     try {
       Task build = project.tasks.getByName(BUILD.name).doLast {
         SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
-        builder.silverpeasHome = extension.silverpeasHome.get()
+        builder.silverpeasHome = extension.silverpeasHome
         builder.settings = extension.settings
         builder.developmentMode = extension.installation.developmentMode.get()
         builder.generateSilverpeasApplication(extension.installation.distDir.get())
@@ -221,6 +220,20 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       extension.settings.SILVERPEAS_VERSION = currentProject.version as String
       jBossServer.redirectOutputTo(new File(extension.logging.logDir, JBOSS_OUTPUT_LOG))
           .withStartingTimeout(extension.timeout.get())
+    }
+  }
+
+  /**
+   * Initializes some predefined Gradle tasks (assemble and build) to perform specific Silverpeas
+   * tasks that are usually covered by the plugin's construct specific task.
+   * @param project the Gradle project
+   * @param extension the project extension of the plugin
+   */
+  private static void initializePredefinedTasks(Project project,
+                                                SilverpeasSetupExtension extension) {
+    project.afterEvaluate { Project currentProject, ProjectState state ->
+      setUpGradleAssemblingTaskForThisPlugin(currentProject, extension)
+      setUpGradleBuildTaskForThisPlugin(currentProject, extension)
     }
   }
 
