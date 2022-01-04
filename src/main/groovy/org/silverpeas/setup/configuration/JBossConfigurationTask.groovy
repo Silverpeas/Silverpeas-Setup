@@ -35,6 +35,7 @@ import org.silverpeas.setup.api.SilverpeasSetupTask
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.regex.Matcher
+
 /**
  * A Gradle task to configure a JBoss/Wildfly instance from some CLI scripts to be ready to run
  * Silverpeas.
@@ -81,7 +82,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
       server.start(adminOnly: true) // start in admin only to perform only configuration tasks
       setUpJDBCDriver()
       processConfigurationFiles()
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       log.error 'Error while configuring JBoss/Wildfly', ex
       throw new TaskExecutionException(this, ex)
     } finally {
@@ -89,40 +90,79 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
     }
   }
 
-  private void setUpJVMOptions() {
+  void setUpJVMOptions() {
     log.info 'JVM options setting'
     new File(jboss.jbossHome, 'bin').listFiles(new FilenameFilter() {
       @Override
       boolean accept(final File dir, final String name) {
-        return name.endsWith('.conf') || name.endsWith('.conf.bat')
+        return name.startsWith('standalone.conf') || name.startsWith('domain.conf')
       }
     }).each { conf ->
-      String jvmOpts; def regexp
-      if (conf.name.endsWith('.bat')) {
-        jvmOpts = "set \"JAVA_OPTS=-Xmx${settings.JVM_RAM_MAX} ${settings.JVM_OPTS}"
-        regexp = /\s*set\s+"JAVA_OPTS=-Xm.+/
-      } else {
-        jvmOpts =
-            "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true ${settings.JVM_OPTS}"
-        regexp = /\s*JAVA_OPTS="-Xm.+/
-      }
-      jvmOpts += '"'
-      conf.withReader {
-        it.transformLine(new FileWriter("${conf.path}.tmp")) { line ->
-          Matcher matcher = line =~ regexp
-          if (matcher.matches()) {
-            line = jvmOpts
-          }
-          line
-        }
-      }
-      File modifiedConf = new File("${conf.path}.tmp")
+      File modifiedConf = conf.text.contains('JBOSS_JAVA_SIZING') ?
+          replaceJavaOpts(conf) : replaceOldJavaOpts(conf)
       modifiedConf.setReadable(conf.canRead())
       modifiedConf.setWritable(conf.canWrite())
       modifiedConf.setExecutable(conf.canExecute())
       conf.delete()
       modifiedConf.renameTo(conf)
     }
+  }
+
+  protected File replaceJavaOpts(File conf) {
+    String jvmOpts, jvmSize
+    def regexpOpts, regexpSize
+    String optsToSet = settings.JVM_OPTS ? " ${settings.JVM_OPTS}" : ''
+    if (conf.name.endsWith('.bat')) {
+      jvmSize = "    set \"JBOSS_JAVA_SIZING=-Xmx${settings.JVM_RAM_MAX}\""
+      jvmOpts = "set \"JAVA_OPTS=%JBOSS_JAVA_SIZING%${optsToSet}\""
+      regexpSize = /\s*set\s+"JBOSS_JAVA_SIZING=-Xm.+/
+      regexpOpts = /\s*set\s+"JAVA_OPTS=%JBOSS_JAVA_SIZING%"/
+    } else {
+      jvmSize = "   JBOSS_JAVA_SIZING=\"-Xmx${settings.JVM_RAM_MAX}\""
+      jvmOpts = "   JAVA_OPTS=\"\$JBOSS_JAVA_SIZING -Djava.net.preferIPv4Stack=true${optsToSet}\""
+      regexpSize = /\s*JBOSS_JAVA_SIZING="-Xm.+/
+      regexpOpts = /\s*JAVA_OPTS="[$]JBOSS_JAVA_SIZING.+/
+
+    }
+    String destFilename = "${conf.path}.tmp"
+    conf.withReader {
+      it.transformLine(new FileWriter(destFilename)) { line ->
+        Matcher sizeMatcher = line =~ regexpSize
+        Matcher optsMatcher = line =~ regexpOpts
+        if (sizeMatcher.matches()) {
+          line = jvmSize
+        } else if (optsMatcher.matches()) {
+          line = jvmOpts
+        }
+        line
+      }
+    }
+    return new File(destFilename)
+  }
+
+  protected File replaceOldJavaOpts(File conf) {
+    String jvmOpts
+    def regexp
+    String optsToSet = settings.JVM_OPTS ? " ${settings.JVM_OPTS}" : ''
+    if (conf.name.endsWith('.bat')) {
+      jvmOpts = "set \"JAVA_OPTS=-Xmx${settings.JVM_RAM_MAX}${optsToSet}\""
+      regexp = /\s*set\s+"JAVA_OPTS=-Xm.+/
+    } else {
+      jvmOpts =
+          "JAVA_OPTS=\"-Xmx${settings.JVM_RAM_MAX} -Djava.net.preferIPv4Stack=true${optsToSet}\""
+      regexp = /\s*JAVA_OPTS="-Xm.+/
+    }
+    String destFilename = "${conf.path}.tmp"
+    conf.withReader {
+      it.transformLine(new FileWriter("${conf.path}.tmp")) { line ->
+        Matcher matcher = line =~ regexp
+        if (matcher.matches()) {
+          line = jvmOpts
+        }
+        line
+      }
+    }
+    return new File(destFilename)
   }
 
   private void installAdditionalModules() {
@@ -182,7 +222,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
             .useSettings(settings)
             .run(jboss: jboss)
       }
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       log.error("Error while running cli script: ${ex.message}", ex)
       throw ex
     }

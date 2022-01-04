@@ -62,7 +62,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
 
   @Override
   void apply(Project project) {
-    SilverpeasSetupExtension extension = createSilverpeasSetupExtention(project)
+    SilverpeasSetupExtension extension = createSilverpeasSetupExtension(project)
 
     // once the whole asked Silverpeas setup's tasks are done, the configuration context is saved
     project.gradle.buildFinished {
@@ -191,7 +191,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param project the Gradle project that uses the plugin to setup a Silverpeas distribution
    * @return the project extension of the plugin
    */
-  private SilverpeasSetupExtension createSilverpeasSetupExtention(Project project) {
+  private SilverpeasSetupExtension createSilverpeasSetupExtension(Project project) {
     SilverpeasSetupExtension extension = project.extensions.create(EXTENSION, SilverpeasSetupExtension, project)
     extension.settings = loadConfigurationProperties(extension.config.configurationHome.get())
     completeSettings(extension.settings, extension)
