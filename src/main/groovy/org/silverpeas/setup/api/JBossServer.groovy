@@ -51,6 +51,8 @@ class JBossServer {
 
   final String jbossHome
 
+  private boolean serverManagementAllIP
+
   private File redirection = null
 
   private long timeout = DEFAULT_TIMEOUT
@@ -165,9 +167,24 @@ class JBossServer {
    * @return itself.
    */
   JBossServer withStartingTimeout(long timeout) {
-    if (this.timeout > 0) {
+    if (timeout > 0) {
       this.timeout = timeout
     }
+    return this
+  }
+
+  /**
+   * By default, the management console is only available on the machine of the running wildfly
+   * at IP 127.0.0.1 and port 9990.
+   * This method allows the management console to be accessible from any server IP. This is useful
+   * with a client server which does not provide WEB browser (which is generally the case).
+   * By default, false (that means default wildfly behavior).
+   * This parameter only affects start and debug methods.
+   * @param isAllIp true to make the management accessible from any client.
+   * @return itself.
+   */
+  JBossServer setServerManagementAllIP(boolean isAllIp) {
+    this.serverManagementAllIP = isAllIp
     return this
   }
 
@@ -200,6 +217,7 @@ class JBossServer {
    * </ul>
    */
   void start(Map params = null) {
+    int managementPort = 9990
     boolean adminOnly = (params != null && params.adminOnly ? params.adminOnly:false)
     if (reloadRequired()) {
       reload()
@@ -209,6 +227,8 @@ class JBossServer {
       ProcessBuilder process
       if (adminOnly) {
         process = new ProcessBuilder(starter, '-c', 'standalone-full.xml', '--admin-only')
+      } else if (serverManagementAllIP) {
+        process = new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-bmanagement', '0.0.0.0', '-b', '0.0.0.0')
       } else {
         process = new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0')
       }
@@ -222,6 +242,10 @@ class JBossServer {
       }
       process.start()
       waitUntilRunning()
+      if (serverManagementAllIP) {
+        println ''
+        println "Silverpeas management console is accessible at server IP on port ${managementPort}"
+      }
     } else {
       logger.info 'A JBoss instance is already started'
     }
@@ -239,11 +263,20 @@ class JBossServer {
       stop()
     }
     if (!isStartingOrRunning()) {
+      int managementPort = 9990
       String p = (port <= 1000 ? '5005':String.valueOf(port))
-      ProcessBuilder process =
-          new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
-              .directory(new File(jbossHome))
-              .redirectErrorStream(true)
+      ProcessBuilder process
+      if (serverManagementAllIP) {
+        process =
+            new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-bmanagement', '0.0.0.0', '-b', '0.0.0.0', '--debug', p)
+                .directory(new File(jbossHome))
+                .redirectErrorStream(true)
+      } else {
+        process =
+            new ProcessBuilder(starter, '-c', 'standalone-full.xml', '-b', '0.0.0.0', '--debug', p)
+                .directory(new File(jbossHome))
+                .redirectErrorStream(true)
+      }
       if (redirection != null) {
         process.redirectOutput(redirection)
       } else {
@@ -252,6 +285,10 @@ class JBossServer {
       }
       process.start()
       waitUntilRunning()
+      println ''
+      if (serverManagementAllIP) {
+        println "Silverpeas management console is accessible at server IP on port ${managementPort}"
+      }
       println "Silverpeas Debugging Port is ${p}"
     } else {
       logger.info 'A JBoss instance is already started'
