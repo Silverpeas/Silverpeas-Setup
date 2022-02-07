@@ -164,17 +164,20 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
         Files.createTempFile('jboss-configuration-', '.cli').toString())
     log.info "CLI configuration scripts will be merged into ${cliScript.toFile().name}"
     Set<Script> scripts = new HashSet<>()
-    config.jbossConfigurationDir.get().listFiles(new FileFilter() {
-      @Override
-      boolean accept(final File child) {
-        return child.isFile()
-      }
-    }).each { File confFile ->
-      log.info "Load configuration file ${confFile.name}"
-      scripts.add(ConfigurationScriptBuilder.fromScript(confFile.path)
-          .mergeOnlyIfCLIInto(cliScript)
-          .build())
-    }
+    config.jbossConfigurationDir.get()
+        .listFiles(new FileFilter() {
+          @Override
+          boolean accept(final File child) {
+            return child.isFile()
+          }
+        })
+        .sort { it.name.toLowerCase() }
+        .each { File confFile ->
+          log.info "Load configuration file ${confFile.name}"
+          scripts.add(ConfigurationScriptBuilder.fromScript(confFile.path)
+              .mergeOnlyIfCLIInto(cliScript)
+              .build())
+        }
     try {
       scripts.each { aScript ->
         aScript
