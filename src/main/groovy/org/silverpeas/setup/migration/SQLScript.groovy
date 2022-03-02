@@ -53,6 +53,7 @@ class SQLScript extends AbstractScript {
   void run(Map<String, ?> args) throws SQLException {
     Sql sql = args.sql
     List<String> statements = loadSqlStatements()
+    logger.debug "  -> execute script ${script.name}..."
     sql.withBatch { batch ->
       statements.each {
         batch.addBatch(it)
