@@ -295,8 +295,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     settings.DB_DATASOURCE_JNDI = 'java:/datasources/silverpeas'
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
-        settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME}"
-        settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME}"
+        settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME};sendStringParametersAsUnicode=false"
+        settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME};sendStringParametersAsUnicode=false"
         settings.DB_DRIVER = 'net.sourceforge.jtds.jdbc.Driver'
         settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.MSSqlPersistenceManager'
         break

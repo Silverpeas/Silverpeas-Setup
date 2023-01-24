@@ -116,7 +116,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
       jvmSize = "    set \"JBOSS_JAVA_SIZING=-Xmx${settings.JVM_RAM_MAX}\""
       jvmOpts = "set \"JAVA_OPTS=%JBOSS_JAVA_SIZING%${optsToSet}\""
       regexpSize = /\s*set\s+"JBOSS_JAVA_SIZING=-Xm.+/
-      regexpOpts = /\s*set\s+"JAVA_OPTS=%JBOSS_JAVA_SIZING%"/
+      regexpOpts = /\s*set\s+"JAVA_OPTS=%JBOSS_JAVA_SIZING%.+/
     } else {
       jvmSize = "   JBOSS_JAVA_SIZING=\"-Xmx${settings.JVM_RAM_MAX}\""
       jvmOpts = "   JAVA_OPTS=\"\$JBOSS_JAVA_SIZING -Djava.net.preferIPv4Stack=true${optsToSet}\""
