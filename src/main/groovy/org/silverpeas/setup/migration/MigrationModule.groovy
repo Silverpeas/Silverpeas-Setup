@@ -26,6 +26,7 @@ package org.silverpeas.setup.migration
 import com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
+import groovy.xml.XmlSlurper
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.Script

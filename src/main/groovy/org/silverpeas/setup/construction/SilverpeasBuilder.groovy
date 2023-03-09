@@ -23,7 +23,8 @@
  */
 package org.silverpeas.setup.construction
 
-import groovy.util.slurpersupport.GPathResult
+import groovy.xml.slurpersupport.GPathResult
+import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
 import org.gradle.api.Project
 import org.gradle.util.GFileUtils

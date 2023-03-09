@@ -114,18 +114,25 @@ publishing {
 dependencies {
   api gradleApi()
   api 'org.apache.commons:commons-lang3:3.12.0'
-  api 'commons-io:commons-io:2.8.0'
-  api 'org.apache.commons:commons-dbcp2:2.8.0'
+  api 'commons-io:commons-io:2.11.0'
+  api 'org.apache.commons:commons-dbcp2:2.9.0'
   api 'commons-codec:commons-codec:1.15'
+  api 'com.google.guava:guava:31.0.1-jre'
   api 'javax.jcr:jcr:2.0'
-  api 'org.apache.jackrabbit:jackrabbit-core:2.20.2'
-  runtimeOnly 'org.eclipse.jetty:jetty-jndi:11.0.2'
-  runtimeOnly 'org.eclipse.jetty:jetty-util:11.0.2'
+  api 'org.apache.jackrabbit:oak-jcr:1.48.0'
+  api 'org.apache.jackrabbit:oak-segment-tar:1.48.0'
+  api 'org.apache.jackrabbit:oak-store-document:1.48.0'
+
+
+  runtimeOnly 'org.eclipse.jetty:jetty-jndi:11.0.14'
+  runtimeOnly 'org.eclipse.jetty:jetty-util:11.0.14'
   runtimeOnly 'com.h2database:h2:1.4.200'
-  runtimeOnly 'org.postgresql:postgresql:42.2.19'
+  runtimeOnly 'org.postgresql:postgresql:42.5.4'
   runtimeOnly 'net.sourceforge.jtds:jtds:1.3.1'
+  runtimeOnly 'io.dropwizard.metrics:metrics-core:3.2.6'
+  runtimeOnly 'org.mongodb:mongo-java-driver:3.12.11'
   testImplementation gradleTestKit()
-  testImplementation platform("org.spockframework:spock-bom:2.0-M5-groovy-3.0")
+  testImplementation platform("org.spockframework:spock-bom:2.3-groovy-3.0")
   testImplementation 'org.spockframework:spock-core'
   testImplementation 'org.spockframework:spock-junit4'
   testImplementation 'junit:junit:4.13.2'
@@ -148,5 +155,12 @@ task sourceJar(type: Jar) {
 }
 
 processTestResources {
-  filter(ReplaceTokens, tokens:[buildDir: buildDir.path.replace('\\', '/')], beginToken: '${', endToken: '}')
+  filesMatching('**/*.properties') {
+    filter(ReplaceTokens,
+        tokens: [buildDir: buildDir.path.replace('\\', '/')], beginToken: '${', endToken: '}')
+  }
+  filesMatching('**/*.xml') {
+    filter(ReplaceTokens,
+        tokens: [buildDir: buildDir.path.replace('\\', '/')], beginToken: '${', endToken: '}')
+  }
 }

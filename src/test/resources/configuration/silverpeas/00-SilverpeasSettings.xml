@@ -15,12 +15,6 @@
       <parameter key="timeoutSchedule">* 0,4,8,12,16,20 * * *</parameter>
     </configfile>
 
-    <configfile name="workflow/castorSettings.properties">
-      <parameter key="CastorJDODatabaseFileURL">
-        ${env.SILVERPEAS_HOME}/resources/instanceManager/database.xml
-      </parameter>
-    </configfile>
-
   </fileset>
 
 </silverpeas-settings>

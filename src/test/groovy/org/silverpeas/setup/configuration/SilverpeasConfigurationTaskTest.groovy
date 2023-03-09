@@ -40,7 +40,6 @@ class SilverpeasConfigurationTaskTest {
 
     assertThePropertiesFileAreCorrectlyConfigured(testProperties)
     assertTheCustomerWorkflowIsCorrectlyConfigured(testProperties)
-    assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(testProperties)
     assertTheConfigContextIsCorrectlySaved(testProperties)
   }
 
@@ -126,27 +125,6 @@ class SilverpeasConfigurationTaskTest {
 
     assert after.scheduler['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *' &&
         after.scheduler['timeoutSchedule'] != before.scheduler['timeoutSchedule']
-
-    assert after.castorSettings['CastorJDODatabaseFileURL'] != before.castorSettings['CastorJDODatabaseFileURL'] &&
-        !after.castorSettings['CastorJDODatabaseFileURL'].empty
-  }
-
-  void assertTheWorkflowEngineIsCorrectlyConfiguredByGroovyScript(TestProperties props) {
-    // the JDO Castor doesn't support H2, so the engine is set up by default to postgresql
-    def before = props.xmlconf.before
-    def after = props.xmlconf.after
-
-    assert after.workflowDatabaseConf.@engine == 'postgresql' &&
-        after.workflowDatabaseConf.@engine.text() != before.workflowDatabaseConf.@engine.text()
-    assert after.workflowDatabaseConf.database.@engine == 'postgresql' &&
-        after.workflowDatabaseConf.database.@engine.text() != before.workflowDatabaseConf.database.@engine.text()
-    assert after.workflowDatabaseConf.database.mapping.@href.text() ==
-        "file:///${System.getProperty('SILVERPEAS_HOME')}/resources/instanceManager/mapping.xml"
-
-    assert after.workflowFastDatabaseConf.@engine == 'postgresql' &&
-        after.workflowFastDatabaseConf.@engine.text() != before.workflowFastDatabaseConf.@engine.text()
-    assert after.workflowFastDatabaseConf.mapping.@href.text() ==
-        "file:///${System.getProperty('SILVERPEAS_HOME')}/resources/instanceManager/fast_mapping.xml"
   }
 
   void assertTheConfigContextIsCorrectlySaved(TestProperties props) {

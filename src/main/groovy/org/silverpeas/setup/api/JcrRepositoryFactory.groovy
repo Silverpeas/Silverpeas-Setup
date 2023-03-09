@@ -23,15 +23,19 @@
  */
 package org.silverpeas.setup.api
 
-import groovy.xml.XmlUtil
-import org.apache.jackrabbit.core.RepositoryImpl
-import org.apache.jackrabbit.core.config.RepositoryConfig
+import org.apache.jackrabbit.oak.Oak
+import org.apache.jackrabbit.oak.jcr.Jcr
+import org.apache.jackrabbit.oak.plugins.document.DocumentNodeStore
+import org.apache.jackrabbit.oak.plugins.document.mongo.MongoDocumentNodeStoreBuilder
+import org.apache.jackrabbit.oak.segment.SegmentNodeStoreBuilders
+import org.apache.jackrabbit.oak.segment.file.FileStore
+import org.apache.jackrabbit.oak.segment.file.FileStoreBuilder
+import org.apache.jackrabbit.oak.spi.state.NodeStore
+import org.gradle.internal.impldep.com.google.common.util.concurrent.MoreExecutors
 
 import javax.jcr.Repository
-import javax.jcr.RepositoryException
-import javax.naming.InitialContext
-import javax.naming.NameNotFoundException
-import javax.xml.parsers.SAXParserFactory
+import java.nio.file.Path
+
 /**
  * A factory to create instances of JCR Repository from configuration properties.
  * @author mmoquillon
@@ -39,63 +43,73 @@ import javax.xml.parsers.SAXParserFactory
 @Singleton(lazy = true)
 class JcrRepositoryFactory {
 
-  private static final String JCR_HOME = 'jcr.home.dir'
-  private static final String JCR_CONFIG_FILE = '/repository.xml'
-
-  private File repositoryConf
-
-  private synchronized File getRepositoryConfiguration(Map settings) {
-    if (!repositoryConf) {
-      initJNDIContext()
-      File destination = File.createTempFile('repository', 'xml')
-
-      SAXParserFactory factory = SAXParserFactory.newInstance()
-      factory.validating = false
-      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-          false)
-      def jcrRepositoryConf = new XmlSlurper(
-          factory.newSAXParser()).parse(getClass().getResourceAsStream(JCR_CONFIG_FILE))
-      jcrRepositoryConf.Workspace.PersistenceManager.@class =
-          settings.JACKRABBIT_PERSISTENCE_MANAGER
-      jcrRepositoryConf.Workspace.PersistenceManager.param.find {
-        it.@name == 'schema'
-      }.@value = settings.DB_SCHEMA
-      jcrRepositoryConf.Versioning.PersistenceManager.@class =
-          settings.JACKRABBIT_PERSISTENCE_MANAGER
-
-      XmlUtil.serialize(jcrRepositoryConf, new FileWriter(destination))
-      repositoryConf = destination
-    }
-    return repositoryConf
-  }
-
-  private static void initJNDIContext() {
-    DataSourceProvider dataSourceProvider = ManagedBeanContainer.get(DataSourceProvider)
-    InitialContext ic = new InitialContext()
-    try {
-      ic.lookup('java:/datasources/DocumentStore')
-    } catch(NameNotFoundException e) {
-      ic.createSubcontext('java:/datasources')
-      ic.bind('java:/datasources/DocumentStore', dataSourceProvider.dataSource)
-    }
-  }
-
   /**
    * Creates an instance mapping to the JCR repository used by Silverpeas.
    * @return a JCR repository instance.
    */
-  Repository createRepository(Map settings) {
+  DisposableRepository createRepository(Map settings) {
     try {
-      File repositoryConf = getRepositoryConfiguration(settings)
-      Properties jcrProperties = new Properties()
-      jcrProperties.load(new FileInputStream(
-          "${settings.SILVERPEAS_HOME}/properties/org/silverpeas/util/jcr.properties"))
-      String jcrHomePath = jcrProperties[JCR_HOME]
-
-      RepositoryConfig config = RepositoryConfig.create(repositoryConf.path, jcrHomePath)
-      return RepositoryImpl.create(config)
-    } catch (IOException | RepositoryException ex) {
+      Properties properties = new Properties()
+      properties.load(new FileInputStream("${settings.JCR_HOME}/silverpeas-oak.properties"))
+      DisposableRepository repository
+      switch (properties['storage']) {
+        case 'segment':
+          repository = getSegmentNodeStoreRepository("${settings.JCR_HOME}", properties)
+          break
+        case 'document':
+          repository = getDocumentNodeStoreRepository(properties)
+          break
+        default:
+          throw new RuntimeException("Storage ${properties['storage']} no supported!")
+      }
+      return repository
+    } catch (Exception ex) {
       throw new RuntimeException(ex.getMessage(), ex)
+    }
+  }
+
+  private static DisposableRepository getSegmentNodeStoreRepository(String jcrHomePath, Properties properties) {
+    String repo =
+        properties['segment.repository'] ? properties['segment.repository'] : 'segmentstore'
+    Path repoPath = Path.of(repo)
+    Path segmentStorePath =
+        repoPath.isAbsolute() ? repoPath : Path.of(jcrHomePath).resolve(repoPath)
+
+    FileStore fs = FileStoreBuilder.fileStoreBuilder(segmentStorePath.toFile()).build()
+    NodeStore ns = SegmentNodeStoreBuilders.builder(fs).build()
+    return new DisposableRepository(repository: new Jcr(new Oak(ns)).createRepository(), fs: fs)
+  }
+
+  private static DisposableRepository getDocumentNodeStoreRepository(Properties properties) {
+    String uri =
+        properties['document.uri'] ? properties['document.uri'] : 'mongodb://localhost:27017'
+    String db = properties['document.db'] ? properties['document.db'] : 'oak'
+    int blobCacheSize =
+        properties['document.blobCacheSize'] ? properties['document.blobCacheSize'] as int : 16
+
+    DocumentNodeStore ns = MongoDocumentNodeStoreBuilder.newMongoDocumentNodeStoreBuilder()
+        .setExecutor(MoreExecutors.newDirectExecutorService())
+        .setMongoDB(uri, db, blobCacheSize)
+        .build()
+    return new DisposableRepository(repository: new Jcr(new Oak(ns)).createRepository(), dns: ns)
+  }
+
+  static class DisposableRepository implements Repository {
+    @Delegate
+    Repository repository
+    private FileStore fs
+    private DocumentNodeStore dns
+
+    /**
+     * Disposes this repository. It frees all the allocated resources to access the JCR. It is
+     * required to invoke this method once all the works with the JCR is done.
+     */
+    void dispose() {
+      if (fs) {
+        fs.close()
+      } else if (dns) {
+        dns.dispose()
+      }
     }
   }
 }

@@ -1,6 +1,7 @@
 package org.silverpeas.setup.configuration
 
-import groovy.util.slurpersupport.GPathResult
+import groovy.xml.XmlSlurper
+import groovy.xml.slurpersupport.GPathResult
 
 /**
  * A set of properties to use in the tests on the Silverpeas configuration.
@@ -46,31 +47,27 @@ class TestProperties {
   TestProperties() {
   }
 
+  @SuppressWarnings('GroovyAssignabilityCheck')
   TestProperties before() {
     settings.before.autDomainSQL = loadPropertiesFrom('authentication/autDomainSQL.properties')
     settings.before.system = loadPropertiesFrom('systemSettings.properties')
     settings.before.scheduler = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
-    settings.before.castorSettings = loadPropertiesFrom('workflow/castorSettings.properties')
 
     xmlconf.before.adefCreateSupplier = loadXmlFileFrom('/data/workflowRepository/ADEFCreateSupplier.xml')
     xmlconf.before.adefCreateProduct = loadXmlFileFrom('/data/workflowRepository/ADEFCreateProduct.xml')
-    xmlconf.before.workflowDatabaseConf = loadXmlFileFrom('/resources/instanceManager/database.xml')
-    xmlconf.before.workflowFastDatabaseConf = loadXmlFileFrom('/resources/instanceManager/fast_database.xml')
 
     configContext.before = loadKeyValuesFileFrom('/configuration/.context')
     return this
   }
 
+  @SuppressWarnings('GroovyAssignabilityCheck')
   TestProperties after() {
     settings.after.autDomainSQL = loadPropertiesFrom('authentication/autDomainSQL.properties')
     settings.after.system = loadPropertiesFrom('systemSettings.properties')
     settings.after.scheduler = loadPropertiesFrom('workflow/engine/schedulerSettings.properties')
-    settings.after.castorSettings = loadPropertiesFrom('workflow/castorSettings.properties')
 
     xmlconf.after.adefCreateSupplier = loadXmlFileFrom('/data/workflowRepository/ADEFCreateSupplier.xml')
     xmlconf.after.adefCreateProduct = loadXmlFileFrom('/data/workflowRepository/ADEFCreateProduct.xml')
-    xmlconf.after.workflowDatabaseConf = loadXmlFileFrom('/resources/instanceManager/database.xml')
-    xmlconf.after.workflowFastDatabaseConf = loadXmlFileFrom('/resources/instanceManager/fast_database.xml')
 
     configContext.after = loadKeyValuesFileFrom('/configuration/.context')
     return this

@@ -1,6 +1,7 @@
 package org.silverpeas.setup.configuration
 
-import groovy.util.slurpersupport.GPathResult
+import groovy.xml.XmlSlurper
+import groovy.xml.slurpersupport.GPathResult
 import org.silverpeas.setup.api.AbstractScript
 import org.silverpeas.setup.api.ManagedBeanContainer
 import org.silverpeas.setup.api.SilverpeasSetupService
