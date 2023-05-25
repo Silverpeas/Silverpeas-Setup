@@ -76,8 +76,10 @@ class JBossServer {
     }
   }
 
+  @SuppressWarnings('unused')
   private void assertJBossIsRunning()  {
     if (!isRunning()) {
+      //noinspection GroovyAccessibility
       throw new AssertionError('JBoss not running')
     }
   }
@@ -90,6 +92,7 @@ class JBossServer {
       if (!rollBacked) {
         throw new InvalidObjectException(msg)
       }
+      //noinspection GroovyAccessibility
       throw new AssertionError(msg)
     }
   }
@@ -102,7 +105,7 @@ class JBossServer {
   private void waitUntilRunning() {
     logger.formatInfo(' %s', '.')
     String status = this.status()
-    long start = System.currentTimeMillis();
+    long start = System.currentTimeMillis()
     while(!running(status)) {
       if (reloadRequired(status)) {
         this.reload()
@@ -183,6 +186,7 @@ class JBossServer {
    * @param isAllIp true to make the management accessible from any client.
    * @return itself.
    */
+  @SuppressWarnings('unused')
   JBossServer setServerManagementAllIP(boolean isAllIp) {
     this.serverManagementAllIP = isAllIp
     return this
@@ -194,6 +198,7 @@ class JBossServer {
    * A JBoss/Wildfly instance should be running.
    * @return the server name and version.
    */
+  @SuppressWarnings('unused')
   String about() {
     def proc = """${cli} --connect --commands=:read-attribute(name=product-name),:read-attribute(name=product-version)""".execute()
     proc.waitFor()
@@ -219,7 +224,7 @@ class JBossServer {
   void start(Map params = null) {
     int managementPort = 9990
     boolean adminOnly = (params != null && params.adminOnly ? params.adminOnly:false)
-    if (reloadRequired()) {
+    if (reloadRequired(this.status())) {
       reload()
       stop()
     }
@@ -257,8 +262,9 @@ class JBossServer {
    * @param port the debugging port. If lesser or equal to 1000 or not specified, the default port
    * 5005 will be used.
    */
+  @SuppressWarnings('unused')
   void debug(int port = 5005) {
-    if (reloadRequired()) {
+    if (reloadRequired(this.status())) {
       reload()
       stop()
     }
@@ -318,19 +324,19 @@ class JBossServer {
     proc.waitFor()
   }
 
-  private boolean running(String status) {
+  private static boolean running(String status) {
     return status == 'running'
   }
 
-  private boolean starting(String status) {
+  private static boolean starting(String status) {
     return status == 'starting'
   }
 
-  private boolean stopped(String status) {
+  private static boolean stopped(String status) {
     return status == 'stopped'
   }
 
-  private boolean reloadRequired(String status) {
+  private static boolean reloadRequired(String status) {
     return status == 'reload-required'
   }
 
@@ -346,6 +352,7 @@ class JBossServer {
    * Is a JBoss/Wildfly instance being starting?
    * @return true if an instance of JBoss/Wildfly is being starting, false otherwise.
    */
+  @SuppressWarnings('unused')
   boolean isStarting() {
     return starting(status())
   }
@@ -364,6 +371,7 @@ class JBossServer {
    * Is a JBoss/Wildfly instance stopped?
    * @return true if an instance of JBoss/Wildfly is stopped, false otherwise.
    */
+  @SuppressWarnings('unused')
   boolean isStopped() {
     return stopped(status())
   }
@@ -391,6 +399,7 @@ class JBossServer {
    * @return true if JBoss/Wildfly is already configured for Silverpeas, false otherwise. This
    * method returns true even if the configuration for Silverpeas isn't complete.
    */
+  @SuppressWarnings('unused')
   boolean isAlreadyConfigured() {
     String config = new File("${jbossHome}/standalone/configuration/standalone-full.xml").text
     return config.contains('java:/datasources/DocumentStore') &&
@@ -502,6 +511,7 @@ class JBossServer {
    * @param artifact the name of the artifact to undeploy.
    * @throws RuntimeException if the deployment of the artifact failed.
    */
+  @SuppressWarnings('unused')
   void undeploy(String artifact) throws RuntimeException {
     Process proc = executeCliCommand("/deployment=${artifact}:undeploy()")
     proc.waitFor()

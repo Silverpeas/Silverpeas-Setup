@@ -107,7 +107,7 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
 
   @Override
   void buildFinished(final BuildResult result) {
-    JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome.path)
+    JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome.path as String)
     String status = "JBoss is ${jboss.status()}"
     String buildDuration = "The whole tasks took ${(long)((System.currentTimeMillis() - startTimestamp) / 1000)}s"
     if (buildStarted) {

@@ -41,6 +41,7 @@ class SoftwareBundles {
     this.silverpeas.setFrom(bundles)
   }
 
+  @SuppressWarnings('unused')
   void setTiers(FileCollection bundles) {
     this.tiers.setFrom(bundles)
   }

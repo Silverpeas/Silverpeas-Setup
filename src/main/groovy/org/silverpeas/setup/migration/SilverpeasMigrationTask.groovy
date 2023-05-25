@@ -168,7 +168,7 @@ class SilverpeasMigrationTask extends SilverpeasSetupTask {
   private void fetchModuleStatusFromDb(Sql sql, def status) {
     log.info 'This is an upgrade'
     sql.eachRow('SELECT sr_package, sr_version FROM sr_packages') { row ->
-      status[row.sr_package] = row.sr_version
+      status[row.sr_package as String] = row.sr_version as String
     }
   }
 

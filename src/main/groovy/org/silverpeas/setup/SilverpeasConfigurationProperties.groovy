@@ -62,7 +62,7 @@ class SilverpeasConfigurationProperties {
   final Property<File> silverpeasConfigurationDir
 
   /**
-   * The directory that contains the additional JBoss/Wildfly modules to install in JBoss/Wildfy
+   * The directory that contains the additional JBoss/Wildfly modules to install in JBoss/Wildfly
    * for Silverpeas. By default SILVERPEAS_HOME/configuration/jboss/modules.
    */
   @Input

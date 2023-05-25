@@ -53,18 +53,21 @@ class XmlSettingsScript extends AbstractScript {
     }
 
     settingsStatements.fileset.each { GPathResult fileset ->
-      String dir = service.expanseVariables(fileset.@root.text())
-      fileset.children().each { GPathResult file ->
+      String dir = service.expanseVariables(fileset.@root.text() as String)
+      fileset.children().forEach { GPathResult file ->
         String status = '[OK]'
+        //noinspection GroovyAccessibility
         String filename = file.@name
         String settingFile = "${pathToLog(dir, settings.SILVERPEAS_HOME)}/${filename}"
         logger.info "${settingFile} processing..."
         try {
           switch (file.name()) {
             case 'configfile':
+              //noinspection GroovyAssignabilityCheck
               updateConfigurationFile(service, "${dir}/${filename}", file.parameter)
               break
             case 'xmlfile':
+              //noinspection GroovyAssignabilityCheck
               updateXmlFile(service, "${dir}/${filename}", file.parameter)
           }
         } catch (Exception ex) {
@@ -79,21 +82,21 @@ class XmlSettingsScript extends AbstractScript {
     logger.info "${script.name} scanning done."
   }
 
-  private void updateConfigurationFile(SilverpeasSetupService service, String configurationFilePath,
+  private static void updateConfigurationFile(SilverpeasSetupService service, String configurationFilePath,
                                        GPathResult parameters) {
     Map<String, String> properties = [:]
-    parameters.each { GPathResult parameter ->
-      properties[parameter.@key.text()] = service.expanseVariables(parameter.text())
+    parameters.forEach { GPathResult parameter ->
+      properties[parameter.@key.text() as String] = service.expanseVariables(parameter.text())
     }
     service.updateProperties(configurationFilePath, properties)
   }
 
-  private void updateXmlFile(SilverpeasSetupService service, String xmlFilePath,
+  private static void updateXmlFile(SilverpeasSetupService service, String xmlFilePath,
                              GPathResult parameters) {
     Document xml = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File(xmlFilePath))
     XPath xpath = XPathFactory.newInstance().newXPath()
-    parameters.each { GPathResult parameter ->
-      def nodes = xpath.evaluate(parameter.@key.text(), xml, XPathConstants.NODESET)
+    parameters.forEach { GPathResult parameter ->
+      def nodes = xpath.evaluate(parameter.@key.text() as String, xml, XPathConstants.NODESET)
       nodes.each { Node node ->
         if (node.nodeType == Node.ATTRIBUTE_NODE) {
           node.nodeValue = service.expanseVariables(parameter.text())
@@ -107,7 +110,7 @@ class XmlSettingsScript extends AbstractScript {
     transformer.transform(new DOMSource(xml), new StreamResult(new File(xmlFilePath)))
   }
 
-  private String pathToLog(String filePath, String silverpeasHomePath) {
+  private static String pathToLog(String filePath, String silverpeasHomePath) {
     String relativeFilePath = filePath
     if (relativeFilePath.startsWith(silverpeasHomePath)) {
       relativeFilePath = filePath.substring(silverpeasHomePath.length() + 1)

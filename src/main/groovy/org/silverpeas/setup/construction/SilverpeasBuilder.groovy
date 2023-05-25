@@ -55,10 +55,6 @@ class SilverpeasBuilder {
   Map settings
   boolean developmentMode
 
-  SilverpeasBuilder(final Project project) {
-    this(project, FileLogger.getLogger('builder'))
-  }
-
   SilverpeasBuilder(final Project project, final FileLogger logger) {
     this.project = project
     this.logger = logger
@@ -148,6 +144,7 @@ class SilverpeasBuilder {
    * @param bundles all the software bundles that made Silverpeas.
    * @return the Silverpeas Core War bundle.
    */
+  @SuppressWarnings('GrMethodMayBeStatic')
   File findSilverpeasCoreWarBundle(Collection<File> bundles) {
     bundles.find { it.name.startsWith(CORE_WAR_BUNDLE_ID) }
   }
@@ -181,32 +178,26 @@ class SilverpeasBuilder {
 
   private void extractRarBundle(File rar, File destinationDir) {
     logger.info "JCA found: ${rar.name}"
-    project.copy {
-      it.from(rar) {
-        String nameWithoutVersion = rar.name
-        Matcher matching = BUNDLE_NAME_PATTERN.matcher(rar.name)
-        matching.each {
-          nameWithoutVersion = it[1] + it[3]
-        }
-        it.rename rar.name, nameWithoutVersion
-      }
-      it.into destinationDir
-    }
+    extractFile(rar, destinationDir)
   }
 
-  private void extractJdbcDriver(File driver, File desinationDir) {
+  private void extractJdbcDriver(File driver, File destinationDir) {
     logger.info "JDBC driver found: ${driver.name}"
     // h2 is already provided by JBoss >= 8
+    extractFile(driver, destinationDir)
+  }
+
+  private extractFile(File file, File destinationDir) {
     project.copy {
-      it.from(driver) {
-        String nameWithoutVersion = driver.name
-        Matcher matching = BUNDLE_NAME_PATTERN.matcher(driver.name)
+      it.from(file) {
+        String nameWithoutVersion = file.name
+        Matcher matching = BUNDLE_NAME_PATTERN.matcher(file.name)
         matching.each {
           nameWithoutVersion = it[1] + it[3]
         }
-        it.rename driver.name, nameWithoutVersion
+        it.rename file.name, nameWithoutVersion
       }
-      it.into desinationDir
+      it.into destinationDir
     }
   }
 
@@ -219,6 +210,7 @@ class SilverpeasBuilder {
     }
   }
 
+  @SuppressWarnings('GroovyAccessibility')
   private void compileWebDescriptor(File sourceDir) {
     // merge all of the web.xml from the different WARs into a single one
     logger.info "Compile the web.xml from all the web descriptors of the WARs"
@@ -291,8 +283,8 @@ class SilverpeasBuilder {
     final File silverpeasDataHome = new File(silverpeasHome, 'data')
     final File silverpeasWebDataHome = new File(silverpeasDataHome, 'web')
 
-    final File dataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_HOME))
-    final File webDataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_WEB))
+    final File dataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_HOME as String))
+    final File webDataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_WEB as String))
 
     if (webDataDestinationDir != silverpeasWebDataHome) {
       logger.info "Move content of ${silverpeasWebDataHome.path} into ${webDataDestinationDir.path}"

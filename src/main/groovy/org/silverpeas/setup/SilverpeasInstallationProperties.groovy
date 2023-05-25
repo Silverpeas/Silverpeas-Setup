@@ -67,6 +67,7 @@ class SilverpeasInstallationProperties {
     bundles = project.objects.newInstance(SoftwareBundles, project)
   }
 
+  @SuppressWarnings('unused')
   void bundles(Action<? extends SoftwareBundles> action) {
     action.execute(bundles)
   }

@@ -25,6 +25,7 @@ package org.silverpeas.setup
 
 
 import org.gradle.api.*
+import org.gradle.api.tasks.TaskProvider
 import org.silverpeas.setup.api.*
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
@@ -72,44 +73,56 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     JBossServer jBossServer = new JBossServer(extension.jbossHome.path)
     initializePluginParameters(project, jBossServer)
 
-    Task construction = project.tasks.create(CONSTRUCT.name, SilverpeasConstructionTask) {
-      it.silverpeasHome = extension.silverpeasHome
-      it.installation = extension.installation
-      it.settings = extension.settings
+    TaskProvider<Task> construction = project.tasks.register(CONSTRUCT.name, SilverpeasConstructionTask) {
+      silverpeasHome = extension.silverpeasHome
+      installation = extension.installation
+      settings = extension.settings
     }
 
-    Task jbossConf = project.tasks.create(CONFIGURE_JBOSS.name, JBossConfigurationTask) {
-      it.driversDir = extension.installation.dsDriversDir.get()
-      it.config = extension.config
-      it.jboss = jBossServer
-      it.settings = extension.settings
+    TaskProvider<JBossConfigurationTask> jbossConf =
+            project.tasks.register(CONFIGURE_JBOSS.name, JBossConfigurationTask) {
+      driversDir = extension.installation.dsDriversDir.get()
+      config = extension.config
+      jboss = jBossServer.useLogger(log)
+      settings = extension.settings
     }
 
-    Task silverpeasConf = project.tasks.create(CONFIGURE_SILVERPEAS.name, SilverpeasConfigurationTask) {
-      it.silverpeasHome = extension.silverpeasHome
-      it.config = extension.config
-      it.settings = extension.settings
-    }.dependsOn(construction)
+    TaskProvider<SilverpeasConfigurationTask> silverpeasConf =
+            project.tasks.register(CONFIGURE_SILVERPEAS.name, SilverpeasConfigurationTask) {
+      dependsOn construction
 
-    Task configuration = project.tasks.create(CONFIGURE.name) {
-      it.description = 'Configures both JBoss and Silverpeas'
-      it.group = 'Build'
-    }.doFirst {
-      ((JBossConfigurationTask) jbossConf).configureJBoss()
-    }.doLast {
-      ((SilverpeasConfigurationTask) silverpeasConf).configureSilverpeas()
-    }.dependsOn(construction)
+      silverpeasHome = extension.silverpeasHome
+      config = extension.config
+      settings = extension.settings
+    }
 
-    Task migration = project.tasks.create(MIGRATE.name, SilverpeasMigrationTask) {
-      it.migration = extension.migration
-      it.settings = extension.settings
-    }.dependsOn(configuration)
+    TaskProvider<Task> configuration = project.tasks.register(CONFIGURE.name) {
+      description = 'Configures both JBoss/Wildfly and Silverpeas'
+      group = 'Build'
+      dependsOn construction
 
-    project.tasks.create(INSTALL.name, SilverpeasInstallationTask) {
-      it.installation = extension.installation
-      it.settings = extension.settings
-      it.jboss = jBossServer
-    }.dependsOn(construction, configuration, migration)
+      doFirst {
+        jbossConf.get().configureJBoss()
+      }
+      doLast {
+        silverpeasConf.get().configureSilverpeas()
+      }
+    }
+
+    TaskProvider<Task> migration = project.tasks.register(MIGRATE.name, SilverpeasMigrationTask) {
+      dependsOn configuration
+
+      migration = extension.migration
+      settings = extension.settings
+    }
+
+    project.tasks.register(INSTALL.name, SilverpeasInstallationTask) {
+      dependsOn migration
+
+      installation = extension.installation
+      settings = extension.settings
+      jboss = jBossServer.useLogger(log)
+    }
 
     initializePredefinedTasks(project, extension)
   }
@@ -123,25 +136,28 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   private static void setUpGradleAssemblingTaskForThisPlugin(Project project,
                                                              SilverpeasSetupExtension extension) {
     try {
-      Task assemble = project.tasks.getByName(ASSEMBLE.name).doLast {
-        if (!extension.installation.distDir.get().exists()) {
-          extension.installation.distDir.get().mkdirs()
+      TaskProvider<Task> assemble = project.tasks.named(ASSEMBLE.name)
+      assemble.configure {
+        description = 'Assemble all the software bundles that made Silverpeas'
+        onlyIf {
+          !extension.installation.distDir.get().exists() &&
+                  !extension.installation.dsDriversDir.get().exists()
         }
-        SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
-        builder.driversDir = extension.installation.dsDriversDir.get()
-        builder.silverpeasHome = extension.silverpeasHome
-        builder.settings = extension.settings
-        builder.extractSoftwareBundles(extension.installation.bundles,
-            extension.installation.distDir.get())
-      }
-      assemble.description = 'Assemble all the software bundles that made Silverpeas'
-      assemble.onlyIf {
-        !extension.installation.distDir.get().exists() &&
-            !extension.installation.dsDriversDir.get().exists()
-      }
-      assemble.outputs.upToDateWhen {
-        extension.installation.distDir.get().exists() &&
-            extension.installation.dsDriversDir.get().exists()
+        outputs.upToDateWhen {
+          extension.installation.distDir.get().exists() &&
+                  extension.installation.dsDriversDir.get().exists()
+        }
+        doLast {
+          if (!extension.installation.distDir.get().exists()) {
+            extension.installation.distDir.get().mkdirs()
+          }
+          SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(name))
+          builder.driversDir = extension.installation.dsDriversDir.get()
+          builder.silverpeasHome = extension.silverpeasHome
+          builder.settings = extension.settings
+          builder.extractSoftwareBundles(extension.installation.bundles,
+                  extension.installation.distDir.get())
+        }
       }
     } catch (UnknownTaskException e) {
       // nothing to do
@@ -159,25 +175,28 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   private static void setUpGradleBuildTaskForThisPlugin(Project project,
                                                         SilverpeasSetupExtension extension) {
     try {
-      Task build = project.tasks.getByName(BUILD.name).doLast {
-        SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(delegate.name))
-        builder.silverpeasHome = extension.silverpeasHome
-        builder.settings = extension.settings
-        builder.developmentMode = extension.installation.developmentMode.get()
-        builder.generateSilverpeasApplication(extension.installation.distDir.get())
-      }
-      build.description = 'Build the Silverpeas Collaborative Web Application'
-      build.onlyIf {
-        extension.installation.distDir.get().exists()
-      }
-      build.outputs.upToDateWhen {
-        boolean ok = extension.installation.distDir.get().exists() &&
-            Files.exists(Paths.get(extension.installation.distDir.get().path, 'WEB-INF', 'web.xml'))
-        if (!extension.installation.developmentMode.get()) {
-          ok = ok && Files.exists(
-              Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))
+      TaskProvider<Task> build = project.tasks.named(BUILD.name)
+      build.configure {
+        description = 'Build the Silverpeas Collaborative Web Application'
+        onlyIf {
+          extension.installation.distDir.get().exists()
         }
-        return ok
+        outputs.upToDateWhen {
+          boolean ok = extension.installation.distDir.get().exists() &&
+                  Files.exists(Paths.get(extension.installation.distDir.get().path, 'WEB-INF', 'web.xml'))
+          if (!extension.installation.developmentMode.get()) {
+            ok = ok && Files.exists(
+                    Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))
+          }
+          return ok
+        }
+        doLast {
+          SilverpeasBuilder builder = new SilverpeasBuilder(project, FileLogger.getLogger(name))
+          builder.silverpeasHome = extension.silverpeasHome
+          builder.settings = extension.settings
+          builder.developmentMode = extension.installation.developmentMode.get()
+          builder.generateSilverpeasApplication(extension.installation.distDir.get())
+        }
       }
     } catch (UnknownTaskException e) {
       // nothing to do
@@ -296,21 +315,24 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
         settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME};sendStringParametersAsUnicode=false"
-        settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME};sendStringParametersAsUnicode=false"
+        if (settings.JCR_NAME) {
+          settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME};sendStringParametersAsUnicode=false"
+        }
         settings.DB_DRIVER = 'net.sourceforge.jtds.jdbc.Driver'
-        settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.MSSqlPersistenceManager'
         break
       case 'ORACLE':
         settings.DB_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.DB_NAME}"
-        settings.JCR_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.JCR_NAME}"
+        if (settings.JCR_NAME) {
+          settings.JCR_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.JCR_NAME}"
+        }
         settings.DB_DRIVER = 'oracle.jdbc.driver.OracleDriver'
-        settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.OraclePersistenceManager'
         break
       case 'POSTGRESQL':
         settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}"
-        settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}"
+        if (settings.JCR_NAME) {
+          settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}"
+        }
         settings.DB_DRIVER = 'org.postgresql.Driver'
-        settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.PostgreSQLPersistenceManager'
         break
       case 'H2':
         if (settings.DB_SERVER == ':file:') {
@@ -318,13 +340,16 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           if (!Files.exists(databaseDirPath))
             Files.createDirectory(databaseDirPath)
           settings.DB_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.DB_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
-          settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+          if (settings.JCR_NAME) {
+            settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+          }
         } else {
           settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
-          settings.JCR_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"
+          if (settings.JCR_NAME) {
+            settings.JCR_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"
+          }
         }
         settings.DB_DRIVER = 'org.h2.Driver'
-        settings.JACKRABBIT_PERSISTENCE_MANAGER = 'org.apache.jackrabbit.core.persistence.pool.H2PersistenceManager'
         break
       default:
         throw new IllegalArgumentException("Unsupported database system: ${settings.DB_SERVERTYPE}")

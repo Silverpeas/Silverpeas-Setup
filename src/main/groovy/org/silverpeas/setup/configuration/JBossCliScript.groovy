@@ -49,7 +49,7 @@ class JBossCliScript extends AbstractScript {
    * @param args a Map of variables to pass to the scripts. The keys in the Map are the names of the
    * variables. Expected the following:
    * <ul>
-   *  <li><em>iboss</em>: the running JBoss/Wildfly instance against which the script will be
+   *  <li><em>jboss</em>: the running JBoss/Wildfly instance against which the script will be
    *  performed.</li>
    * </ul>
    * @throws RuntimeException if an error occurs during the execution of the script.
@@ -57,7 +57,7 @@ class JBossCliScript extends AbstractScript {
   @Override
   void run(Map<String, ?> args) throws RuntimeException {
     try {
-      JBossServer jboss = args.jboss
+      JBossServer jboss = args.jboss as JBossServer
       String fileBaseName = FilenameUtils.getBaseName(script.name)
       Path cli = Files.createTempFile("${fileBaseName}-", '.cli')
       logger.info "Prepare ${script.name} into ${cli.fileName}"

@@ -27,6 +27,7 @@ import org.apache.commons.dbcp2.cpdsadapter.DriverAdapterCPDS
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 
 import javax.sql.DataSource
+import java.time.Duration
 
 /**
  * A provider of the DataSource object used to access the database.
@@ -34,7 +35,7 @@ import javax.sql.DataSource
  */
 class DataSourceProvider {
 
-  private final DataSource dataSource
+  public final DataSource dataSource
 
   DataSourceProvider(final Map<String, String> settings) {
     Objects.requireNonNull(settings)
@@ -47,7 +48,7 @@ class DataSourceProvider {
     SharedPoolDataSource tds = new SharedPoolDataSource()
     tds.setConnectionPoolDataSource(cpds)
     tds.setMaxTotal(10)
-    tds.setDefaultMaxWaitMillis(50)
+    tds.setDefaultMaxWait(Duration.ofMillis(50))
     dataSource = tds
   }
 }

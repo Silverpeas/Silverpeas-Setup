@@ -47,6 +47,7 @@ class JcrRepositoryFactory {
    * Creates an instance mapping to the JCR repository used by Silverpeas.
    * @return a JCR repository instance.
    */
+  @SuppressWarnings('GrMethodMayBeStatic')
   DisposableRepository createRepository(Map settings) {
     try {
       Properties properties = new Properties()

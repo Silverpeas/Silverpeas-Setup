@@ -63,6 +63,7 @@ abstract class SystemWrapper {
   /**
    * @see System#setProperty(java.lang.String, java.lang.String)
    */
+  @SuppressWarnings('unused')
   static String setProperty(String property, String value) {
     return System.setProperty(property, value)
   }

@@ -23,8 +23,7 @@
  */
 package org.silverpeas.setup.configuration
 
-import org.gradle.api.Project
-import org.gradle.api.ProjectState
+
 import org.gradle.api.tasks.*
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
@@ -57,12 +56,6 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
     group = 'Build'
     onlyIf {
       precondition()
-    }
-
-    project.afterEvaluate { Project currentProject, ProjectState state ->
-      if (state.executed) {
-        jboss.useLogger(log)
-      }
     }
   }
 

@@ -81,13 +81,14 @@ class MigrationModule {
    * @return true if the migration of this module should be executed at a specific order, false
    * otherwise.
    */
+  @SuppressWarnings('unused')
   boolean isExecutionOrdered() {
     return order != UNORDERED
   }
 
   /**
    * Migrates the package represented by this module. If it is an installation, then it sets up the
-   * persistence schema required by the package in the concerned data source structure. Otherwhise,
+   * persistence schema required by the package in the concerned data source structure. Otherwise,
    * the existing persistence schema is just upgraded to the latest state.
    * </p>
    * In the case of an upgrade, it will occur in different steps of migration, each of them
@@ -127,11 +128,12 @@ class MigrationModule {
     if (actualVersion) {
       for (int version = (actualVersion as int); version < (toVersion as int); version++) {
         String versionIn3Digits = String.format("%03d", version)
+        //noinspection SecondUnsafeCall
         List<Script> scripts =
             migrationDescriptor.upgrade.find {it.@fromVersion == versionIn3Digits}?.script.collect {
               MigrationScriptBuilder
-                  .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), "up${versionIn3Digits}"))
-                  .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
+                  .fromScript(absolutePathOfScript(it.@name.text() as String, it.@type.text() as String, "up${versionIn3Digits}"))
+                  .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text() as String))
                   .build()
             }
         if (scripts.empty) {
@@ -149,8 +151,8 @@ class MigrationModule {
     } else {
       List<Script> scripts = migrationDescriptor.current.script.collect {
         MigrationScriptBuilder
-            .fromScript(absolutePathOfScript(it.@name.text(), it.@type.text(), toVersion))
-            .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text()))
+            .fromScript(absolutePathOfScript(it.@name.text() as String, it.@type.text() as String, toVersion))
+            .ofType(MigrationScriptBuilder.ScriptType.valueOf(it.@type.text() as String))
             .build()
       }
       migrations << DatasourceMigration.builder()
@@ -176,7 +178,7 @@ class MigrationModule {
           scriptPath = Paths.get("${settings.MIGRATION_HOME}/scripts/${module}/${version}/${path}")
           break
         default:
-          throw new IllegalFormatException("The script type ${type} isn't supported by the migration tool!")
+          throw new IllegalArgumentException("The script type ${type} isn't supported by the migration tool!")
       }
     }
     if (!scriptPath.toFile().exists()) {

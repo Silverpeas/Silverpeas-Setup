@@ -9,6 +9,7 @@ import org.silverpeas.setup.api.JBossServer
 import org.silverpeas.setup.test.TestContext
 
 import static org.silverpeas.setup.api.SilverpeasSetupTaskNames.INSTALL
+
 /**
  * Test the case of the installation of Silverpeas performed by a dedicated Gradle task.
  * @author mmoquillon
@@ -27,8 +28,8 @@ class SilverpeasInstallationTaskTest {
   @Test
   void testInstallJustSilverpeas() {
     SilverpeasInstallationTask task = project.tasks.findByPath(INSTALL.name)
-    def mock = new MockFor(JBossServer)
 
+    def mock = new MockFor(JBossServer)
     mock.demand.with {
       isStartingOrRunning { false }
       start { }

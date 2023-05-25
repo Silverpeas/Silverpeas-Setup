@@ -24,8 +24,6 @@
 package org.silverpeas.setup.installation
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
-import org.gradle.api.ProjectState
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
@@ -34,6 +32,7 @@ import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 
 import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVERPEAS_WAR
+
 /**
  * A Gradle task to install the Web archive of the Silverpeas application into the JEE application
  * server.
@@ -53,12 +52,6 @@ class SilverpeasInstallationTask extends DefaultTask {
   SilverpeasInstallationTask() {
     description = 'Installs Silverpeas into JBoss/Wildfly'
     group = 'Build'
-
-    project.afterEvaluate { Project currentProject, ProjectState state ->
-      if (state.executed) {
-        jboss.useLogger(log)
-      }
-    }
   }
 
   @TaskAction

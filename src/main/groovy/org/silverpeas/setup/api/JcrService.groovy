@@ -21,6 +21,7 @@ class JcrService {
    * @return a closeable session. Once closed, the user is disconnected from the repository and the
    * access to it is freed.
    */
+  @SuppressWarnings('GrMethodMayBeStatic')
   CloseableSession openSession(Map settings) {
     DisposableRepository repository = JcrRepositoryFactory.instance.createRepository(settings)
     Session session = repository.login(new SimpleCredentials("admin", "admin".toCharArray()))
@@ -34,11 +35,12 @@ class JcrService {
    * @return the datetime as a JCR value.
    * @throws RepositoryException if an error occurs while converting the datetime.
    */
+  @SuppressWarnings('GrMethodMayBeStatic')
   Value convertToJcrValue(final Session session, final Date date)
       throws RepositoryException {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(date);
-    return session.getValueFactory().createValue(calendar);
+    Calendar calendar = Calendar.getInstance()
+    calendar.setTime(date)
+    return session.getValueFactory().createValue(calendar)
   }
 
   static class CloseableSession implements Session, Closeable {

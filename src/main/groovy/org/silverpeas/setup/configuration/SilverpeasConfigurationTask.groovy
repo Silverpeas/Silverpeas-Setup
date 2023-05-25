@@ -23,7 +23,7 @@
  */
 package org.silverpeas.setup.configuration
 
-import org.gradle.api.provider.Property
+
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
@@ -78,7 +78,7 @@ class SilverpeasConfigurationTask extends SilverpeasSetupTask {
         script
             .useLogger(log)
             .useSettings(settings)
-            .run()
+            .run([:])
       } catch (Exception ex) {
         log.error("Error while processing the configuration file ${configurationFile.path}", ex)
         throw new TaskExecutionException(this, ex)

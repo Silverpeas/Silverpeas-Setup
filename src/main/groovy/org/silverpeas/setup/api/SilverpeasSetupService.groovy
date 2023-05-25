@@ -38,7 +38,6 @@ import java.util.regex.Matcher
 class SilverpeasSetupService {
 
   private static final def VAR_PATTERN = /\$\{(env\.|sys\.)?(\w+)\}/
-  private static final def SCRIPT_PATTERN = /\$\{eval:([:.\w \{\}\$]+)\}/
   // pattern defining the grammar of a property in a properties file and in which we capture the key
   private static final def PROPERTY_PATTERN = /^\s*([\w\d._-]+)\s*=\s*[\S+\s*]*$/
 
@@ -61,7 +60,8 @@ class SilverpeasSetupService {
    * @param propertiesFilePath the path of the properties file.
    * @param properties the properties to put into the file.
    */
-  void updateProperties(String propertiesFilePath, properties) {
+  @SuppressWarnings('GrMethodMayBeStatic')
+  void updateProperties(String propertiesFilePath, Map<String, String> properties) {
     def existingProperties = []
     FileWriter updatedPropertiesFile = new FileWriter(propertiesFilePath + '.tmp')
     new FileReader(propertiesFilePath).transformLine(updatedPropertiesFile) { line ->
@@ -72,7 +72,7 @@ class SilverpeasSetupService {
         def property = properties.find { key, value -> key == currentKey }
         if (property != null) {
           existingProperties << property.key
-          String value = normalizePropsValue(property.value)
+          String value = normalizePropsValue(property.value as String)
           line = line.replaceFirst('=.*', "=  ${value}")
         }
       }
@@ -122,25 +122,25 @@ class SilverpeasSetupService {
     matching.each { token ->
       switch (token[1]) {
         case 'sys.':
-          if (!SystemWrapper.getProperty(token[2])) {
+          if (!SystemWrapper.getProperty(token[2] as String)) {
             println "Error: no such system property ${token[2]}"
             throw new StopExecutionException("Error: no such system property ${token[2]}")
           }
-          expression = expression.replace(token[0], normalizePath(SystemWrapper.getProperty(token[2])))
+          expression = expression.replace(token[0] as CharSequence, normalizePath(SystemWrapper.getProperty(token[2] as String)))
           break
         case 'env.':
-          if (!SystemWrapper.getenv(token[2])) {
+          if (!SystemWrapper.getenv(token[2] as String)) {
             println "Error: no such environment variable ${token[2]}"
             throw new StopExecutionException("Error: no such environment variable ${token[2]}")
           }
-          expression = expression.replace(token[0], normalizePath(SystemWrapper.getenv(token[2])))
+          expression = expression.replace(token[0] as CharSequence, normalizePath(SystemWrapper.getenv(token[2] as String)))
           break
         default:
           if (settings[token[2]] == null) {
             println "Error: no such variable ${token[2]}"
             throw new StopExecutionException("Error: no such variable ${token[2]}")
           }
-          expression = expanseVariables(expression.replace(token[0], settings[token[2]]))
+          expression = expanseVariables(expression.replace(token[0] as CharSequence, settings[token[2]] as String))
           break
       }
     }
@@ -157,7 +157,8 @@ class SilverpeasSetupService {
    * Windows; in other operating systems any files prefixed by a point is marked as hidden.
    * @return the path of the created directory.
    */
-  Path createDirectory(Path path, def attributes) {
+  @SuppressWarnings(['GrMethodMayBeStatic', 'unused'])
+  Path createDirectory(Path path, Map<String, Boolean> attributes) {
     Path dirPath = path
     if (!Files.exists(dirPath)) {
       dirPath = Files.createDirectories(path)
@@ -185,12 +186,13 @@ class SilverpeasSetupService {
    * @param namespace the namespace under which any traces will be written.
    * @return the logger.
    */
+  @SuppressWarnings('GrMethodMayBeStatic')
   FileLogger getLogger(String namespace) {
     return FileLogger.getLogger(namespace)
   }
 
   private static String normalizePath(String path) {
-    return path.replace('\\', '/');
+    return path.replace('\\', '/')
   }
 
   private static String normalizePropsValue(String value) {
@@ -198,13 +200,13 @@ class SilverpeasSetupService {
     int i = 0
     while(i < value.length()) {
       char entry = value.charAt(i)
-      if (entry == '\\' && i < value.length() && value.charAt(i + 1).toLowerCase() != 'u') {
+      if (entry == '\\' as char && i < value.length() && value.charAt(i + 1).toLowerCase() != 'u' as char) {
         i++
         replacement.append('\\').append(entry)
-      } else if (entry == '\r') {
+      } else if (entry == '\r' as char) {
         replacement.append('\\\r\n')
         i += 2
-      } else if (entry == '\n') {
+      } else if (entry == '\n' as char) {
         replacement.append('\\\n')
         i++
       } else {

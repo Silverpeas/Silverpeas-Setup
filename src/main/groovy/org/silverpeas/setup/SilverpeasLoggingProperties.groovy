@@ -49,7 +49,7 @@ class SilverpeasLoggingProperties {
   boolean useLogger = true
 
   /**
-   * Additional to its own tasks, the ones in a Gradle script the logging system of the pluging
+   * Additional to its own tasks, the ones in a Gradle script the logging system of the plugin
    * should take in charge. By default, none is taken in charge; only the tasks in the plugin are
    * supported by the logging system.
    */
