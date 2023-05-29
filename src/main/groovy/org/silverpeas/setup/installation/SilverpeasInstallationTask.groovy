@@ -50,7 +50,7 @@ class SilverpeasInstallationTask extends DefaultTask {
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasInstallationTask() {
-    description = 'Installs Silverpeas into JBoss/Wildfly'
+    description = "Installs Silverpeas ${project.version} into JBoss/Wildfly"
     group = 'Build'
   }
 

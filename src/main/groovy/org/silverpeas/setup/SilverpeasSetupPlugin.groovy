@@ -124,6 +124,20 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
       jboss = jBossServer.useLogger(log)
     }
 
+    project.tasks.register(UPGRADE.name, SilverpeasInstallationTask) {
+      description = "Upgrade Silverpeas in JBoss/Wildfly to version ${project.version}"
+      dependsOn project.tasks.named('clean'), migration
+
+      installation = extension.installation
+      settings = extension.settings
+      jboss = jBossServer.useLogger(log)
+
+      doFirst {
+        FileLogger log = FileLogger.getLogger(UPGRADE.name)
+        log.info("Upgrade of Silverpeas to version ${project.version}")
+      }
+    }
+
     initializePredefinedTasks(project, extension)
   }
 
@@ -138,7 +152,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     try {
       TaskProvider<Task> assemble = project.tasks.named(ASSEMBLE.name)
       assemble.configure {
-        description = 'Assemble all the software bundles that made Silverpeas'
+        description = 'Assemble all the software bundles making up Silverpeas'
         onlyIf {
           !extension.installation.distDir.get().exists() &&
                   !extension.installation.dsDriversDir.get().exists()

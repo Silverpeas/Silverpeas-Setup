@@ -28,15 +28,42 @@ package org.silverpeas.setup.api
  * @author mmoquillon
  */
 enum SilverpeasSetupTaskNames {
-
+  /**
+   * Extracts all the software bundles making up Silverpeas and assembles their content into a single location
+   */
   ASSEMBLE('assemble'),
+  /**
+   * Builds the Silverpeas Web application by generating the JEE required descriptors (web.xml, persistence.xml, ...)
+   */
   BUILD('build'),
+  /**
+   * Assembles from different software bundles and builds the Silverpeas Web application.
+   */
   CONSTRUCT('construct'),
+  /**
+   * Configures the JBoss/Wildfly JEE server for running Silverpeas.
+   */
   CONFIGURE_JBOSS('configure_jboss'),
+  /**
+   * Configure Silverpeas.
+   */
   CONFIGURE_SILVERPEAS('configure_silverpeas'),
+  /**
+   * Configure both JBoss/Wildfly and Silverpeas.
+   */
   CONFIGURE('configure'),
+  /**
+   * Migrates the data source structure from the current version to the latest one.
+   */
   MIGRATE('migrate'),
-  INSTALL('install')
+  /**
+   * Installs Silverpeas into JBoss/Wildfly
+   */
+  INSTALL('install'),
+  /**
+   * Upgrade Silverpeas from the current version to the one specified in its installation descriptor.
+   */
+  UPGRADE('upgrade')
 
   final String name
 
