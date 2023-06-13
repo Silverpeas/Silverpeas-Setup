@@ -19,7 +19,7 @@ class SilverpeasConfigurationTaskTest {
 
   @Before
   void setUp() {
-    context = TestContext.create().setUpSystemEnv().initGradleProject()
+    context = TestContext.create().setUpSystemEnv().initGradleProject(['construct'])
   }
 
   @After
@@ -43,7 +43,7 @@ class SilverpeasConfigurationTaskTest {
     assertTheConfigContextIsCorrectlySaved(testProperties)
   }
 
-  void assertTheCustomerWorkflowIsCorrectlyConfigured(TestProperties props) {
+  static void assertTheCustomerWorkflowIsCorrectlyConfigured(TestProperties props) {
     def before = props.xmlconf.before
     def after = props.xmlconf.after
     assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
@@ -127,7 +127,7 @@ class SilverpeasConfigurationTaskTest {
         after.scheduler['timeoutSchedule'] != before.scheduler['timeoutSchedule']
   }
 
-  void assertTheConfigContextIsCorrectlySaved(TestProperties props) {
+  static void assertTheConfigContextIsCorrectlySaved(TestProperties props) {
     assert props.configContext.before['status is'] == props.configContext.after['status is']
     assert props.configContext.before['installed at'] == props.configContext.after['installed at']
     assert props.configContext.before['updated at'] == props.configContext.after['updated at']

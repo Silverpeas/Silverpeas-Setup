@@ -220,7 +220,7 @@ class SilverpeasBuilder {
             fileName.endsWith('war.xml')
       }
     })
-    if (mainWebXmlFiles.size() != 1) {
+    if (mainWebXmlFiles == null || mainWebXmlFiles.size() != 1) {
       throw new IllegalStateException('No main web descriptor found!')
     }
 

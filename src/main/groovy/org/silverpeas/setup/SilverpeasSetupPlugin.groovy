@@ -182,7 +182,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   /**
    * Setup the predefined Build Gradle task to the peculiar behaviour of the plugin that is to
    * generate the Silverpeas Collaborative portal application from the extracted content of the
-   * software bundles that made up a Silverpeas distribution.
+   * software bundles that make up a Silverpeas distribution.
    * @param project the Gradle project
    * @param extension the project extension of the plugin
    */
@@ -196,8 +196,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           extension.installation.distDir.get().exists()
         }
         outputs.upToDateWhen {
-          boolean ok = extension.installation.distDir.get().exists() &&
-                  Files.exists(Paths.get(extension.installation.distDir.get().path, 'WEB-INF', 'web.xml'))
+          Path webDescriptor = Paths.get(extension.installation.distDir.get().path, 'WEB-INF', 'web.xml')
+          boolean ok = Files.exists(webDescriptor)
           if (!extension.installation.developmentMode.get()) {
             ok = ok && Files.exists(
                     Paths.get(project.buildDir.path, SilverpeasConstructionTask.SILVERPEAS_WAR))

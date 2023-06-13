@@ -23,15 +23,13 @@
  */
 package org.silverpeas.setup.construction
 
-
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -54,23 +52,32 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
     description = 'Assemble and build the Silverpeas Collaborative Web Application'
     group = 'Build'
     onlyIf {
-      precondition()
+      preconditionSatisfied()
     }
     outputs.upToDateWhen {
-      isUpToDate()
+      allIsGenerated()
     }
   }
 
-  def precondition() {
-    !installation.distDir.get().exists() && !installation.dsDriversDir.get().exists()
+  def preconditionSatisfied() {
+    !areBundlesAssembled() || !isWebDescriptorGenerated()
   }
 
-  def isUpToDate() {
-    boolean ok = installation.distDir.get().exists() && installation.dsDriversDir.get().exists()
+  def allIsGenerated() {
+    boolean ok = areBundlesAssembled() && isWebDescriptorGenerated()
     if (!installation.developmentMode.get()) {
       ok = ok && Files.exists(Paths.get(project.buildDir.path, SILVERPEAS_WAR))
     }
     return ok
+  }
+
+  private boolean isWebDescriptorGenerated() {
+    Path webDescriptor = Paths.get(installation.distDir.get().path, 'WEB-INF', 'web.xml')
+    return Files.exists(webDescriptor)
+  }
+
+  private boolean areBundlesAssembled() {
+    return installation.distDir.get().exists() && installation.dsDriversDir.get().exists()
   }
 
   @TaskAction
@@ -81,11 +88,13 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
     if (!installation.dsDriversDir.get().exists()) {
       installation.dsDriversDir.get().mkdirs()
     }
+
     SilverpeasBuilder builder = new SilverpeasBuilder(project, log)
     builder.driversDir = installation.dsDriversDir.get()
     builder.silverpeasHome = silverpeasHome
     builder.developmentMode = installation.developmentMode.get()
     builder.settings = settings
+
     builder.extractSoftwareBundles(installation.bundles, installation.distDir.get())
     builder.generateSilverpeasApplication(installation.distDir.get())
   }
