@@ -119,9 +119,9 @@ dependencies {
   api 'commons-codec:commons-codec:1.15'
   api 'com.google.guava:guava:31.0.1-jre'
   api 'javax.jcr:jcr:2.0'
-  api 'org.apache.jackrabbit:oak-jcr:1.48.0'
-  api 'org.apache.jackrabbit:oak-segment-tar:1.48.0'
-  api 'org.apache.jackrabbit:oak-store-document:1.48.0'
+  api 'org.apache.jackrabbit:oak-jcr:1.52.0'
+  api 'org.apache.jackrabbit:oak-segment-tar:1.52.0'
+  api 'org.apache.jackrabbit:oak-store-document:1.52.0'
 
 
   runtimeOnly 'org.eclipse.jetty:jetty-jndi:11.0.14'

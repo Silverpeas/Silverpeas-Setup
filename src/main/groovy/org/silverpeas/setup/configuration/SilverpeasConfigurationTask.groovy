@@ -30,6 +30,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
+import org.silverpeas.setup.api.JcrService
 import org.silverpeas.setup.api.Script
 import org.silverpeas.setup.api.SilverpeasSetupTask
 
@@ -78,7 +79,7 @@ class SilverpeasConfigurationTask extends SilverpeasSetupTask {
         script
             .useLogger(log)
             .useSettings(settings)
-            .run([:])
+            .run([jcr: JcrService.instance])
       } catch (Exception ex) {
         log.error("Error while processing the configuration file ${configurationFile.path}", ex)
         throw new TaskExecutionException(this, ex)

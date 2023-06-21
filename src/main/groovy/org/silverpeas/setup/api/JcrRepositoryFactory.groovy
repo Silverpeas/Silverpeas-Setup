@@ -48,11 +48,11 @@ class JcrRepositoryFactory {
    * @return a JCR repository instance.
    */
   @SuppressWarnings('GrMethodMayBeStatic')
-  DisposableRepository createRepository(Map settings) {
+  CloseableRepository createRepository(Map settings) {
     try {
       Properties properties = new Properties()
       properties.load(new FileInputStream("${settings.JCR_HOME}/silverpeas-oak.properties"))
-      DisposableRepository repository
+      CloseableRepository repository
       switch (properties['storage']) {
         case 'segment':
           repository = getSegmentNodeStoreRepository("${settings.JCR_HOME}", properties)
@@ -69,7 +69,7 @@ class JcrRepositoryFactory {
     }
   }
 
-  private static DisposableRepository getSegmentNodeStoreRepository(String jcrHomePath, Properties properties) {
+  private static CloseableRepository getSegmentNodeStoreRepository(String jcrHomePath, Properties properties) {
     String repo =
         properties['segment.repository'] ? properties['segment.repository'] : 'segmentstore'
     Path repoPath = Path.of(repo)
@@ -78,10 +78,10 @@ class JcrRepositoryFactory {
 
     FileStore fs = FileStoreBuilder.fileStoreBuilder(segmentStorePath.toFile()).build()
     NodeStore ns = SegmentNodeStoreBuilders.builder(fs).build()
-    return new DisposableRepository(repository: new Jcr(new Oak(ns)).createRepository(), fs: fs)
+    return new CloseableRepository(ns, fs)
   }
 
-  private static DisposableRepository getDocumentNodeStoreRepository(Properties properties) {
+  private static CloseableRepository getDocumentNodeStoreRepository(Properties properties) {
     String uri =
         properties['document.uri'] ? properties['document.uri'] : 'mongodb://localhost:27017'
     String db = properties['document.db'] ? properties['document.db'] : 'oak'
@@ -92,25 +92,41 @@ class JcrRepositoryFactory {
         .setExecutor(MoreExecutors.newDirectExecutorService())
         .setMongoDB(uri, db, blobCacheSize)
         .build()
-    return new DisposableRepository(repository: new Jcr(new Oak(ns)).createRepository(), dns: ns)
+    return new CloseableRepository(ns,null)
   }
 
-  static class DisposableRepository implements Repository {
+  static class CloseableRepository implements Repository, Closeable {
     @Delegate
     Repository repository
     private FileStore fs
-    private DocumentNodeStore dns
+    private NodeStore ns
+
+    private CloseableRepository(NodeStore nodeStore, FileStore fileStore) {
+      this.repository = new Jcr(new Oak(nodeStore)).createRepository()
+      this.ns = nodeStore
+      this.fs = fileStore
+    }
 
     /**
-     * Disposes this repository. It frees all the allocated resources to access the JCR. It is
+     * Closes this repository. It frees all the allocated resources to access the JCR. It is
      * required to invoke this method once all the works with the JCR is done.
      */
-    void dispose() {
+    @Override
+    void close() {
       if (fs) {
         fs.close()
-      } else if (dns) {
+      } else {
+        DocumentNodeStore dns = (DocumentNodeStore) ns
         dns.dispose()
       }
+    }
+
+    /**
+     * Gets the node store used as backend by the repository to store the JCR content.
+     * @return a NodeStore instance.
+     */
+    NodeStore getNodeStore() {
+      ns
     }
   }
 }
