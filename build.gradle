@@ -34,7 +34,7 @@ buildscript {
 
 plugins {
   id 'java-gradle-plugin'
-  id 'org.ajoberstar.grgit' version '4.1.0' apply true
+  id 'org.ajoberstar.grgit' version '5.2.0' apply true
   id 'idea'
   id 'maven-publish'
   id 'net.linguica.maven-settings' version '0.5'
