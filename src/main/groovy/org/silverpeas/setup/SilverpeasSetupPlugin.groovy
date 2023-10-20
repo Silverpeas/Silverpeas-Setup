@@ -316,6 +316,8 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param extension the project extension of the plugin
    */
   private static void completeSettings(Map<String, String> settings, SilverpeasSetupExtension extension) {
+    settings.URL_BASE = !settings.SERVER_URL || settings.SERVER_URL.blank ||
+            settings.SERVER_URL.contains("localhost") ? "" : settings.SERVER_URL
     settings.SILVERPEAS_HOME = normalizePath(extension.silverpeasHome.path)
     settings.MIGRATION_HOME = normalizePath(extension.migration.homeDir.get().path)
     settings.CONFIGURATION_HOME = normalizePath(extension.config.configurationHome.get().path)
