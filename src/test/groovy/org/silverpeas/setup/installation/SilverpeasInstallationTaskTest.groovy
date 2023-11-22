@@ -50,7 +50,12 @@ class SilverpeasInstallationTaskTest {
   void testInstall() {
     SilverpeasInstallationTask task = project.tasks.findByPath(INSTALL.name)
 
-    File jackrabbit = new File(task.installation.deploymentDir.get(), 'jackrabbit-jca.rar')
+    File deploymentDir = task.installation.deploymentDir.get()
+    if (!deploymentDir.exists()) {
+      deploymentDir.mkdirs()
+    }
+
+    File jackrabbit = new File(deploymentDir, 'jackrabbit-jca.rar')
     jackrabbit.createNewFile()
 
     def mock = new MockFor(JBossServer)
