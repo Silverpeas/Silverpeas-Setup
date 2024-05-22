@@ -9,7 +9,7 @@
     As a special exception to the terms and conditions of version 3.0 of
     the GPL, you may redistribute this Program in connection with Free/Libre
     Open Source Software ("FLOSS") applications as described in Silverpeas's
-    FLOSS exception.  You should have recieved a copy of the text describing
+    FLOSS exception.  You should have received a copy of the text describing
     the FLOSS exception, and it is also available here:
     "https://www.silverpeas.org/legal/floss_exception.html"
 
@@ -23,16 +23,13 @@
  */
 package org.silverpeas.setup.construction
 
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.SilverpeasSetupTask
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -55,23 +52,32 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
     description = 'Assemble and build the Silverpeas Collaborative Web Application'
     group = 'Build'
     onlyIf {
-      precondition()
+      preconditionSatisfied()
     }
     outputs.upToDateWhen {
-      isUpToDate()
+      allIsGenerated()
     }
   }
 
-  def precondition() {
-    !installation.distDir.get().exists() && !installation.dsDriversDir.get().exists()
+  def preconditionSatisfied() {
+    !areBundlesAssembled() || !isWebDescriptorGenerated()
   }
 
-  def isUpToDate() {
-    boolean ok = installation.distDir.get().exists() && installation.dsDriversDir.get().exists()
+  def allIsGenerated() {
+    boolean ok = areBundlesAssembled() && isWebDescriptorGenerated()
     if (!installation.developmentMode.get()) {
       ok = ok && Files.exists(Paths.get(project.buildDir.path, SILVERPEAS_WAR))
     }
     return ok
+  }
+
+  private boolean isWebDescriptorGenerated() {
+    Path webDescriptor = Paths.get(installation.distDir.get().path, 'WEB-INF', 'web.xml')
+    return Files.exists(webDescriptor)
+  }
+
+  private boolean areBundlesAssembled() {
+    return installation.distDir.get().exists() && installation.dsDriversDir.get().exists()
   }
 
   @TaskAction

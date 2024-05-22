@@ -19,7 +19,7 @@ class SilverpeasConfigurationTaskTest {
 
   @Before
   void setUp() {
-    context = TestContext.create().setUpSystemEnv().initGradleProject()
+    context = TestContext.create().setUpSystemEnv().initGradleProject(['construct'])
   }
 
   @After

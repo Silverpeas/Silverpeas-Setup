@@ -9,7 +9,7 @@
   As a special exception to the terms and conditions of version 3.0 of
   the GPL, you may redistribute this Program in connection with Free/Libre
   Open Source Software ("FLOSS") applications as described in Silverpeas's
-  FLOSS exception.  You should have recieved a copy of the text describing
+  FLOSS exception.  You should have received a copy of the text describing
   the FLOSS exception, and it is also available here:
   "https://www.silverpeas.org/legal/floss_exception.html"
 
@@ -49,7 +49,7 @@ class JBossCliScript extends AbstractScript {
    * @param args a Map of variables to pass to the scripts. The keys in the Map are the names of the
    * variables. Expected the following:
    * <ul>
-   *  <li><em>iboss</em>: the running JBoss/Wildfly instance against which the script will be
+   *  <li><em>jboss</em>: the running JBoss/Wildfly instance against which the script will be
    *  performed.</li>
    * </ul>
    * @throws RuntimeException if an error occurs during the execution of the script.

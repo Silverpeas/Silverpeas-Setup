@@ -1,7 +1,7 @@
 package org.silverpeas.setup.api
 
 /**
- * A provider of beans that were constructed and initialized at plugin application to a Grandle
+ * A provider of beans that were constructed and initialized at plugin application to a Gradle
  * project.
  * @author mmoquillon
  */

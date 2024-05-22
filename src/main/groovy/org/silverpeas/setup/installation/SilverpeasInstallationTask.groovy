@@ -9,7 +9,7 @@
   As a special exception to the terms and conditions of version 3.0 of
   the GPL, you may redistribute this Program in connection with Free/Libre
   Open Source Software ("FLOSS") applications as described in Silverpeas's
-  FLOSS exception.  You should have recieved a copy of the text describing
+  FLOSS exception.  You should have received a copy of the text describing
   the FLOSS exception, and it is also available here:
   "https://www.silverpeas.org/legal/floss_exception.html"
 
@@ -24,8 +24,6 @@
 package org.silverpeas.setup.installation
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
-import org.gradle.api.ProjectState
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
@@ -34,6 +32,7 @@ import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
 
 import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVERPEAS_WAR
+
 /**
  * A Gradle task to install the Web archive of the Silverpeas application into the JEE application
  * server.
@@ -51,14 +50,8 @@ class SilverpeasInstallationTask extends DefaultTask {
   final FileLogger log = FileLogger.getLogger(this.name)
 
   SilverpeasInstallationTask() {
-    description = 'Installs Silverpeas into JBoss/Wildfly'
+    description = "Installs Silverpeas ${project.version} into JBoss/Wildfly"
     group = 'Build'
-
-    project.afterEvaluate { Project currentProject, ProjectState state ->
-      if (state.executed) {
-        jboss.useLogger(log)
-      }
-    }
   }
 
   @TaskAction

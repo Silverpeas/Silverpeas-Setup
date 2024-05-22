@@ -9,7 +9,7 @@
   As a special exception to the terms and conditions of version 3.0 of
   the GPL, you may redistribute this Program in connection with Free/Libre
   Open Source Software ("FLOSS") applications as described in Silverpeas's
-  FLOSS exception.  You should have recieved a copy of the text describing
+  FLOSS exception.  You should have received a copy of the text describing
   the FLOSS exception, and it is also available here:
   "https://www.silverpeas.org/legal/floss_exception.html"
 
@@ -81,11 +81,20 @@ class TestContext {
   /**
    * Initializes in the filesystem a Gradle project that uses the plugin. The Gradle project
    * can then be ran by using the Gradle runner returned by the TestContext#getGradleRunner method.
+   * @param previousInvokedTasks a list of task names that have to be considered as yet invoked. As such, the resources
+   * these tasks should created will be set up in order to avoid them to be again invoked through tasks dependency
+   * graph.
    * @return itself.
    */
-  TestContext initGradleProject() {
-    Files.createDirectories(Paths.get(resourcesDir, 'build', 'drivers'))
-    Files.createDirectories(Paths.get(resourcesDir, 'build', 'dist'))
+  TestContext initGradleProject(List<String> previousInvokedTasks) {
+    if (previousInvokedTasks.contains("assemble") || previousInvokedTasks.contains("construct")) {
+      Files.createDirectories(Paths.get(resourcesDir, 'build', 'drivers'))
+      Files.createDirectories(Paths.get(resourcesDir, 'build', 'dist', 'WEB-INF'))
+    }
+    if (previousInvokedTasks.contains("build") || previousInvokedTasks.contains("construct")) {
+      Files.createFile(Paths.get(resourcesDir, 'build', 'dist', 'WEB-INF', 'web.xml'))
+    }
+
     Files.createFile(Paths.get(resourcesDir, 'settings.gradle'))
         .toFile()
         .text = """

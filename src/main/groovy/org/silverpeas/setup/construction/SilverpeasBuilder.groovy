@@ -9,7 +9,7 @@
     As a special exception to the terms and conditions of version 3.0 of
     the GPL, you may redistribute this Program in connection with Free/Libre
     Open Source Software ("FLOSS") applications as described in Silverpeas's
-    FLOSS exception.  You should have recieved a copy of the text describing
+    FLOSS exception.  You should have received a copy of the text describing
     the FLOSS exception, and it is also available here:
     "https://www.silverpeas.org/legal/floss_exception.html"
 
@@ -227,7 +227,7 @@ class SilverpeasBuilder {
             fileName.endsWith('war.xml')
       }
     })
-    if (mainWebXmlFiles.size() != 1) {
+    if (mainWebXmlFiles == null || mainWebXmlFiles.size() != 1) {
       throw new IllegalStateException('No main web descriptor found!')
     }
 
@@ -290,8 +290,8 @@ class SilverpeasBuilder {
     final File silverpeasDataHome = new File(silverpeasHome, 'data')
     final File silverpeasWebDataHome = new File(silverpeasDataHome, 'web')
 
-    final File dataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_HOME))
-    final File webDataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_WEB))
+    final File dataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_HOME as String))
+    final File webDataDestinationDir = new File(service.expanseVariables(settings.SILVERPEAS_DATA_WEB as String))
 
     if (webDataDestinationDir != silverpeasWebDataHome) {
       logger.info "Move content of ${silverpeasWebDataHome.path} into ${webDataDestinationDir.path}"
