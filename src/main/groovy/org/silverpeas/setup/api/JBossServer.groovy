@@ -402,8 +402,7 @@ class JBossServer {
   @SuppressWarnings('unused')
   boolean isAlreadyConfigured() {
     String config = new File("${jbossHome}/standalone/configuration/standalone-full.xml").text
-    return config.contains('java:/datasources/DocumentStore') &&
-        config.contains('java:/datasources/silverpeas')
+    return config.contains('java:/datasources/silverpeas')
   }
 
   /**
