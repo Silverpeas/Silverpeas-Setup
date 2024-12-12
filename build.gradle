@@ -43,7 +43,7 @@ plugins {
 
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
-version = '6.4.2-SNAPSHOT'
+version = '6.4.2'
 
 gradlePlugin {
   plugins {
