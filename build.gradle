@@ -35,7 +35,7 @@ buildscript {
 
 plugins {
   id 'java-gradle-plugin'
-  id 'org.ajoberstar.grgit' version '4.0.2' apply true
+  id 'org.ajoberstar.grgit' version '4.1.1' apply true
   id 'idea'
   id 'maven-publish'
   id 'groovy'
