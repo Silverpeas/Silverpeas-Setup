@@ -73,6 +73,7 @@ class SilverpeasBuilder {
     Objects.requireNonNull(silverpeasHome)
     Objects.requireNonNull(driversDir)
     final Collection<File> silverpeasBundles = bundles.silverpeas.files
+    final Collection<File> customBundles = bundles.custom.files
     final Collection<File> tiersBundles = bundles.tiers.files
     def isAWar = { File f ->
       f.name.endsWith('.war') && !f.name.startsWith(CORE_WAR_BUNDLE_ID)
@@ -105,6 +106,21 @@ class SilverpeasBuilder {
         extractJdbcDriver(bundle, driversDir)
       } else if (isARar(bundle)) {
         extractRarBundle(bundle, project.buildDir)
+      }
+    }
+
+    // now we extract any custom(er) bundles by their type
+    customBundles.each { bundle ->
+      if (isAWar(bundle)) {
+        extractWarBundle(bundle, destinationDir)
+      } else if (isAConf(bundle)) {
+        extractConfigurationBundle(bundle, silverpeasHome)
+      } else if (isAJdbcDriver(bundle)) {
+        extractJdbcDriver(bundle, driversDir)
+      } else if (isARar(bundle)) {
+        extractRarBundle(bundle, project.buildDir)
+      } else if (isALib(bundle)) {
+        extractLibBundle(bundle, Paths.get(destinationDir.path, 'WEB-INF', 'lib').toFile())
       }
     }
 
