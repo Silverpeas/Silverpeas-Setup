@@ -57,11 +57,11 @@ class SilverpeasInstallationProperties {
   @Inject
   SilverpeasInstallationProperties(Project project, File silverpeasHome) {
     distDir = project.objects.property(File)
-    distDir.set(new File(project.buildDir, "dist"))
+    distDir.set(new File(project.layout.buildDirectory.get().asFile, "dist"))
     deploymentDir = project.objects.property(File)
     deploymentDir.set(new File(silverpeasHome, 'deployments'))
     dsDriversDir = project.objects.property(File)
-    dsDriversDir.set(new File(project.buildDir, "drivers"))
+    dsDriversDir.set(new File(project.layout.buildDirectory.get().asFile, "drivers"))
     developmentMode = project.objects.property(Boolean)
     developmentMode.set(false)
     bundles = project.objects.newInstance(SoftwareBundles, project)

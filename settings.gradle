@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2000 - 2024 Silverpeas
+    Copyright (C) 2000 - 2026 Silverpeas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -21,4 +21,10 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+plugins {
+  // resolve and, if needed, auto-provision the JDK required by the Java toolchain declared in
+  // build.gradle (Java 17) from the foojay disco service when no matching JDK is found locally.
+  id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+}
+
 rootProject.name = 'silverpeas-setup'

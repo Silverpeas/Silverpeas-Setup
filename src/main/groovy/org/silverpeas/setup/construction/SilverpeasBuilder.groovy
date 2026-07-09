@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2000 - 2024 Silverpeas
+    Copyright (C) 2000 - 2026 Silverpeas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -105,7 +105,7 @@ class SilverpeasBuilder {
       } else if (isAJdbcDriver(bundle)) {
         extractJdbcDriver(bundle, driversDir)
       } else if (isARar(bundle)) {
-        extractRarBundle(bundle, project.buildDir)
+        extractRarBundle(bundle, project.layout.buildDirectory.get().asFile)
       }
     }
 
@@ -118,7 +118,7 @@ class SilverpeasBuilder {
       } else if (isAJdbcDriver(bundle)) {
         extractJdbcDriver(bundle, driversDir)
       } else if (isARar(bundle)) {
-        extractRarBundle(bundle, project.buildDir)
+        extractRarBundle(bundle, project.layout.buildDirectory.get().asFile)
       } else if (isALib(bundle)) {
         extractLibBundle(bundle, Paths.get(destinationDir.path, 'WEB-INF', 'lib').toFile())
       }
@@ -285,8 +285,8 @@ class SilverpeasBuilder {
     XmlUtil.serialize(persistence, new FileWriter(xmlPersistenceFile))
 
     if (!developmentMode) {
-      logger.info "Generate silverpeas.war in ${project.buildDir.path}"
-      project.ant.zip(destfile: "${project.buildDir.path}/silverpeas.war", baseDir: sourceDir.path)
+      logger.info "Generate silverpeas.war in ${project.layout.buildDirectory.get().asFile.path}"
+      project.ant.zip(destfile: "${project.layout.buildDirectory.get().asFile.path}/silverpeas.war", baseDir: sourceDir.path)
     } else {
       logger.info "Silverpeas Application generation done in ${sourceDir}"
     }

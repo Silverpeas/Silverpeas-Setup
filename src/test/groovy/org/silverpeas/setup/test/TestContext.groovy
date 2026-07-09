@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2024 Silverpeas
+  Copyright (C) 2000 - 2026 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -109,7 +109,7 @@ plugins {
 
 silversetup {
   logging {
-    logDir = file("\${project.buildDir}/log")
+    logDir = layout.buildDirectory.dir('log').get().asFile
     useLogger = false
   }
 }
@@ -126,7 +126,7 @@ silversetup {
   Project createGradleProject() {
     Project project = ProjectBuilder.builder().withName('silverpeas-installer').build()
     project.apply plugin: 'silversetup'
-    project.silversetup.logging.logDir = new File(project.buildDir, 'log')
+    project.silversetup.logging.logDir = new File(project.layout.buildDirectory.get().asFile, 'log')
     project.silversetup.logging.useLogger = false
 
     SilverpeasSetupExtension extension =

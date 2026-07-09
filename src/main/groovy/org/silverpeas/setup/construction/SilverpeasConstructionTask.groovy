@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2000 - 2024 Silverpeas
+    Copyright (C) 2000 - 2026 Silverpeas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -66,7 +66,7 @@ class SilverpeasConstructionTask extends SilverpeasSetupTask {
   def allIsGenerated() {
     boolean ok = areBundlesAssembled() && isWebDescriptorGenerated()
     if (!installation.developmentMode.get()) {
-      ok = ok && Files.exists(Paths.get(project.buildDir.path, SILVERPEAS_WAR))
+      ok = ok && Files.exists(Paths.get(project.layout.buildDirectory.get().asFile.path, SILVERPEAS_WAR))
     }
     return ok
   }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2024 Silverpeas
+  Copyright (C) 2000 - 2026 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -67,7 +67,7 @@ class SilverpeasInstallationTask extends DefaultTask {
       deploymentDir.mkdirs()
     }
     project.copy {
-      it.from(project.fileTree(project.buildDir))
+      it.from(project.fileTree(project.layout.buildDirectory.get().asFile))
       it.include '*.rar'
       it.include '*.jar'
       it.include '*.war'

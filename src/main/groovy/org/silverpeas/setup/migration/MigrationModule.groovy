@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2024 Silverpeas
+  Copyright (C) 2000 - 2026 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,6 @@
  */
 package org.silverpeas.setup.migration
 
-import com.sun.org.apache.xerces.internal.jaxp.validation.XMLSchemaFactory
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 import groovy.xml.XmlSlurper
@@ -34,6 +33,7 @@ import org.silverpeas.setup.api.Script
 import javax.xml.XMLConstants
 import javax.xml.transform.Source
 import javax.xml.transform.stream.StreamSource
+import javax.xml.validation.SchemaFactory
 import java.nio.file.Path
 import java.nio.file.Paths
 /**
@@ -189,7 +189,7 @@ class MigrationModule {
 
   private void validateDescriptor(File descriptor) {
     def xsd = new StreamSource(getClass().getResourceAsStream('/migration.xsd'))
-    def factory = XMLSchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+    def factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
     def schema = factory.newSchema([xsd] as Source[])
     def validator = schema.newValidator()
     validator.validate(new StreamSource(new FileReader(descriptor)))

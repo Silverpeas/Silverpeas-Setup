@@ -12,6 +12,7 @@ build
 .project
 .idea
 .sonar-ide.properties
+.claude
 nbactions.xml
 nb-configuration.xml
 nbactions.xml

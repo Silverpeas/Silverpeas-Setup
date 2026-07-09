@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 - 2024 Silverpeas
+  Copyright (C) 2000 - 2026 Silverpeas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as
@@ -60,7 +60,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
   }
 
   boolean precondition() {
-    project.buildDir.exists() && Files.exists(this.driversDir.toPath())
+    project.layout.buildDirectory.get().asFile.exists() && Files.exists(this.driversDir.toPath())
   }
 
   @TaskAction
