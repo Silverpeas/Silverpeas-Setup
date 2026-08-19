@@ -43,7 +43,7 @@ plugins {
 
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
-version = '6.5-SNAPSHOT'
+version = '6.5-java21'
 
 gradlePlugin {
   plugins {
@@ -85,11 +85,11 @@ repositories {
 }
 
 java {
-  // use a Java 17 toolchain so that the compilation and the tests execution both run on a
-  // JDK 17, regardless of the JVM launching Gradle. This makes the build reproducible even when
+  // use a Java 21 toolchain so that the compilation and the tests execution both run on a
+  // JDK 21, regardless of the JVM launching Gradle. This makes the build reproducible even when
   // Gradle itself is started with another Java version (for example Java 11).
   toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
+    languageVersion = JavaLanguageVersion.of(21)
   }
   withSourcesJar()
 }
