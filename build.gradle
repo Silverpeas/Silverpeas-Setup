@@ -26,7 +26,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 buildscript {
   repositories {
     maven {
-      url 'https://nexus3.silverpeas.org/repository/silverpeas'
+      url = 'https://nexus3.silverpeas.org/repository/silverpeas'
     }
     mavenLocal()
   }
@@ -43,7 +43,7 @@ plugins {
 
 description = 'The Gradle plugin to set up Silverpeas. It is used both to install or to upgrade Silverpeas.'
 group = 'org.silverpeas'
-version = '6.5-java21'
+version = '6.5-SNAPSHOT'
 
 gradlePlugin {
   plugins {
@@ -74,12 +74,12 @@ project.configure(project) {
 
 repositories {
   maven {
-    name 'silverpeas'
-    url 'https://nexus3.silverpeas.org/repository/silverpeas'
+    name = 'silverpeas'
+    url = 'https://nexus3.silverpeas.org/repository/silverpeas'
   }
   maven {
-    name 'gradle-plugins'
-    url 'https://plugins.gradle.org/m2/'
+    name = 'gradle-plugins'
+    url = 'https://plugins.gradle.org/m2/'
   }
   mavenLocal()
 }
@@ -104,11 +104,11 @@ publishing {
   repositories {
     maven {
       if (project.snapshot) {
-        name 'silverpeas-snapshots'
-        url 'https://nexus3.silverpeas.org/repository/snapshots/'
+        name = 'silverpeas-snapshots'
+        url = 'https://nexus3.silverpeas.org/repository/snapshots/'
       } else {
-        name 'silverpeas'
-        url 'https://nexus3.silverpeas.org/repository/releases/'
+        name = 'silverpeas'
+        url = 'https://nexus3.silverpeas.org/repository/releases/'
       }
     }
   }

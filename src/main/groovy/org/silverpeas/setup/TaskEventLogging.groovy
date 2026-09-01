@@ -23,101 +23,151 @@
  */
 package org.silverpeas.setup
 
-import org.gradle.BuildAdapter
-import org.gradle.BuildResult
-import org.gradle.api.Task
-import org.gradle.api.execution.TaskExecutionListener
-import org.gradle.api.tasks.TaskState
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+import org.gradle.tooling.events.FinishEvent
+import org.gradle.tooling.events.OperationCompletionListener
+import org.gradle.tooling.events.task.TaskFailureResult
+import org.gradle.tooling.events.task.TaskFinishEvent
+import org.gradle.tooling.events.task.TaskSkippedResult
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
-import org.silverpeas.setup.api.SilverpeasSetupTaskNames
 
 /**
- * A logger hooking to events from the task execution in order to customize the output of the
- * traces coming from Gradle and to indicates in this plugin's logging system at which tasks the
+ * A build service listening to the completion of the tasks in order to customize the output of the
+ * traces coming from Gradle and to indicate in this plugin's logging system to which task the
  * further traces will refer.
+ * <p>
+ * Because it is an {@link AutoCloseable} service, Gradle closes it once the build is done,
+ * whatever its result. This is why it takes also in charge the output of a summary about the
+ * Silverpeas setup. Doing so, this service replaces both the deprecated
+ * {@code Gradle#useLogger(Object)} and {@code Gradle#buildFinished(Closure)} methods.
+ * </p>
  * @author mmoquillon
  */
-class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
+abstract class TaskEventLogging
+    implements BuildService<TaskEventLogging.Parameters>, OperationCompletionListener, AutoCloseable {
 
   private static final String DEFAULT_LOG_NAMESPACE = 'Silverpeas Setup'
 
   /**
-   * The name of the tasks to consider in the custom output. By default, the tasks configureJBoss,
-   * configureSilverpeas, and migration are supported.
+   * The parameters of this service. They are all set by the plugin once the project using it has
+   * been evaluated.
    */
-  List<String> tasks = SilverpeasSetupTaskNames.values().collect { it.name }
+  static interface Parameters extends BuildServiceParameters {
 
-  private buildStarted = false
-  private List<String> executedTasks = []
-  private long startTimestamp
+    /**
+     * The name of the tasks to consider in the custom output. By default, the tasks of the plugin
+     * plus the ones declared in the <code>logging.scriptTasks</code> property of the plugin's
+     * extension.
+     */
+    ListProperty<String> getTasks()
 
-  TaskEventLogging() {
-    startTimestamp = System.currentTimeMillis()
+    /**
+     * Has the execution of the tasks to be traced both in the log file of the plugin and in the
+     * standard output? It is set with the <code>logging.useLogger</code> property of the plugin's
+     * extension.
+     */
+    Property<Boolean> getTracing()
+
+    Property<String> getSilverpeasVersion()
+
+    Property<String> getSilverpeasHome()
+
+    Property<String> getJbossHome()
+
+    Property<String> getJcrHome()
+
+    Property<String> getDatabase()
+
+    Property<Boolean> getProductionMode()
   }
 
-  TaskEventLogging withTasks(tasks) {
-    this.tasks.addAll(tasks)
-    return this
-  }
+  private boolean buildStarted = false
+  private final long startTimestamp = System.currentTimeMillis()
 
   @Override
-  void beforeExecute(Task task) {
-    if (tasks.contains(task.name)) {
-      if (!buildStarted) {
-        buildStarted = true
-        SilverpeasSetupExtension silverSetup =
-            (SilverpeasSetupExtension) task.project.extensions.getByName(SilverpeasSetupPlugin.EXTENSION)
-        String javaHome = System.getenv('JAVA_HOME')
-        FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
-            "SILVERPEAS SETUP: ${task.project.version}",
-            "SILVERPEAS HOME:  ${silverSetup.silverpeasHome.path}",
-            "JBOSS HOME:       ${silverSetup.jbossHome.path}",
-            "JCR HOME:         ${silverSetup.settings.JCR_HOME.asPath().toString()}",
-            "JAVA HOME:        ${javaHome != null ? javaHome : 'not set'}",
-            "DATABASE:         ${silverSetup.settings.DB_SERVERTYPE.toLowerCase()}",
-            "OPERATING SYSTEM: ${System.getProperty('os.name')}",
-            "PRODUCTION MODE:  ${!silverSetup.installation.developmentMode.get()}")
+  void onFinish(final FinishEvent event) {
+    if (!(event instanceof TaskFinishEvent) || !parameters.tracing.get()) {
+      return
+    }
+    TaskFinishEvent taskEvent = (TaskFinishEvent) event
+    String taskName = taskNameOf(taskEvent)
+    if (!parameters.tasks.get().contains(taskName)) {
+      return
+    }
+
+    if (!buildStarted) {
+      buildStarted = true
+      outputSetupContext()
+    }
+
+    FileLogger log = FileLogger.getLogger(taskName)
+    String taskTitle = unformat(taskName)
+    String status = statusOf(taskEvent, log)
+    log.info "${taskTitle}: [${status}]\n"
+    outputTaskStatus(taskTitle, status)
+  }
+
+  /**
+   * Once the build is done, whatever its result, outputs, if the tracing is enabled, a summary
+   * about both the state of JBoss/Wildfly and the duration of the whole setup.
+   */
+  @Override
+  void close() {
+    if (!parameters.tracing.get()) {
+      return
+    }
+    try {
+      JBossServer jboss = new JBossServer(parameters.jbossHome.get())
+      String status = "JBoss is ${jboss.status()}"
+      String buildDuration =
+          "The whole tasks took ${(long) ((System.currentTimeMillis() - startTimestamp) / 1000)}s"
+      if (buildStarted) {
+        FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n%s\n', status, buildDuration)
+        println "${buildDuration}"
+        buildStarted = false
       }
-      FileLogger log = FileLogger.getLogger(task.name)
-      String taskTitle = unformat(task.name)
-      if (!task.didWork) {
-        log.info "${taskTitle}..."
-        outputTask taskTitle
-      } else {
-        executedTasks << task.name
-      }
+      println()
+      println "INFO: ${status}"
+    } catch (Exception e) {
+      // the summary is just informative: it mustn't mask the result of the build itself
+      FileLogger.getLogger(DEFAULT_LOG_NAMESPACE)
+          .warn("Cannot output the summary of the setup: ${e.message}")
     }
   }
 
-  @Override
-  void afterExecute(Task task, TaskState state) {
-    if (tasks.contains(task.name) && !executedTasks.contains(task.name)) {
-      FileLogger log = FileLogger.getLogger(task.name)
-      String taskTitle = unformat(task.name)
-      String status = 'OK'
-      if (state.failure != null) {
-        status = 'FAILURE'
-        log.error state.failure
-      }
-      log.info "${taskTitle}: [${status}]\n"
-      outputStatus status
-    }
+  private void outputSetupContext() {
+    String javaHome = System.getenv('JAVA_HOME')
+    FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n',
+        "SILVERPEAS SETUP: ${parameters.silverpeasVersion.get()}",
+        "SILVERPEAS HOME:  ${parameters.silverpeasHome.get()}",
+        "JBOSS HOME:       ${parameters.jbossHome.get()}",
+        "JCR HOME:         ${parameters.jcrHome.get()}",
+        "JAVA HOME:        ${javaHome != null ? javaHome : 'not set'}",
+        "DATABASE:         ${parameters.database.get()}",
+        "OPERATING SYSTEM: ${System.getProperty('os.name')}",
+        "PRODUCTION MODE:  ${parameters.productionMode.get()}")
   }
 
-  @Override
-  void buildFinished(final BuildResult result) {
-    JBossServer jboss = new JBossServer(result.gradle.rootProject.extensions.silversetup.jbossHome.path as String)
-    String status = "JBoss is ${jboss.status()}"
-    String buildDuration = "The whole tasks took ${(long)((System.currentTimeMillis() - startTimestamp) / 1000)}s"
-    if (buildStarted) {
-      FileLogger.getLogger(DEFAULT_LOG_NAMESPACE).formatInfo('\n%s\n%s\n', status, buildDuration)
-      println "${buildDuration}"
-      buildStarted = false
+  private static String taskNameOf(final TaskFinishEvent event) {
+    String taskPath = event.descriptor.taskPath
+    return taskPath.substring(taskPath.lastIndexOf(':') + 1)
+  }
+
+  private static String statusOf(final TaskFinishEvent event, final FileLogger log) {
+    String status = 'OK'
+    if (event.result instanceof TaskFailureResult) {
+      status = 'FAILURE'
+      ((TaskFailureResult) event.result).failures.each {
+        log.error("${it.message}\n${it.description}")
+      }
+    } else if (event.result instanceof TaskSkippedResult) {
+      status = 'SKIPPED'
     }
-    println()
-    println "INFO: ${status}"
-    result.rethrowFailure()
+    return status
   }
 
   private static String unformat(String name) {
@@ -133,16 +183,12 @@ class TaskEventLogging extends BuildAdapter implements TaskExecutionListener {
     return str.toString()
   }
 
-  private static void outputTask(String taskTitle) {
+  private static void outputTaskStatus(String taskTitle, String status) {
     StringBuilder result = new StringBuilder("${taskTitle}... ")
     int charToAdd = 20 - result.length()
     for (int i = 0; i < charToAdd; i++) {
       result.append(' ')
     }
-    print result.toString()
-  }
-
-  private static void outputStatus(String status) {
-    println "       ${status}"
+    println "${result.toString()}       ${status}"
   }
 }

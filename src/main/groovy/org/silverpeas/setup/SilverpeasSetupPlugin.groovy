@@ -25,7 +25,9 @@ package org.silverpeas.setup
 
 
 import org.gradle.api.*
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.build.event.BuildEventsListenerRegistry
 import org.silverpeas.setup.api.*
 import org.silverpeas.setup.configuration.JBossConfigurationTask
 import org.silverpeas.setup.configuration.SilverpeasConfigurationTask
@@ -37,6 +39,7 @@ import org.silverpeas.setup.migration.SilverpeasMigrationTask
 import org.silverpeas.setup.security.Encryption
 import org.silverpeas.setup.security.EncryptionFactory
 
+import javax.inject.Inject
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -60,15 +63,18 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
 
   public static final String EXTENSION = 'silversetup'
   public static final String JBOSS_OUTPUT_LOG = 'jboss-output.log'
+  private static final String EVENTS_LISTENER = 'silverpeasSetupEventsListener'
+
+  private final BuildEventsListenerRegistry eventsListenerRegistry
+
+  @Inject
+  SilverpeasSetupPlugin(BuildEventsListenerRegistry eventsListenerRegistry) {
+    this.eventsListenerRegistry = eventsListenerRegistry
+  }
 
   @Override
   void apply(Project project) {
     SilverpeasSetupExtension extension = createSilverpeasSetupExtension(project)
-
-    // once the whole asked Silverpeas setup's tasks are done, the configuration context is saved
-    project.gradle.buildFinished {
-      extension.config.context.save()
-    }
 
     JBossServer jBossServer = new JBossServer(extension.jbossHome.path)
     initializePluginParameters(project, jBossServer)
@@ -240,20 +246,50 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
    * @param jBossServer the JBoss server wrapper to initialize with some of the plugin's input
    * properties exposed to the project.
    */
-  private static void initializePluginParameters(Project project,
-                                                 JBossServer jBossServer) {
+  private void initializePluginParameters(Project project,
+                                          JBossServer jBossServer) {
     project.afterEvaluate { Project currentProject, ProjectState state ->
       SilverpeasSetupExtension extension =
           (SilverpeasSetupExtension) currentProject.extensions.getByName(EXTENSION)
       registerManagedBeansForScripts(extension)
       extension.settings.DEV_MODE = extension.installation.developmentMode.get() as String
       if (extension.logging.useLogger) {
-        initLogging(currentProject, extension.logging)
+        initLogging(extension.logging)
       }
       extension.settings.SILVERPEAS_VERSION = currentProject.version as String
       jBossServer.redirectOutputTo(new File(extension.logging.logDir, JBOSS_OUTPUT_LOG))
           .withStartingTimeout(extension.timeout.get())
+      registerSetupEventsListener(currentProject, extension)
     }
+  }
+
+  /**
+   * Registers the build service listening to the completion of the tasks in order both to
+   * customize the output of the traces about their execution and to output, once the build is done
+   * (whatever its result), a summary about the Silverpeas setup.
+   * <p>
+   * This service is the replacement of both the deprecated {@code Gradle#useLogger(Object)} and
+   * {@code Gradle#buildFinished(Closure)} methods.
+   * </p>
+   * @param project the Gradle project using the plugin
+   * @param extension the project extension of the plugin
+   */
+  private void registerSetupEventsListener(Project project, SilverpeasSetupExtension extension) {
+    Provider<TaskEventLogging> listener = project.gradle.sharedServices
+        .registerIfAbsent(EVENTS_LISTENER, TaskEventLogging) { spec ->
+          spec.parameters.with {
+            tasks.set(SilverpeasSetupTaskNames.values().collect { it.name } +
+                extension.logging.scriptTasks)
+            tracing.set(extension.logging.useLogger)
+            silverpeasVersion.set(project.version as String)
+            silverpeasHome.set(extension.silverpeasHome.path)
+            jbossHome.set(extension.jbossHome.path)
+            jcrHome.set(extension.settings.JCR_HOME.asPath().toString())
+            database.set(extension.settings.DB_SERVERTYPE.toLowerCase())
+            productionMode.set(!extension.installation.developmentMode.get())
+          }
+        }
+    eventsListenerRegistry.onTaskCompletion(listener)
   }
 
   /**
@@ -383,21 +419,18 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
   }
 
   /**
-   * Initializes the logging system for the project with the specified logging properties.
-   * @param project the Gradle project
+   * Initializes the logging system for the project with the specified logging properties. The
+   * customization of the traces written both on the standard output and on the log file is done by
+   * the {@link TaskEventLogging} build service.
    * @param loggingProperties the logging properties.
    */
-  private static void initLogging(Project project, SilverpeasLoggingProperties loggingProperties) {
+  private static void initLogging(SilverpeasLoggingProperties loggingProperties) {
     String timestamp = new Date().format('yyyyMMdd_HHmmss')
     if (!loggingProperties.logDir.exists()) {
       loggingProperties.logDir.mkdirs()
     }
     File logFile = new File(loggingProperties.logDir, "build-${timestamp}.log")
     FileLogger.init(logFile, loggingProperties.defaultLevel)
-
-    /* customize the traces writing both on the standard output and on the log file. */
-    project.gradle.useLogger(new TaskEventLogging()
-        .withTasks(loggingProperties.scriptTasks))
   }
 
   /**

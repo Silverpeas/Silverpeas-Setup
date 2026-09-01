@@ -45,6 +45,13 @@ class SilverpeasLoggingProperties {
    * Should the logging system of the plugin be used to output traces into log files.
    * By default, true. If false, the traces will be then output through the logging system of
    * Gradle; they will be output into the standard output (level QUIET)
+   * <p>
+   * Whatever its value, the traces of Gradle itself aren't anymore silenced by the plugin (this
+   * was done by the now deprecated {@code Gradle#useLogger(Object)} method). To get an output as
+   * concise as before, run the build with the <code>--quiet</code> option or set
+   * <code>org.gradle.logging.level=quiet</code> in the <code>gradle.properties</code> file of the
+   * Silverpeas installer.
+   * </p>
    */
   boolean useLogger = true
 

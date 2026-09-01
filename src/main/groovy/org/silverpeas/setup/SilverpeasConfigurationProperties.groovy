@@ -99,7 +99,7 @@ class SilverpeasConfigurationProperties {
    */
   static class Context {
     final private File file
-    final private Map props = [:]
+    final private ContextProperties props
 
     /**
      * Constructs a new configuration context.
@@ -107,10 +107,11 @@ class SilverpeasConfigurationProperties {
      */
     private Context(File storageDir) {
       file = new File(storageDir, '.context')
+      props = new ContextProperties(this)
       if (Files.exists(file.toPath())) {
         file.text.eachLine { line ->
           String[] keyValue = line.trim().split(':')
-          props[keyValue[0].trim()] = keyValue[1].trim()
+          props.load(keyValue[0].trim(), keyValue[1].trim())
         }
       }
     }
@@ -128,6 +129,51 @@ class SilverpeasConfigurationProperties {
           w.println("${k}: ${v}")
         }
       }
+    }
+  }
+
+  /**
+   * The properties of a configuration context. Any change of one of those properties is
+   * immediately persisted so that the context is always up-to-date, whatever the result of the
+   * build. (Previously the context was saved by a listener registered with the now deprecated
+   * <code>Gradle#buildFinished(Closure)</code> method.)
+   */
+  private static class ContextProperties extends LinkedHashMap {
+
+    private final Context context
+
+    private ContextProperties(Context context) {
+      this.context = context
+    }
+
+    private void load(key, value) {
+      super.put(key, value)
+    }
+
+    @Override
+    Object put(key, value) {
+      Object previous = super.put(key, value)
+      context.save()
+      return previous
+    }
+
+    @Override
+    void putAll(Map properties) {
+      super.putAll(properties)
+      context.save()
+    }
+
+    @Override
+    Object remove(key) {
+      Object removed = super.remove(key)
+      context.save()
+      return removed
+    }
+
+    @Override
+    void clear() {
+      super.clear()
+      context.save()
     }
   }
 }
