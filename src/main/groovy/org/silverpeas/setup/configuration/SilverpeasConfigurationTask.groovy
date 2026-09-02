@@ -27,6 +27,7 @@ package org.silverpeas.setup.configuration
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
@@ -42,6 +43,7 @@ import java.nio.file.Paths
  * configuration rules and from Groovy scripts.
  * @author mmoquillon
  */
+@DisableCachingByDefault(because = 'The configuration of Silverpeas isn\'t a cacheable operation')
 class SilverpeasConfigurationTask extends SilverpeasSetupTask {
 
   @Internal

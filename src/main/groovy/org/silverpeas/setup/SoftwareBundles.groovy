@@ -4,6 +4,8 @@ import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 
 import javax.inject.Inject
 
@@ -23,6 +25,7 @@ class SoftwareBundles {
      * aren't taken in charge.
      */
     @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
     final ConfigurableFileCollection silverpeas
 
     /**
@@ -30,6 +33,7 @@ class SoftwareBundles {
      * processed differently by the plugin: only the JAR libraries are taken in charge.
      */
     @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
     final ConfigurableFileCollection tiers
 
     /**
@@ -40,6 +44,7 @@ class SoftwareBundles {
      * example).
      */
     @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
     final ConfigurableFileCollection custom
 
     @Inject

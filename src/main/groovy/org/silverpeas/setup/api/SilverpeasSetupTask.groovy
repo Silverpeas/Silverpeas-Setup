@@ -2,11 +2,13 @@ package org.silverpeas.setup.api
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Internal
+import org.gradle.work.DisableCachingByDefault
 
 /**
  * Common definition of a task in the Silverpeas Setup plugin.
  * @author mmoquillon
  */
+@DisableCachingByDefault(because = 'Setting up Silverpeas isn\'t a cacheable operation')
 abstract class SilverpeasSetupTask extends DefaultTask {
 
   /**

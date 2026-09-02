@@ -25,6 +25,7 @@ package org.silverpeas.setup.configuration
 
 
 import org.gradle.api.tasks.*
+import org.gradle.work.DisableCachingByDefault
 import org.silverpeas.setup.SilverpeasConfigurationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
@@ -40,9 +41,11 @@ import java.util.regex.Matcher
  * Silverpeas.
  * @author mmoquillon
  */
+@DisableCachingByDefault(because = 'The configuration of JBoss/Wildfly isn\'t a cacheable operation')
 class JBossConfigurationTask extends SilverpeasSetupTask {
 
   @InputDirectory
+  @PathSensitive(PathSensitivity.RELATIVE)
   File driversDir
   @Nested
   SilverpeasConfigurationProperties config

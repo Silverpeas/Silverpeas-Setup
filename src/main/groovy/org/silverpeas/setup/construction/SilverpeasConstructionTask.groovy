@@ -24,6 +24,7 @@
 package org.silverpeas.setup.construction
 
 import org.gradle.api.tasks.*
+import org.gradle.work.DisableCachingByDefault
 import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.SilverpeasSetupTask
@@ -37,6 +38,7 @@ import java.nio.file.Paths
  * Silverpeas. It gathers both the assembling and the build tasks.
  * @author mmoquillon
  */
+@DisableCachingByDefault(because = 'The construction of the Silverpeas application isn\'t a cacheable operation')
 class SilverpeasConstructionTask extends SilverpeasSetupTask {
 
   public static final String SILVERPEAS_WAR = 'silverpeas.war'

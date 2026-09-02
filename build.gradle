@@ -37,7 +37,6 @@ plugins {
   id 'org.ajoberstar.grgit' version '5.3.3' apply true
   id 'idea'
   id 'maven-publish'
-  id 'net.linguica.maven-settings' version '0.5'
   id 'groovy'
 }
 
@@ -110,6 +109,16 @@ publishing {
         name = 'silverpeas'
         url = 'https://nexus3.silverpeas.org/repository/releases/'
       }
+      // the credentials to publish into Nexus are expected to be defined by the two following
+      // Gradle properties, usually set in the gradle.properties file of the user (that is to say
+      // in ~/.gradle/gradle.properties) or, for a CI, by the environment variables
+      // ORG_GRADLE_PROJECT_nexusUsername and ORG_GRADLE_PROJECT_nexusPassword.
+      // (They were previously read from the servers section of the Maven settings.xml file by the
+      // net.linguica.maven-settings plugin, no more maintained and incompatible with Gradle 10.)
+      credentials {
+        username = providers.gradleProperty('nexusUsername').orNull
+        password = providers.gradleProperty('nexusPassword').orNull
+      }
     }
   }
 }
@@ -117,6 +126,8 @@ publishing {
 
 dependencies {
   api gradleApi()
+  // groovy-sql isn't anymore bundled within the Gradle distribution since Gradle 9
+  api 'org.apache.groovy:groovy-sql:4.0.32'
   api 'org.apache.commons:commons-lang3:3.20.0'
   api 'org.apache.commons:commons-text:1.15.0'
   api 'commons-io:commons-io:2.22.0'
@@ -124,9 +135,9 @@ dependencies {
   api 'commons-codec:commons-codec:1.22.0'
   api 'com.google.guava:guava:33.0.0-jre'
   api 'javax.jcr:jcr:2.0'
-  api 'org.apache.jackrabbit:oak-jcr:2.2.0'
-  api 'org.apache.jackrabbit:oak-segment-tar:2.2.0'
-  api 'org.apache.jackrabbit:oak-store-document:2.2.0'
+  api 'org.apache.jackrabbit:oak-jcr:2.4.0'
+  api 'org.apache.jackrabbit:oak-segment-tar:2.4.0'
+  api 'org.apache.jackrabbit:oak-store-document:2.4.0'
 
 
   runtimeOnly 'org.eclipse.jetty:jetty-jndi:12.1.11'
@@ -137,7 +148,9 @@ dependencies {
   runtimeOnly 'io.dropwizard.metrics:metrics-core:4.2.26'
   runtimeOnly 'org.mongodb:mongodb-driver-sync:5.6.2'
   testImplementation gradleTestKit()
-  testImplementation platform("org.spockframework:spock-bom:2.4-groovy-3.0")
+  // groovy-test isn't anymore bundled within the Gradle distribution since Gradle 9
+  testImplementation 'org.apache.groovy:groovy-test:4.0.32'
+  testImplementation platform("org.spockframework:spock-bom:2.4-groovy-4.0")
   testImplementation 'org.spockframework:spock-core'
   testImplementation 'org.spockframework:spock-junit4'
   testImplementation 'junit:junit:4.13.2'
@@ -155,8 +168,8 @@ jar {
   }
 }
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.allSource
+tasks.register('sourceJar', Jar) {
+  from sourceSets.main.allSource
 }
 
 processTestResources {

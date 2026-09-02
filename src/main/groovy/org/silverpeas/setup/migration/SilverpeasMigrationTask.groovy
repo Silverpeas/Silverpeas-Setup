@@ -28,6 +28,7 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.TaskExecutionException
 import org.silverpeas.setup.SilverpeasMigrationProperties
 import org.silverpeas.setup.api.DataSourceProvider
@@ -57,6 +58,7 @@ import java.sql.SQLException
  * MS-SQL, and Oracle).
  * @author mmoquillon
  */
+@DisableCachingByDefault(because = 'The migration of the Silverpeas datasource isn\'t a cacheable operation')
 class SilverpeasMigrationTask extends SilverpeasSetupTask {
 
   static final String MIGRATION_SETTING_MODULE = 'dbbuilder-migration.xml'

@@ -27,7 +27,7 @@ import groovy.xml.slurpersupport.GPathResult
 import groovy.xml.XmlSlurper
 import groovy.xml.XmlUtil
 import org.gradle.api.Project
-import org.gradle.util.GFileUtils
+import org.apache.commons.io.FileUtils
 import org.silverpeas.setup.SoftwareBundles
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.ManagedBeanContainer
@@ -258,11 +258,11 @@ class SilverpeasBuilder {
       aWebXml.'servlet'.each { elt -> mainWebXml.appendNode(elt) }
       aWebXml.'servlet-mapping'.each { elt -> mainWebXml.appendNode(elt) }
       aWebXml.'resource-env-ref'.each { elt -> mainWebXml.appendNode(elt) }
-      GFileUtils.forceDelete(it)
+      FileUtils.forceDelete(it)
     }
     XmlUtil.serialize(mainWebXml,
         new FileWriter(Paths.get(sourceDir.path, 'WEB-INF', 'web.xml').toFile()))
-    GFileUtils.forceDelete(mainWebXmlFile)
+    FileUtils.forceDelete(mainWebXmlFile)
   }
 
   private void compilePersistenceDescriptor(File sourceDir) {

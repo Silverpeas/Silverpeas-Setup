@@ -27,6 +27,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import org.silverpeas.setup.SilverpeasInstallationProperties
 import org.silverpeas.setup.api.FileLogger
 import org.silverpeas.setup.api.JBossServer
@@ -38,6 +39,7 @@ import static org.silverpeas.setup.construction.SilverpeasConstructionTask.SILVE
  * server.
  * @author mmoquillon
  */
+@DisableCachingByDefault(because = 'The deployment of the Silverpeas artifacts into JBoss/Wildfly isn\'t a cacheable operation')
 class SilverpeasInstallationTask extends DefaultTask {
 
   @Nested
