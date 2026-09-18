@@ -366,11 +366,14 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
     settings.DB_DATASOURCE_JNDI = 'java:/datasources/silverpeas'
     switch (settings.DB_SERVERTYPE) {
       case 'MSSQL':
-        settings.DB_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.DB_NAME};sendStringParametersAsUnicode=false"
+        // sendStringParametersAsUnicode is required, otherwise the varchar parameters are sent as
+        // nvarchar ones and then SQL Server stops using the indexes on the varchar columns
+        String mssqlOptions = "sendStringParametersAsUnicode=false;${mssqlEncryption(settings)}"
+        settings.DB_URL = "jdbc:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL};databaseName=${settings.DB_NAME};${mssqlOptions}"
         if (settings.JCR_NAME) {
-          settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME};sendStringParametersAsUnicode=false"
+          settings.JCR_URL = "jdbc:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL};databaseName=${settings.JCR_NAME};${mssqlOptions}"
         }
-        settings.DB_DRIVER = 'net.sourceforge.jtds.jdbc.Driver'
+        settings.DB_DRIVER = 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
         settings.DB_VALIDATION_SQL = 'SELECT 1'
         break
       case 'ORACLE':
@@ -382,9 +385,10 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         settings.DB_VALIDATION_SQL = 'SELECT 1 FROM DUAL'
         break
       case 'POSTGRESQL':
-        settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}"
+        String pgOptions = postgresqlEncryption(settings)
+        settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}${pgOptions}"
         if (settings.JCR_NAME) {
-          settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}"
+          settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}${pgOptions}"
         }
         settings.DB_DRIVER = 'org.postgresql.Driver'
         settings.DB_VALIDATION_SQL = 'SELECT 1'
@@ -399,9 +403,11 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
             settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
           }
         } else {
-          settings.DB_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
+          // in server mode only, H2 supports encrypted connections through a dedicated protocol
+          String h2Protocol = isEncryptionRequired(settings) ? 'ssl' : 'tcp'
+          settings.DB_URL = "jdbc:h2:${h2Protocol}://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
           if (settings.JCR_NAME) {
-            settings.JCR_URL = "jdbc:h2:tcp://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"
+            settings.JCR_URL = "jdbc:h2:${h2Protocol}://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"
           }
         }
         settings.DB_DRIVER = 'org.h2.Driver'
@@ -411,6 +417,57 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         throw new IllegalArgumentException("Unsupported database system: ${settings.DB_SERVERTYPE}")
     }
     settings.DB_SCHEMA = settings.DB_SERVERTYPE.toLowerCase()
+  }
+
+  /**
+   * Is the encryption of the connections to the database required by the settings?
+   * @param settings the Silverpeas settings.
+   * @return true if the connections have to be encrypted, false otherwise.
+   */
+  private static boolean isEncryptionRequired(Map<String, String> settings) {
+    return Boolean.parseBoolean(settings.DB_ENCRYPT)
+  }
+
+  /**
+   * Is the certificate of the database server to be trusted without any validation? Meaningful
+   * only when the encryption of the connections is required.
+   * @param settings the Silverpeas settings.
+   * @return true if the certificate of the server has to be accepted as it is, false if it has to
+   * be validated.
+   */
+  private static boolean isServerCertificateTrusted(Map<String, String> settings) {
+    return Boolean.parseBoolean(settings.DB_ENCRYPT_TRUST_SERVER_CERT)
+  }
+
+  /**
+   * Computes the encryption related parameters of a connection URL to SQL Server. Unlike the other
+   * supported database systems, the parameter about the encryption has to be always explicitly set
+   * as, since the version 10 of the Microsoft JDBC driver, the encryption is expected by default
+   * and hence a connection to a server without any trusted certificate would be refused.
+   * @param settings the Silverpeas settings.
+   * @return the parameters to add to the connection URL.
+   */
+  private static String mssqlEncryption(Map<String, String> settings) {
+    if (!isEncryptionRequired(settings)) {
+      return 'encrypt=false'
+    }
+    return isServerCertificateTrusted(settings) ?
+        'encrypt=true;trustServerCertificate=true' : 'encrypt=true'
+  }
+
+  /**
+   * Computes the encryption related parameters of a connection URL to PostgreSQL. Nothing is set
+   * when the encryption isn't required: the default mode of the PostgreSQL JDBC driver is to try
+   * an encrypted connection and to fall back to a plain one if the server doesn't support it, and
+   * disabling explicitly the encryption would then be a regression for such installations.
+   * @param settings the Silverpeas settings.
+   * @return the parameters to add to the connection URL.
+   */
+  private static String postgresqlEncryption(Map<String, String> settings) {
+    if (!isEncryptionRequired(settings)) {
+      return ''
+    }
+    return isServerCertificateTrusted(settings) ? '?sslmode=require' : '?sslmode=verify-full'
   }
 
   /**

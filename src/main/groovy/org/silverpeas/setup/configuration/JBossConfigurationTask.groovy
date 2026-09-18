@@ -179,7 +179,7 @@ class JBossConfigurationTask extends SilverpeasSetupTask {
       // install the required driver other than H2
       driversDir.listFiles().each { driver ->
         if ((driver.name.startsWith('postgresql') && settings.DB_SERVERTYPE == 'POSTGRESQL') ||
-            (driver.name.startsWith('jtds') && settings.DB_SERVERTYPE == 'MSSQL') ||
+            (driver.name.startsWith('mssql-jdbc') && settings.DB_SERVERTYPE == 'MSSQL') ||
             (driver.name.startsWith('ojdbc') && settings.DB_SERVERTYPE == 'ORACLE')) {
           settings.DB_DRIVER_NAME = driver.name
           try {
