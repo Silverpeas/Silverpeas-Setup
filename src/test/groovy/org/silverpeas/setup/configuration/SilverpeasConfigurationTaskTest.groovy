@@ -27,6 +27,12 @@ class SilverpeasConfigurationTaskTest {
     context.cleanUp()
   }
 
+  /**
+   * The assertions below are only about the expected value of each configured parameter. Don't add
+   * any assertion checking a value has changed: the configuration is applied in place, on the
+   * resources of the build directory, and hence a subsequent execution of this test would find them
+   * already configured and would fail whereas the configuration did work.
+   */
   @Test
   void testSilverpeasConfiguration() {
     TestProperties testProperties = new TestProperties().before()
@@ -44,14 +50,7 @@ class SilverpeasConfigurationTaskTest {
   }
 
   static void assertTheCustomerWorkflowIsCorrectlyConfigured(TestProperties props) {
-    def before = props.xmlconf.before
     def after = props.xmlconf.after
-    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'achats'}
-          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
-        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'achats'}
-          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value
 
     assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
         .consequences.consequence.find { it.@value == 'achats'}
@@ -59,21 +58,7 @@ class SilverpeasConfigurationTaskTest {
 
     assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
           .consequences.consequence.find { it.@value == 'achats'}
-          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value !=
-        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'achats'}
-          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value
-
-    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'achats'}
           .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
-
-    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'MO'}
-          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
-        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'MO'}
-          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value
 
     assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
           .consequences.consequence.find { it.@value == 'MO'}
@@ -81,27 +66,10 @@ class SilverpeasConfigurationTaskTest {
 
     assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
           .consequences.consequence.find { it.@value == 'MO'}
-          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value !=
-        before.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-        .consequences.consequence.find { it.@value == 'MO'}
-        .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value
-
-    assert after.adefCreateSupplier.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.find { it.@value == 'MO'}
           .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
-
-    assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value !=
-        before.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}.consequences.consequence
-          .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value
 
     assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}.consequences.consequence
           .triggers.trigger.param.find { it.@name == 'targetComponentId'}.@value == 'kmelia42'
-
-    assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}.consequences.consequence
-          .triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value !=
-        before.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}
-          .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value
 
     assert after.adefCreateProduct.actions.action.find { it.@name == 'Archiver'}
           .consequences.consequence.triggers.trigger.param.find { it.@name == 'targetTopicId'}.@value == '100'
@@ -114,17 +82,12 @@ class SilverpeasConfigurationTaskTest {
     assert after.autDomainSQL['fallbackType'] == 'always' &&
         after.autDomainSQL['fallbackType'] == before.autDomainSQL['fallbackType']
     assert after.autDomainSQL['autServer0.SQLJDBCUrl'] ==
-        "jdbc:h2:file:${context.resourcesDir}/h2/test;MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" &&
-        after.autDomainSQL['autServer0.SQLJDBCUrl'] != before.autDomainSQL['autServer0.SQLJDBCUrl']
-    assert after.autDomainSQL['autServer0.SQLAccessLogin'] == 'sa' &&
-        after.autDomainSQL['autServer0.SQLAccessLogin'] != before.autDomainSQL['autServer0.SQLAccessLogin']
-    assert after.autDomainSQL['autServer0.SQLAccessPasswd'] == '' &&
-        after.autDomainSQL['autServer0.SQLAccessPasswd'] != before.autDomainSQL['autServer0.SQLAccessPasswd']
-    assert after.autDomainSQL['autServer0.SQLDriverClass'] == 'org.h2.Driver' &&
-        after.autDomainSQL['autServer0.SQLDriverClass'] != before.autDomainSQL['autServer0.SQLDriverClass']
+        "jdbc:h2:file:${context.resourcesDir}/h2/test;MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+    assert after.autDomainSQL['autServer0.SQLAccessLogin'] == 'sa'
+    assert after.autDomainSQL['autServer0.SQLAccessPasswd'] == ''
+    assert after.autDomainSQL['autServer0.SQLDriverClass'] == 'org.h2.Driver'
 
-    assert after.scheduler['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *' &&
-        after.scheduler['timeoutSchedule'] != before.scheduler['timeoutSchedule']
+    assert after.scheduler['timeoutSchedule'] == '* 0,4,8,12,16,20 * * *'
   }
 
   static void assertTheConfigContextIsCorrectlySaved(TestProperties props) {
