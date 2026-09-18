@@ -82,7 +82,8 @@ class SilverpeasBuilder {
       f.name.matches(/^.*-configuration-.*.jar$/)
     }
     def isAJdbcDriver = { File f ->
-      f.name.startsWith('postgresql') || f.name.startsWith('jtds') || f.name.startsWith('ojdbc')
+      f.name.startsWith('postgresql') || f.name.startsWith('mssql-jdbc') ||
+          f.name.startsWith('ojdbc')
     }
     def isARar = { File f ->
       f.name.endsWith('.rar')
