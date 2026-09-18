@@ -370,26 +370,16 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
         // nvarchar ones and then SQL Server stops using the indexes on the varchar columns
         String mssqlOptions = "sendStringParametersAsUnicode=false;${mssqlEncryption(settings)}"
         settings.DB_URL = "jdbc:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL};databaseName=${settings.DB_NAME};${mssqlOptions}"
-        if (settings.JCR_NAME) {
-          settings.JCR_URL = "jdbc:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL};databaseName=${settings.JCR_NAME};${mssqlOptions}"
-        }
         settings.DB_DRIVER = 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
         settings.DB_VALIDATION_SQL = 'SELECT 1'
         break
       case 'ORACLE':
         settings.DB_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.DB_NAME}"
-        if (settings.JCR_NAME) {
-          settings.JCR_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.JCR_NAME}"
-        }
         settings.DB_DRIVER = 'oracle.jdbc.driver.OracleDriver'
         settings.DB_VALIDATION_SQL = 'SELECT 1 FROM DUAL'
         break
       case 'POSTGRESQL':
-        String pgOptions = postgresqlEncryption(settings)
-        settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}${pgOptions}"
-        if (settings.JCR_NAME) {
-          settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}${pgOptions}"
-        }
+        settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}${postgresqlEncryption(settings)}"
         settings.DB_DRIVER = 'org.postgresql.Driver'
         settings.DB_VALIDATION_SQL = 'SELECT 1'
         break
@@ -399,16 +389,10 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           if (!Files.exists(databaseDirPath))
             Files.createDirectory(databaseDirPath)
           settings.DB_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.DB_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
-          if (settings.JCR_NAME) {
-            settings.JCR_URL = "jdbc:h2:file:${settings.SILVERPEAS_HOME}/h2/${settings.JCR_NAME};MV_STORE=FALSE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
-          }
         } else {
           // in server mode only, H2 supports encrypted connections through a dedicated protocol
           String h2Protocol = isEncryptionRequired(settings) ? 'ssl' : 'tcp'
           settings.DB_URL = "jdbc:h2:${h2Protocol}://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.DB_NAME}"
-          if (settings.JCR_NAME) {
-            settings.JCR_URL = "jdbc:h2:${h2Protocol}://${settings.DB_SERVER}:${settings.DB_PORT_H2}/${settings.JCR_NAME}"
-          }
         }
         settings.DB_DRIVER = 'org.h2.Driver'
         settings.DB_VALIDATION_SQL = 'SELECT 1'
