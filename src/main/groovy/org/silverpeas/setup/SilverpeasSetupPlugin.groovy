@@ -371,6 +371,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           settings.JCR_URL = "jdbc:jtds:sqlserver://${settings.DB_SERVER}:${settings.DB_PORT_MSSQL}/${settings.JCR_NAME};sendStringParametersAsUnicode=false"
         }
         settings.DB_DRIVER = 'net.sourceforge.jtds.jdbc.Driver'
+        settings.DB_VALIDATION_SQL = 'SELECT 1'
         break
       case 'ORACLE':
         settings.DB_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.DB_NAME}"
@@ -378,6 +379,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           settings.JCR_URL = "jdbc:oracle:thin:@${settings.DB_SERVER}:${settings.DB_PORT_ORACLE}:${settings.JCR_NAME}"
         }
         settings.DB_DRIVER = 'oracle.jdbc.driver.OracleDriver'
+        settings.DB_VALIDATION_SQL = 'SELECT 1 FROM DUAL'
         break
       case 'POSTGRESQL':
         settings.DB_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.DB_NAME}"
@@ -385,6 +387,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           settings.JCR_URL = "jdbc:postgresql://${settings.DB_SERVER}:${settings.DB_PORT_POSTGRESQL}/${settings.JCR_NAME}"
         }
         settings.DB_DRIVER = 'org.postgresql.Driver'
+        settings.DB_VALIDATION_SQL = 'SELECT 1'
         break
       case 'H2':
         if (settings.DB_SERVER == ':file:') {
@@ -402,6 +405,7 @@ class SilverpeasSetupPlugin implements Plugin<Project> {
           }
         }
         settings.DB_DRIVER = 'org.h2.Driver'
+        settings.DB_VALIDATION_SQL = 'SELECT 1'
         break
       default:
         throw new IllegalArgumentException("Unsupported database system: ${settings.DB_SERVERTYPE}")
