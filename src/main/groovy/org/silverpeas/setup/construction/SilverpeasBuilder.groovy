@@ -178,6 +178,10 @@ class SilverpeasBuilder {
         it.rename 'web.xml', "${WEB_XML_PREFIX}-${war.name}.xml"
         if (!war.name.startsWith(CORE_WAR_BUNDLE_ID)) {
           it.exclude 'WEB-INF/classes/META-INF/MANIFEST.MF'
+          // the manifest of the Silverpeas Core War bundle must be kept as it carries entries
+          // read by the application server (like the WildFly logging profile to apply to
+          // silverpeas.war). It mustn't be superseded by the manifest of another war bundle.
+          it.exclude 'META-INF/MANIFEST.MF'
         }
       }
       it.into destinationDir
